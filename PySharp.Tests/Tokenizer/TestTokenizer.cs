@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PySharp.Tokenizer;
 using static PySharp.Tokenizer.TokenType;
 
@@ -13,6 +14,19 @@ public class TestTokenizer
     private static readonly Dictionary<string, (string, IList<Token>)> one_row_test_cases =
         new()
         {
+            ["String_SimpleSingle"] = ("'123'", [new(StringLiteral, "'123'", (0, 0), (0, 5)), eof(0, 5)]),
+            ["String_SimpleDouble"] = ("\"123\"", [new(StringLiteral, "\"123\"", (0, 0), (0, 5)), eof(0, 5)]),
+            ["String_SpaceBoth"] = ("'123' \"123\"", [new(StringLiteral, "'123'", (0, 0), (0, 5)),
+                                                      new(StringLiteral, "\"123\"", (0, 6), (0, 11)), eof(0, 11)]),
+            ["String_Empty"] = ("''", [new(StringLiteral, "''", (0, 0), (0, 2)), eof(0, 2)]),
+            ["String_raw"] = ("r'123'", [new(StringLiteral, "r'123'", (0, 0), (0, 6)), eof(0, 6)]),
+            ["String_RAW"] = ("R'123'", [new(StringLiteral, "R'123'", (0, 0), (0, 6)), eof(0, 6)]),
+            ["String_byte"] = ("b'123'", [new(StringLiteral, "b'123'", (0, 0), (0, 6)), eof(0, 6)]),
+            ["String_BYTE"] = ("B'123'", [new(StringLiteral, "B'123'", (0, 0), (0, 6)), eof(0, 6)]),
+            ["String_RawByte"] = ("rb'123'", [new(StringLiteral, "rb'123'", (0, 0), (0, 7)), eof(0, 7)]),
+            ["String_ByteRaw"] = ("br'123'", [new(StringLiteral, "br'123'", (0, 0), (0, 7)), eof(0, 7)]),
+            ["String_EscapedQuote"] = (@"'bau\'bau'", [new(StringLiteral, @"'bau\'bau'", (0, 0), (0, 10)), eof(0, 10)]),
+
             ["Name_Simple"] = ("bau", [new(Name, "bau", (0, 0), (0, 3)), eof(0, 3)]),
             ["Name_Space"] = ("bau bau", [new(Name, "bau", (0, 0), (0, 3)), new(Name, "bau", (0, 4), (0, 7)), eof(0, 7)]),
             ["Name_TrailingUnderscore"] = ("baubau__", [new(Name, "baubau__", (0, 0), (0, 8)), eof(0, 8)]),
@@ -111,6 +125,7 @@ public class TestTokenizer
         };
 
     [Theory]
+    // Names
     [InlineData("Name_Simple")]
     [InlineData("Name_Space")]
     [InlineData("Name_TrailingUnderscore")]
@@ -118,6 +133,7 @@ public class TestTokenizer
     [InlineData("Name_BetweenUnderscore")]
     [InlineData("Name_WithDigits")]
     [InlineData("Name_Complex")]
+    // Numbers
     [InlineData("Number_Simple")]
     [InlineData("Number_Space")]
     [InlineData("Number_Zeros")]
@@ -151,14 +167,29 @@ public class TestTokenizer
     [InlineData("Number_BinaryFull")]
     [InlineData("Number_BinaryUnderscores")]
     [InlineData("Number_BinaryLong")]
+    // Operators
     [InlineData("Op_AllExceptParensAndDots", Skip = "Not implemented yet.")]
     [InlineData("Op_Dot")]
     [InlineData("Op_DotSpace")]
     [InlineData("Op_Ellipsis")]
     [InlineData("Op_EllipsisSpace")]
     [InlineData("Op_EllipsisDot")]
+    // One-row strings.
+    [InlineData("String_SimpleSingle")]
+    [InlineData("String_SimpleDouble")]
+    [InlineData("String_SpaceBoth")]
+    [InlineData("String_Empty")]
+    [InlineData("String_raw")]
+    [InlineData("String_RAW")]
+    [InlineData("String_byte")]
+    [InlineData("String_BYTE")]
+    [InlineData("String_RawByte")]
+    [InlineData("String_ByteRaw")]
+    [InlineData("String_EscapedQuote")]
     public void TestOneRow(string @case)
     {
+        Debug.Assert(one_row_test_cases.ContainsKey(@case));
+
         (string code, var expected) = one_row_test_cases[@case];
 
         var tokenizer = new PySharp.Tokenizer.Tokenizer(code, false);
@@ -171,6 +202,8 @@ public class TestTokenizer
             result.Add(token);
         }
         while (token.Type is not EndOfFile);
+
+        Assert.True(tokenizer.ShouldStop);
 
         Assert.Equal(expected.Count, result.Count);
         for (int i = 0; i < expected.Count; i++)

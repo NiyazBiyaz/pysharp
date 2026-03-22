@@ -4,7 +4,7 @@ public enum TokenType
 {
     Name,
     Number,
-    String,
+    StringLiteral, // 'String' is ambiguous with 'string' in tests.
     FStringStart,
     FStringMiddle,
     FStringEnd,

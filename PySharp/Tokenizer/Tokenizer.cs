@@ -113,7 +113,7 @@ public class Tokenizer(string source, bool saveTrivia)
                 else if (nextChar == '\\')
                 {
                     continuationColumn = continuationColumn != 0 ? continuationColumn : column;
-                    var lineCont = readContinuationLine();
+                    var lineCont = readLineContinuation();
                     if (lineCont.Type is TokenType.Error)
                         return lineCont;
                 }
@@ -200,7 +200,6 @@ public class Tokenizer(string source, bool saveTrivia)
         startColumnOffset = currentColumnOffset;
     }
 
-
     private Token? tryComment()
     {
         if (nextChar == '#')
@@ -222,7 +221,10 @@ public class Tokenizer(string source, bool saveTrivia)
     private Token? tryEof()
     {
         if (nextChar == eof)
+        {
+            ShouldStop = true;
             return createToken(TokenType.EndOfFile, true);
+        }
 
         return null;
     }
@@ -517,23 +519,72 @@ public class Tokenizer(string source, bool saveTrivia)
         return ok;
     }
 
-    private Token? tryString() => null;
+    private static bool isQuote(char ch) => ch == '"' || ch == '\'';
 
-    private Token? readPartialStringStart(PartialStringType stringType, bool prefixR) => throw new NotImplementedException();
+    private Token? tryString() => isQuote(nextChar) ? readString() : null;
 
-    private Token? readString() => throw new NotImplementedException();
+    private Token readPartialStringStart(PartialStringType stringType, bool prefixR) => throw new NotImplementedException();
+
+    private Token readString()
+    {
+        Debug.Assert(isQuote(nextChar));
+
+        char quote = nextChar;
+        int count = 1;
+        int closingQuotesCount = 0;
+        bool hasEscapedQuote = false;
+
+        startLineNumber = lineNumber;
+
+        moveNext();
+        if (nextChar == quote)
+        {
+            moveNext();
+            // Triple-quoted string.
+            if (nextChar == quote)
+                count = 3;
+            // Empty string found.
+            else
+                closingQuotesCount = 1;
+        }
+
+        while (closingQuotesCount != count)
+        {
+            if (nextChar == eof || (count == 3 && nextChar == '\n'))
+            {
+                // TODO: Error handling.
+                throw new NotImplementedException();
+            }
+            if (nextChar == quote)
+                closingQuotesCount++;
+
+            else
+            {
+                closingQuotesCount = 0;
+                if (nextChar == '\\')
+                {
+                    moveNext();
+                    if (nextChar == quote)
+                        hasEscapedQuote = true;
+                }
+            }
+            moveNext();
+        }
+
+        return createToken(TokenType.StringLiteral);
+    }
 
     private Token? tryLineContinuation()
     {
         if (nextChar == '\\')
         {
-            return readContinuationLine();
+            return readLineContinuation();
         }
 
         return null;
     }
 
-    private Token readContinuationLine()
+    private Token readLineContinuation()
     {
         if (nextChar != '\n')
         {
@@ -587,7 +638,7 @@ public class Tokenizer(string source, bool saveTrivia)
     {
         int startLine = type switch
         {
-            TokenType.String or TokenType.FStringMiddle or TokenType.TStringMiddle => startLineNumber,
+            TokenType.StringLiteral or TokenType.FStringMiddle or TokenType.TStringMiddle => startLineNumber,
             _ => lineNumber,
         };
 
