@@ -259,7 +259,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
                 if (nextChar == '\'' || nextChar == '"')
                 {
-                    if (invalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
+                    if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
                         return errorToken(TokenizerError.InvalidLiteral, errMsg);
 
                     if (sawF || sawT)
@@ -341,17 +341,65 @@ public class Tokenizer(string source, bool saveTrivia)
                 // Hexadecimal.
                 if (char.ToLower(nextChar) == 'x')
                 {
-                    throw new NotImplementedException("Hexadecimal is not supported yet.");
+                    moveNext();
+                    do
+                    {
+                        if (nextChar == '_')
+                        {
+                            if (!char.IsAsciiHexDigit(nextNextChar))
+                                return errorToken(TokenizerError.InvalidLiteral, "Invalid hexadecimal literal.");
+                        }
+
+                        do
+                            moveNext();
+                        while (char.IsAsciiHexDigit(nextChar));
+                    }
+                    while (nextChar == '_');
+
+                    if (isInvalidEndOfNumber(nextChar))
+                        return errorToken(TokenizerError.InvalidLiteral, "Invalid hexadecimal literal.");
                 }
                 // Octal.
                 else if (char.ToLower(nextChar) == 'o')
                 {
-                    throw new NotImplementedException("Octal is not supported yet.");
+                    moveNext();
+                    do
+                    {
+                        if (nextChar == '_')
+                        {
+                            if (!isAsciiOctDigit(nextNextChar))
+                                return errorToken(TokenizerError.InvalidLiteral, "Invalid octal literal.");
+                        }
+
+                        do
+                            moveNext();
+                        while (isAsciiOctDigit(nextChar));
+                    }
+                    while (nextChar == '_');
+
+                    if (isInvalidEndOfNumber(nextChar))
+                        return errorToken(TokenizerError.InvalidLiteral, "Invalid octal literal.");
                 }
                 // Binary.
                 else if (char.ToLower(nextChar) == 'b')
                 {
-                    throw new NotImplementedException("Binary is not supported yet.");
+                    moveNext();
+                    do
+                    {
+                        if (nextChar == '_')
+                        {
+                            if (!isAsciiBinDigit(nextNextChar))
+                                return errorToken(TokenizerError.InvalidLiteral, "Invalid binary literal.");
+                        }
+
+                        do
+                            moveNext();
+                        while (isAsciiBinDigit(nextChar));
+                    }
+                    while (nextChar == '_');
+
+                    if (isInvalidEndOfNumber(nextChar))
+                        return errorToken(TokenizerError.InvalidLiteral, "Invalid binary literal.");
                 }
 
                 // Decimal literal with leading zeros.
@@ -593,7 +641,7 @@ public class Tokenizer(string source, bool saveTrivia)
         return false;
     }
 
-    private static string? invalidStringPrefixes(bool b, bool r, bool u, bool f, bool t)
+    private static string? isInvalidStringPrefixes(bool b, bool r, bool u, bool f, bool t)
     {
         const string err_format = "'{0}' and '{1}' prefixes are incompatible.";
         if (u)
@@ -625,6 +673,12 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private static bool isPotentialNameChar(char character) =>
         character == '_' || char.IsAsciiDigit(character) || char.IsLetter(character);
+
+    private static bool isAsciiOctDigit(char character) =>
+        character >= '0' && character <= '7';
+
+    private static bool isAsciiBinDigit(char character) =>
+        character == '1' || character == '0';
 
     #endregion
 }

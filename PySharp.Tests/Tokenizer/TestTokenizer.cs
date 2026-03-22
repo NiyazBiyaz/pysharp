@@ -51,7 +51,7 @@ public class TestTokenizer
             ["Number_HexadecimalUnderscores"] = ("0x33_22_11", [new(Number, "0x33_22_11", (0, 0), (0, 10)), eof(0, 10)]),
             ["Number_HexadecimalLeadUnderscores"] = ("0x_33_22_11", [new(Number, "0x_33_22_11", (0, 0), (0, 11)), eof(0, 11)]),
             ["Number_OctalFull"] = ("0o01234567", [new(Number, "0o01234567", (0, 0), (0, 10)), eof(0, 10)]),
-            ["Number_OctalUnderscores"] = ("0o_123_456_7", [new(Number, "0x_123_456_7", (0, 0), (0, 12)), eof(0, 12)]),
+            ["Number_OctalUnderscores"] = ("0o_123_456_7", [new(Number, "0o_123_456_7", (0, 0), (0, 12)), eof(0, 12)]),
             ["Number_BinaryFull"] = ("0b01", [new(Number, "0b01", (0, 0), (0, 4)), eof(0, 4)]),
             ["Number_BinaryUnderscores"] = ("0b_1_0", [new(Number, "0b_1_0", (0, 0), (0, 6)), eof(0, 6)]),
             ["Number_BinaryLong"] = ("0b101010100100100010101001", [new(Number, "0b101010100100100010101001", (0, 0), (0, 26)), eof(0, 26)]),
@@ -140,17 +140,17 @@ public class TestTokenizer
     [InlineData("Number_Complex1")]
     [InlineData("Number_Complex2")]
     [InlineData("Number_Complex3")]
-    [InlineData("Number_Hexadecimal", Skip = "Not implemented yet.")]
-    [InlineData("Number_HexadecimalFullLower", Skip = "Not implemented yet.")]
-    [InlineData("Number_HexadecimalFullUpper", Skip = "Not implemented yet.")]
-    [InlineData("Number_HexadecimalMixed", Skip = "Not implemented yet.")]
-    [InlineData("Number_HexadecimalUnderscores", Skip = "Not implemented yet.")]
-    [InlineData("Number_HexadecimalLeadUnderscores", Skip = "Not implemented yet.")]
-    [InlineData("Number_OctalFull", Skip = "Not implemented yet.")]
-    [InlineData("Number_OctalUnderscores", Skip = "Not implemented yet.")]
-    [InlineData("Number_BinaryFull", Skip = "Not implemented yet.")]
-    [InlineData("Number_BinaryUnderscores", Skip = "Not implemented yet.")]
-    [InlineData("Number_BinaryLong", Skip = "Not implemented yet.")]
+    [InlineData("Number_Hexadecimal")]
+    [InlineData("Number_HexadecimalFullLower")]
+    [InlineData("Number_HexadecimalFullUpper")]
+    [InlineData("Number_HexadecimalMixed")]
+    [InlineData("Number_HexadecimalUnderscores")]
+    [InlineData("Number_HexadecimalLeadUnderscores")]
+    [InlineData("Number_OctalFull")]
+    [InlineData("Number_OctalUnderscores")]
+    [InlineData("Number_BinaryFull")]
+    [InlineData("Number_BinaryUnderscores")]
+    [InlineData("Number_BinaryLong")]
     [InlineData("Op_AllExceptParensAndDots", Skip = "Not implemented yet.")]
     [InlineData("Op_Dot")]
     [InlineData("Op_DotSpace")]
