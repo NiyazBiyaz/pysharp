@@ -168,16 +168,16 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private Token? tryIndentation()
     {
-        // Leave lexemes of indentation tokens empty.
         if (pendingIndentation < 0)
         {
             pendingIndentation++;
+            // Dedent tokens is empty.
             return createToken(TokenType.Dedent, true);
         }
         else if (pendingIndentation > 0)
         {
             pendingIndentation--;
-            return createToken(TokenType.Indent, true);
+            return createToken(TokenType.Indent);
         }
 
         return null;
@@ -285,27 +285,33 @@ public class Tokenizer(string source, bool saveTrivia)
         if (nextChar == '\n')
         {
             atLineBeginning = true;
-            moveNext();
+            Token tok;
 
             if (isBlankLine || bracketsLevel > 0)
             {
+                // If line is empty, try to save trivia new line.
                 if (saveTrivia)
                 {
                     if (isBlankLineWithComment)
                         isBlankLineWithComment = false;
-                    return createToken(TokenType.TriviaNewLine);
+                    tok = createToken(TokenType.TriviaNewLine);
                 }
-                return tryNextLine();
+                // Or force reading next token.
+                else
+                {
+                    moveNext();
+                    return ReadNext();
+                }
             }
-            if (isBlankLineWithComment && saveTrivia)
+            else if (isBlankLineWithComment && saveTrivia)
             {
                 isBlankLineWithComment = false;
                 return createToken(TokenType.TriviaNewLine);
             }
+            else
+                tok = createToken(TokenType.NewLine);
 
-            var tok = createToken(TokenType.NewLine);
-            lineNumber++;
-            currentColumnOffset = 0;
+            moveNext();
             return tok;
         }
 
@@ -542,7 +548,10 @@ public class Tokenizer(string source, bool saveTrivia)
             moveNext();
             // Triple-quoted string.
             if (nextChar == quote)
+            {
+                moveNext();
                 count = 3;
+            }
             // Empty string found.
             else
                 closingQuotesCount = 1;
@@ -550,7 +559,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
         while (closingQuotesCount != count)
         {
-            if (nextChar == eof || (count == 3 && nextChar == '\n'))
+            if (nextChar == eof || (count == 1 && nextChar == '\n'))
             {
                 // TODO: Error handling.
                 throw new NotImplementedException();
@@ -609,16 +618,24 @@ public class Tokenizer(string source, bool saveTrivia)
             return;
         }
 
+        // If currently pointed char is LF, we need to increase line number.
+        bool increaseLine = lookAtRaw(currentPos, 0) == '\n' || lookAtRaw(currentPos, 0) == '\r';
+
         currentPos++;
         currentColumnOffset++;
 
-        if (lookAtRaw(currentPos, 0) == '\r')
+        // Increase line and reset column offset before CRLF checking.
+        if (increaseLine)
         {
-            if (lookAtRaw(currentPos, 1) == '\n')
-            {
-                currentPos++;
-                currentColumnOffset++;
-            }
+            lineNumber++;
+            currentColumnOffset = 0;
+        }
+
+        // If new pointed char is CRLF skip CR and remain LF.
+        if (lookAtRaw(currentPos, 0) == '\r' && lookAtRaw(currentPos, 1) == '\n')
+        {
+            currentPos++;
+            currentColumnOffset++;
         }
     }
 

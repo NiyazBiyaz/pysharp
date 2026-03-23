@@ -6,12 +6,7 @@ namespace PySharp.Tests.Tokenizer;
 
 public class TestTokenizer
 {
-    /*
-    Copy and paste this for new case.
-            [""] = ("", [new(, "", (0, 0), ()), eof()]),
-    */
-
-    private static readonly Dictionary<string, (string, IList<Token>)> one_row_test_cases =
+    private static readonly Dictionary<string, (string code, IList<Token> expected)> one_row_test_cases =
         new()
         {
             ["String_SimpleSingle"] = ("'123'", [new(StringLiteral, "'123'", (0, 0), (0, 5)), eof(0, 5)]),
@@ -192,6 +187,73 @@ public class TestTokenizer
 
         (string code, var expected) = one_row_test_cases[@case];
 
+        test(code, expected);
+    }
+
+    /*
+    Copy and paste this for new case.
+            [""] = ("", [new(, "", (0, 0), ()), eof()]),
+    */
+
+    private static readonly Dictionary<string, (string code, IList<Token> tokens)> multiline_string_test_cases =
+        new()
+        {
+            ["InOneLine"] = ("""
+            '''bau'''
+            """, [new(StringLiteral, "'''bau'''", (0, 0), (0, 9)), eof(0, 9)]),
+            ["MixedQuotes"] = ("''' \"\"\" '''", [new(StringLiteral, "''' \"\"\" '''", (0, 0), (0, 11)), eof(0, 11)]),
+            ["EscapedQuote"] = ("""
+            ''' \' '''
+            """,
+            [new(StringLiteral, "''' \\' '''", (0, 0), (0, 10)), eof(0, 10)]),
+            ["OneLineFeed"] = ("""
+            '''bau
+            bau'''
+            """, [new(StringLiteral, "'''bau\nbau'''", (0, 0), (1, 6)), eof(1, 6)]),
+            ["EscapedEndOfLine"] = ("""
+            '''bau\
+            bau'''
+            """, [new(StringLiteral, "'''bau\\\nbau'''", (0, 0), (1, 6)), eof(1, 6)]),
+            ["LineFeedCRLF"] = ("'''bau\r\nbau'''", [new(StringLiteral, "'''bau\r\nbau'''", (0, 0), (1, 6)), eof(1, 6)]),
+            ["LineFeedCR"] = ("'''bau\rbau'''", [new(StringLiteral, "'''bau\rbau'''", (0, 0), (1, 6)), eof(1, 6)]),
+            ["Empty"] = ("''''''", [new(StringLiteral, "''''''", (0, 0), (0, 6)), eof(0, 6)]),
+            ["Raw"] = (@"r'''b\au'''", [new(StringLiteral, @"r'''b\au'''", (0, 0), (0, 11)), eof(0, 11)]),
+            ["Byte"] = (@"b'''r\au'''", [new(StringLiteral, @"b'''r\au'''", (0, 0), (0, 11)), eof(0, 11)]),
+            ["ByteRaw"] = (@"rb'''me\ow'''", [new(StringLiteral, @"rb'''me\ow'''", (0, 0), (0, 13)), eof(0, 13)]),
+            ["LongString"] = ("""
+            '''bau1"
+            bau2'
+            bau3
+            bau4'
+            '''
+            """,
+            [new(StringLiteral, "'''bau1\"\nbau2'\nbau3\nbau4'\n'''", (0, 0), (4, 3)), eof(4, 3)]),
+        };
+
+    [Theory]
+    [InlineData("InOneLine")]
+    [InlineData("MixedQuotes")]
+    [InlineData("EscapedQuote")]
+    [InlineData("OneLineFeed")]
+    [InlineData("EscapedEndOfLine")]
+    [InlineData("LineFeedCRLF")]
+    [InlineData("LineFeedCR")]
+    [InlineData("Empty")]
+    [InlineData("Raw")]
+    [InlineData("Byte")]
+    [InlineData("ByteRaw")]
+    [InlineData("LongString")]
+    public void TestMultilineString(string @case)
+    {
+        Debug.Assert(multiline_string_test_cases.ContainsKey(@case));
+
+        (string code, var expected) = multiline_string_test_cases[@case];
+
+        test(code, expected);
+    }
+
+    private static void test(string code, IList<Token> expected)
+    {
         var tokenizer = new PySharp.Tokenizer.Tokenizer(code, false);
 
         List<Token> result = [];
