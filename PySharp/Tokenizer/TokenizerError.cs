@@ -7,4 +7,5 @@ public enum TokenizerError
     InvalidLineContinuation,
     InvalidLiteral,
     IndentationError,
+    CharacterError,
 }

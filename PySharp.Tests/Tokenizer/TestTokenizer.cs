@@ -163,7 +163,7 @@ public class TestTokenizer
     [InlineData("Number_BinaryUnderscores")]
     [InlineData("Number_BinaryLong")]
     // Operators
-    [InlineData("Op_AllExceptParensAndDots", Skip = "Not implemented yet.")]
+    [InlineData("Op_AllExceptParensAndDots")]
     [InlineData("Op_Dot")]
     [InlineData("Op_DotSpace")]
     [InlineData("Op_Ellipsis")]

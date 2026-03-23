@@ -62,15 +62,14 @@ public class Tokenizer(string source, bool saveTrivia)
     {
         resetStart();
 
-        Token? maybeToken;
-        maybeToken = tryNextLine() ?? tryIndentation();
+        Token? maybeToken = tryNextLine() ?? tryIndentation();
         if (maybeToken.HasValue)
             return maybeToken.Value;
 
         skipWhitespace();
         resetStart();
 
-        maybeToken =
+        Token definitelyToken =
             tryComment() ??
             tryEof() ??
             tryName() ??
@@ -78,12 +77,10 @@ public class Tokenizer(string source, bool saveTrivia)
             tryDotOrFraction() ??
             tryNumber() ??
             tryString() ??
-            tryLineContinuation();
+            tryLineContinuation() ??
+            readOperatorOrErrorToken();
 
-        if (maybeToken.HasValue)
-            return maybeToken.Value;
-
-        throw new NotImplementedException();
+        return definitelyToken;
     }
 
     private Token? tryNextLine()
@@ -606,6 +603,44 @@ public class Tokenizer(string source, bool saveTrivia)
         return ReadNext();
     }
 
+    private Token readOperatorOrErrorToken()
+    {
+        char prevChar;
+        if (opTwoChars(prevChar = nextChar, nextNextChar) is TokenType tok2Type)
+        {
+            moveNext();
+            if (opThreeChars(prevChar, nextChar, nextNextChar) is TokenType tok3Type)
+            {
+                moveNext();
+                moveNext();
+                return createToken(tok3Type);
+            }
+
+            moveNext();
+            return createToken(tok2Type);
+        }
+
+        switch (nextChar)
+        {
+            case '{':
+            case '(':
+            case '[':
+                // Opening brackets.
+                bracketsLevel++;
+                break;
+            case '}':
+            case ')':
+            case ']':
+                // Closing brackets.
+                bracketsLevel--;
+                break;
+        }
+
+        TokenType? tok = opOneChar(nextChar);
+        moveNext();
+        return tok is TokenType tok1Type ? createToken(tok1Type) : errorToken(TokenizerError.CharacterError, "Unknown symbol.");
+    }
+
     #region Helpers
 
     private bool isEof(int position, int offset) => position + offset >= source.Length;
@@ -747,6 +782,68 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private static bool isAsciiBinDigit(char character) =>
         character == '1' || character == '0';
+
+    private static TokenType? opOneChar(char ch) => ch switch
+    {
+        '(' => TokenType.LeftParen,
+        ')' => TokenType.RightParen,
+        '[' => TokenType.LeftSquareBracket,
+        ']' => TokenType.RightSquareBracket,
+        '{' => TokenType.LeftBrace,
+        '}' => TokenType.RightBrace,
+        '.' => TokenType.Dot,
+        ',' => TokenType.Comma,
+        ':' => TokenType.Colon,
+        ';' => TokenType.Semicolon,
+        '=' => TokenType.Equal,
+        '+' => TokenType.Plus,
+        '-' => TokenType.Minus,
+        '*' => TokenType.Star,
+        '/' => TokenType.Slash,
+        '%' => TokenType.Percent,
+        '&' => TokenType.Ampersand,
+        '|' => TokenType.VertBar,
+        '@' => TokenType.At,
+        '^' => TokenType.Circumflex,
+        '~' => TokenType.Tilde,
+        '>' => TokenType.Greater,
+        '<' => TokenType.Less,
+        '!' => TokenType.Exclamation,
+        _ => null,
+    };
+
+    private static TokenType? opTwoChars(char ch1, char ch2) => (ch1, ch2) switch
+    {
+        (':', '=') => TokenType.ColonEqual,
+        ('=', '=') => TokenType.EqEqual,
+        ('+', '=') => TokenType.PlusEqual,
+        ('-', '=') => TokenType.MinusEqual,
+        ('-', '>') => TokenType.RightArrow,
+        ('*', '=') => TokenType.StarEqual,
+        ('*', '*') => TokenType.DoubleStar,
+        ('/', '=') => TokenType.SlashEqual,
+        ('/', '/') => TokenType.DoubleSlash,
+        ('%', '=') => TokenType.PercentEqual,
+        ('&', '=') => TokenType.AmpersandEqual,
+        ('|', '=') => TokenType.VertBarEqual,
+        ('@', '=') => TokenType.AtEqual,
+        ('^', '=') => TokenType.CircumflexEqual,
+        ('>', '=') => TokenType.GreaterEqual,
+        ('>', '>') => TokenType.RightShift,
+        ('<', '=') => TokenType.LessEqual,
+        ('<', '<') => TokenType.LeftShift,
+        _ => null,
+    };
+
+    private static TokenType? opThreeChars(char ch1, char ch2, char ch3) => (ch1, ch2, ch3) switch
+    {
+        ('.', '.', '.') => TokenType.Ellipsis,
+        ('*', '*', '=') => TokenType.DoubleStarEqual,
+        ('/', '/', '=') => TokenType.DoubleSlashEqual,
+        ('>', '>', '=') => TokenType.RightShiftEqual,
+        ('<', '<', '=') => TokenType.LeftShiftEqual,
+        _ => null,
+    };
 
     #endregion
 }
