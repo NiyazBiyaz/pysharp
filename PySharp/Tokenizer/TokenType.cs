@@ -68,4 +68,5 @@ public enum TokenType
     Error,
     Comment,
     TriviaNewLine,
+    WhiteSpace,
 }

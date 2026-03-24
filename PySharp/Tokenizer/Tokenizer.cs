@@ -61,14 +61,16 @@ public class Tokenizer(string source, bool saveTrivia)
     public Token ReadNext()
     {
         resetStart();
-
         Token? maybeToken = tryNextLine() ?? tryIndentation();
         if (maybeToken.HasValue)
             return maybeToken.Value;
 
-        skipWhitespace();
         resetStart();
+        maybeToken = skipAndTryWhitespace();
+        if (maybeToken.HasValue)
+            return maybeToken.Value;
 
+        resetStart();
         Token definitelyToken =
             tryComment() ??
             tryEof() ??
@@ -88,6 +90,10 @@ public class Tokenizer(string source, bool saveTrivia)
         if (atLineBeginning)
         {
             atLineBeginning = false;
+
+            // Remain whitespace if we in brackets for trivia whitespace tokens.
+            if (bracketsLevel != 0)
+                return null;
 
             int column = 0;
             int alternateColumn = 0;
@@ -120,7 +126,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
             isBlankLine = nextChar == '#' || nextChar == '\n';
 
-            if (!isBlankLine && bracketsLevel == 0)
+            if (!isBlankLine)
             {
                 column = continuationColumn == 0 ? column : continuationColumn;
                 alternateColumn = continuationColumn == 0 ? alternateColumn : continuationColumn;
@@ -180,15 +186,16 @@ public class Tokenizer(string source, bool saveTrivia)
         return null;
     }
 
-    private void skipWhitespace()
+    private Token? skipAndTryWhitespace()
     {
         while (nextChar == ' ' || nextChar == '\t' || nextChar == '\f')
             moveNext();
 
-        if (saveTrivia)
-        {
-            throw new NotImplementedException();
-        }
+        // TODO: probably need to separate types of whitespace.
+        if (saveTrivia && currentPos != startPos)
+            return createToken(TokenType.WhiteSpace);
+
+        return null;
     }
 
     private void resetStart()
@@ -282,6 +289,7 @@ public class Tokenizer(string source, bool saveTrivia)
         if (nextChar == '\n')
         {
             atLineBeginning = true;
+            bool increaseLine = moveNext();
             Token tok;
 
             if (isBlankLine || bracketsLevel > 0)
@@ -293,26 +301,37 @@ public class Tokenizer(string source, bool saveTrivia)
                         isBlankLineWithComment = false;
                     tok = createToken(TokenType.TriviaNewLine);
                 }
-                // Or force reading next token.
+                // Or force reading next token (advance line before it).
                 else
                 {
-                    moveNext();
+                    if (increaseLine)
+                        advanceLine();
                     return ReadNext();
                 }
             }
+            // If line is empty but with comment save trivia.
             else if (isBlankLineWithComment && saveTrivia)
             {
                 isBlankLineWithComment = false;
-                return createToken(TokenType.TriviaNewLine);
+                tok = createToken(TokenType.TriviaNewLine);
             }
+            // If we have valued new line
             else
                 tok = createToken(TokenType.NewLine);
 
-            moveNext();
+            if (increaseLine)
+                advanceLine();
+
             return tok;
         }
 
         return null;
+    }
+
+    private void advanceLine()
+    {
+        lineNumber++;
+        currentColumnOffset = 0;
     }
 
     private Token? tryDotOrFraction()
@@ -574,7 +593,9 @@ public class Tokenizer(string source, bool saveTrivia)
                         hasEscapedQuote = true;
                 }
             }
-            moveNext();
+            bool newLine = moveNext();
+            if (newLine)
+                advanceLine();
         }
 
         return createToken(TokenType.StringLiteral);
@@ -645,12 +666,16 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private bool isEof(int position, int offset) => position + offset >= source.Length;
 
-    private void moveNext()
+    /// <summary>
+    /// Moves current position to next character in the source.
+    /// </summary>
+    /// <returns><see langword="true"/> if needs to increase line number; otherwise <see langword="false"/>.</returns>
+    private bool moveNext()
     {
         if (isEof(currentPos, 0))
         {
             ShouldStop = true;
-            return;
+            return false;
         }
 
         // If currently pointed char is LF, we need to increase line number.
@@ -659,19 +684,15 @@ public class Tokenizer(string source, bool saveTrivia)
         currentPos++;
         currentColumnOffset++;
 
-        // Increase line and reset column offset before CRLF checking.
-        if (increaseLine)
-        {
-            lineNumber++;
-            currentColumnOffset = 0;
-        }
-
         // If new pointed char is CRLF skip CR and remain LF.
         if (lookAtRaw(currentPos, 0) == '\r' && lookAtRaw(currentPos, 1) == '\n')
         {
             currentPos++;
             currentColumnOffset++;
         }
+
+        // Signal caller that need to increase line number.
+        return increaseLine;
     }
 
     private char lookAt(int position, int offset)

@@ -190,11 +190,6 @@ public class TestTokenizer
         test(code, expected);
     }
 
-    /*
-    Copy and paste this for new case.
-            [""] = ("", [new(, "", (0, 0), ()), eof()]),
-    */
-
     private static readonly Dictionary<string, (string code, IList<Token> tokens)> multiline_string_test_cases =
         new()
         {
@@ -252,9 +247,141 @@ public class TestTokenizer
         test(code, expected);
     }
 
-    private static void test(string code, IList<Token> expected)
+    private static readonly Dictionary<string, (string code, bool trivia, IList<Token> expected)> parens_test_cases =
+        new()
+        {
+            ["AllInRow"] = ("({[]})", false, [
+                new(LeftParen, "(", (0, 0), (0, 1)),
+                new(LeftBrace, "{", (0, 1), (0, 2)),
+                new(LeftSquareBracket, "[", (0, 2), (0, 3)),
+                new(RightSquareBracket, "]", (0, 3), (0, 4)),
+                new(RightBrace, "}", (0, 4), (0, 5)),
+                new(RightParen, ")", (0, 5), (0, 6)),
+                eof(0, 6),
+            ]),
+            ["TriviaNewLine_Paren"] = ("(\n)", true, [
+                new(LeftParen, "(", (0, 0), (0, 1)),
+                new(TriviaNewLine, "\n", (0, 1), (0, 2)),
+                new(RightParen, ")", (1, 0), (1, 1)),
+                eof(1, 1),
+            ]),
+            ["TriviaNewLine_Brace"] = ("{\n}", true, [
+                new(LeftBrace, "{", (0, 0), (0, 1)),
+                new(TriviaNewLine, "\n", (0, 1), (0, 2)),
+                new(RightBrace, "}", (1, 0), (1, 1)),
+                eof(1, 1),
+            ]),
+            ["TriviaNewLine_SqBrt"] = ("[\n]", true, [
+                new(LeftSquareBracket, "[", (0, 0), (0, 1)),
+                new(TriviaNewLine, "\n", (0, 1), (0, 2)),
+                new(RightSquareBracket, "]", (1, 0), (1, 1)),
+                eof(1, 1),
+            ]),
+            ["TriviaNewLine_ReducingNesting"] = ("""
+            (
+            [
+            ]
+            )
+            """, true, [
+                new(LeftParen, "(", (0, 0), (0, 1)), new(TriviaNewLine, "\n", (0, 1), (0, 2)),
+                new(LeftSquareBracket, "[", (1, 0), (1, 1)), new(TriviaNewLine, "\n", (1, 1), (1, 2)),
+                new(RightSquareBracket, "]", (2, 0), (2, 1)), new(TriviaNewLine, "\n", (2, 1), (2, 2) /* This token expected */),
+                new(RightParen, ")", (3, 0), (3, 1)),
+                eof(3, 1),
+            ]),
+            ["TriviaNewLine_RestoreLogicalNewLines"] = ("""
+            (
+            [
+            ]
+            )
+            bau
+            """, true, [
+                new(LeftParen, "(", (0, 0), (0, 1)), new(TriviaNewLine, "\n", (0, 1), (0, 2)),
+                new(LeftSquareBracket, "[", (1, 0), (1, 1)), new(TriviaNewLine, "\n", (1, 1), (1, 2)),
+                new(RightSquareBracket, "]", (2, 0), (2, 1)), new(TriviaNewLine, "\n", (2, 1), (2, 2)),
+                new(RightParen, ")", (3, 0), (3, 1)), new(NewLine, "\n", (3, 1), (3, 2)),
+                new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["WithoutTrivia_ReducingNesting"] = ("""
+            (
+            [
+            ]
+            )
+            """, false, [
+                new(LeftParen, "(", (0, 0), (0, 1)),
+                new(LeftSquareBracket, "[", (1, 0), (1, 1)),
+                new(RightSquareBracket, "]", (2, 0), (2, 1)),
+                new(RightParen, ")", (3, 0), (3, 1)),
+                eof(3, 1),
+            ]),
+            ["WithoutTrivia_RestoreLogicalNewLines"] = ("""
+            (
+            [
+            ]
+            )
+            bau
+            """, false, [
+                new(LeftParen, "(", (0, 0), (0, 1)),
+                new(LeftSquareBracket, "[", (1, 0), (1, 1)),
+                new(RightSquareBracket, "]", (2, 0), (2, 1)),
+                new(RightParen, ")", (3, 0), (3, 1)), new(NewLine, "\n", (3, 1), (3, 2)),
+                new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["WithoutTrivia_NoIndents"] = ("""
+            (
+                bau
+            )
+            """, false, [
+                new(LeftParen, "(", (0, 0), (0, 1)),
+                new(Name, "bau", (1, 4), (1, 7)),
+                new(RightParen, ")", (2, 0), (2, 1)),
+                eof(2, 1),
+            ]),
+            ["TriviaWhiteSpace_NoIndents"] = ("""
+            (
+                bau
+            )
+            """, true, [
+                new(LeftParen, "(", (0, 0), (0, 1)), new(TriviaNewLine, "\n", (0, 1), (0, 2)),
+                new(WhiteSpace, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(TriviaNewLine, "\n", (1, 7), (1, 8)),
+                new(RightParen, ")", (2, 0), (2, 1)),
+                eof(2, 1),
+            ]),
+        };
+
+    /*
+    Copy and paste this for new case.
+            [""] = ("", [
+                new(, "", (0, 0), ()),
+                eof(),
+            ]),
+    */
+
+    [Theory]
+    [InlineData("AllInRow")]
+    [InlineData("TriviaNewLine_Paren")]
+    [InlineData("TriviaNewLine_Brace")]
+    [InlineData("TriviaNewLine_SqBrt")]
+    [InlineData("TriviaNewLine_ReducingNesting")]
+    [InlineData("TriviaNewLine_RestoreLogicalNewLines")]
+    [InlineData("WithoutTrivia_ReducingNesting")]
+    [InlineData("WithoutTrivia_RestoreLogicalNewLines")]
+    [InlineData("TriviaWhiteSpace_NoIndents")]
+    [InlineData("WithoutTrivia_NoIndents")]
+    public void TestBrackets(string @case)
     {
-        var tokenizer = new PySharp.Tokenizer.Tokenizer(code, false);
+        Debug.Assert(parens_test_cases.ContainsKey(@case));
+
+        (string code, bool trivia, var expected) = parens_test_cases[@case];
+
+        test(code, expected, trivia: trivia);
+    }
+
+    private static void test(string code, IList<Token> expected, bool trivia = false)
+    {
+        var tokenizer = new PySharp.Tokenizer.Tokenizer(code, trivia);
 
         List<Token> result = [];
         Token token;
