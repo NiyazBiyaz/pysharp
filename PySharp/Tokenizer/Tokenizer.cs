@@ -18,7 +18,8 @@ public class Tokenizer(string source, bool saveTrivia)
     private int currentColumnOffset = 0;
 
     private bool isBlankLine = false;
-    private bool isBlankLineWithComment;
+    private bool isBlankLineWithComment = false;
+    private bool atContinuedLine = false;
 
     private readonly Stack<int> indentStack = new([0]);
     private readonly Stack<int> alternateIndentStack = new([0]);
@@ -27,6 +28,7 @@ public class Tokenizer(string source, bool saveTrivia)
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
     private const string invalid_dec = "Invalid decimal literal.";
+    private const string tab_space_err_msg = "Tabs and spaces mixing is not allowed.";
 
     private int pendingIndentation
     {
@@ -62,17 +64,21 @@ public class Tokenizer(string source, bool saveTrivia)
     {
         resetStart();
         Token? maybeToken = tryNextLine() ?? tryIndentation();
-        if (maybeToken.HasValue)
-            return maybeToken.Value;
+        if (maybeToken is Token token)
+            return token;
 
         resetStart();
         maybeToken = skipAndTryWhitespace();
-        if (maybeToken.HasValue)
-            return maybeToken.Value;
+        if (maybeToken is Token whiteSpace)
+            return whiteSpace;
+
+        resetStart();
+        maybeToken = tryComment();
+        if (maybeToken is Token comment)
+            return comment;
 
         resetStart();
         Token definitelyToken =
-            tryComment() ??
             tryEof() ??
             tryName() ??
             tryLineFeed() ??
@@ -91,9 +97,12 @@ public class Tokenizer(string source, bool saveTrivia)
         {
             atLineBeginning = false;
 
-            // Remain whitespace if we in brackets for trivia whitespace tokens.
-            if (bracketsLevel != 0)
+            // Remain whitespace if we in brackets or on continued line for trivia whitespace tokens.
+            if (bracketsLevel != 0 || atContinuedLine)
+            {
+                atContinuedLine = false;
                 return null;
+            }
 
             int column = 0;
             int alternateColumn = 0;
@@ -131,17 +140,15 @@ public class Tokenizer(string source, bool saveTrivia)
                 column = continuationColumn == 0 ? column : continuationColumn;
                 alternateColumn = continuationColumn == 0 ? alternateColumn : continuationColumn;
 
-                string tabSpaceErrMsg = "Tabs and spaces mixing is not allowed.";
-
                 if (column == indentStack.Peek())
                 {
                     if (alternateColumn != alternateIndentStack.Peek())
-                        return errorToken(TokenizerError.IndentationError, tabSpaceErrMsg);
+                        return errorToken(TokenizerError.IndentationError, tab_space_err_msg);
                 }
                 else if (column > indentStack.Peek())
                 {
                     if (alternateColumn <= alternateIndentStack.Peek())
-                        return errorToken(TokenizerError.IndentationError, tabSpaceErrMsg);
+                        return errorToken(TokenizerError.IndentationError, tab_space_err_msg);
 
                     pendingIndentation++;
                     indentStack.Push(column);
@@ -149,22 +156,43 @@ public class Tokenizer(string source, bool saveTrivia)
                 }
                 else if (column < indentStack.Peek())
                 {
-                    // column cannot be lower than zero here, so it will stop on indentStack[0] == 0
-                    while (column < indentStack.Peek())
-                    {
-                        pendingIndentation--;
-                        indentStack.Pop();
-                        alternateIndentStack.Pop();
-                    }
-
-                    if (column != indentStack.Peek())
-                        return errorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.");
-
-                    if (alternateColumn != alternateIndentStack.Peek())
-                        return errorToken(TokenizerError.IndentationError, tabSpaceErrMsg);
+                    if (enqueueDedent(column, alternateColumn) is Token errTok)
+                        return errTok;
                 }
             }
         }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Reduces current indentation stack top element to <paramref name="column"/> and enqueues
+    /// <see cref="TokenType.Dedent"/> tokens to <see cref="pendingIndentation"/>.
+    /// </summary>
+    /// <param name="column">Target indentation.</param>
+    /// <param name="alternateColumn">Target alternate indentation, needed for indent consistency checks.</param>
+    /// <returns><see cref="null"/> on success; otherwise <see cref="TokenType.Error"/>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"/>
+    private Token? enqueueDedent(int column, int alternateColumn)
+    {
+        Debug.Assert(column < indentStack.Peek());
+
+        ArgumentOutOfRangeException.ThrowIfNegative(column);
+        ArgumentOutOfRangeException.ThrowIfNegative(alternateColumn);
+
+        // column cannot be lower than zero here, so it will stop on indentStack[0] == 0
+        while (column < indentStack.Peek())
+        {
+            pendingIndentation--;
+            indentStack.Pop();
+            alternateIndentStack.Pop();
+        }
+
+        if (column != indentStack.Peek())
+            return errorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.");
+
+        if (alternateColumn != alternateIndentStack.Peek())
+            return errorToken(TokenizerError.IndentationError, tab_space_err_msg);
 
         return null;
     }
@@ -174,7 +202,8 @@ public class Tokenizer(string source, bool saveTrivia)
         if (pendingIndentation < 0)
         {
             pendingIndentation++;
-            // Dedent tokens is empty.
+            // Dedent tokens are empty with zero-width.
+            resetStart();
             return createToken(TokenType.Dedent, true);
         }
         else if (pendingIndentation > 0)
@@ -226,6 +255,14 @@ public class Tokenizer(string source, bool saveTrivia)
     {
         if (nextChar == eof)
         {
+            // If indentation stack is not empty, enqueue dedent and return it.
+            if (indentStack.Count > 1)
+            {
+                enqueueDedent(0, 0);
+                return tryIndentation();
+            }
+
+            // Request stop and return EOF.
             ShouldStop = true;
             return createToken(TokenType.EndOfFile, true);
         }
@@ -292,7 +329,7 @@ public class Tokenizer(string source, bool saveTrivia)
             bool increaseLine = moveNext();
             Token tok;
 
-            if (isBlankLine || bracketsLevel > 0)
+            if (isBlankLine || bracketsLevel > 0 || atContinuedLine)
             {
                 // If line is empty, try to save trivia new line.
                 if (saveTrivia)
@@ -613,6 +650,10 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private Token readLineContinuation()
     {
+        Debug.Assert(nextChar == '\\');
+
+        moveNext();
+
         if (nextChar != '\n')
         {
             if (nextChar == eof)
@@ -620,6 +661,11 @@ public class Tokenizer(string source, bool saveTrivia)
             else
                 return errorToken(TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.");
         }
+
+        atContinuedLine = true;
+
+        if (saveTrivia)
+            return createToken(TokenType.BackSlash);
 
         return ReadNext();
     }
@@ -666,6 +712,8 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private bool isEof(int position, int offset) => position + offset >= source.Length;
 
+    private bool skipNextCrlf = false;
+
     /// <summary>
     /// Moves current position to next character in the source.
     /// </summary>
@@ -684,12 +732,16 @@ public class Tokenizer(string source, bool saveTrivia)
         currentPos++;
         currentColumnOffset++;
 
-        // If new pointed char is CRLF skip CR and remain LF.
-        if (lookAtRaw(currentPos, 0) == '\r' && lookAtRaw(currentPos, 1) == '\n')
+        if (skipNextCrlf)
         {
             currentPos++;
             currentColumnOffset++;
+            skipNextCrlf = false;
         }
+
+        // If new pointed char is CRLF skip CR and remain LF.
+        if (lookAtRaw(currentPos, 0) == '\r' && lookAtRaw(currentPos, 1) == '\n')
+            skipNextCrlf = true;
 
         // Signal caller that need to increase line number.
         return increaseLine;
@@ -698,9 +750,6 @@ public class Tokenizer(string source, bool saveTrivia)
     private char lookAt(int position, int offset)
     {
         char ch = lookAtRaw(position, offset);
-
-        if (ch == '\n' && lookAtRaw(position, offset - 1) == '\r')
-            return lookAtRaw(position, offset - 2);
 
         return ch == '\r' ? '\n' : ch;
     }

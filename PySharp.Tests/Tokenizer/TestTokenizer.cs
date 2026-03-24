@@ -351,14 +351,6 @@ public class TestTokenizer
             ]),
         };
 
-    /*
-    Copy and paste this for new case.
-            [""] = ("", [
-                new(, "", (0, 0), ()),
-                eof(),
-            ]),
-    */
-
     [Theory]
     [InlineData("AllInRow")]
     [InlineData("TriviaNewLine_Paren")]
@@ -375,6 +367,319 @@ public class TestTokenizer
         Debug.Assert(parens_test_cases.ContainsKey(@case));
 
         (string code, bool trivia, var expected) = parens_test_cases[@case];
+
+        test(code, expected, trivia: trivia);
+    }
+
+    private static readonly Dictionary<string, (string code, bool trivia, IList<Token> expected)> indentation_test_cases =
+        new()
+        {
+            ["OneIndent"] = ("""
+            bau
+                bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(Dedent, empty, (1, 7), (1, 7)),
+                eof(1, 7),
+            ]),
+            ["TwoIndents"] = ("""
+            bau
+                bau
+                    bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)),
+                new(Dedent, empty, (2, 11), (2, 11)), new(Dedent, empty, (2, 11), (2, 11)),
+                eof(2, 11),
+            ]),
+            ["OneDedent"] = ("""
+            bau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Dedent, empty, (2, 0), (2, 0)), new(Name, "bau", (2, 0), (2, 3)),
+                eof(2, 3),
+            ]),
+            ["TwoDedentSoft"] = ("""
+            bau
+                bau
+                    bau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)), new(NewLine, "\n", (2, 11), (2, 12)),
+                new(Dedent, empty, (3, 4), (3, 4)), new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["TwoDedentHard"] = ("""
+            bau
+                bau
+                    bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)), new(NewLine, "\n", (2, 11), (2, 12)),
+                new(Dedent, empty, (3, 0), (3, 0)), new(Dedent, empty, (3, 0), (3, 0)), new(Name, "bau", (3, 0), (3, 3)),
+                eof(3, 3),
+            ]),
+            ["IndentAfterDedent"] = ("""
+            bau
+                bau
+                    bau
+                bau
+                    bau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)), new(NewLine, "\n", (2, 11), (2, 12)),
+                new(Dedent, empty, (3, 4), (3, 4)), new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Indent, "        " /* Re-indent will have all chars from start to valued token */, (4, 0), (4, 8)),
+                new(Name, "bau", (4, 8), (4, 11)), new(NewLine, "\n", (4, 11), (4, 12)),
+                new(Dedent, empty, (5, 4), (5, 4)), new(Name, "bau", (5, 4), (5, 7)), new(NewLine, "\n", (5, 7), (5, 8)),
+                new(Dedent, empty, (6, 0), (6, 0)), new(Name, "bau", (6, 0), (6, 3)),
+                eof(6, 3),
+            ]),
+            ["HoldingIndentation"] = ("""
+            bau
+                bau
+                bau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Name, "bau", (2, 4), (2, 7)), new(NewLine, "\n", (2, 7), (2, 8)),
+                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["HoldingIndentationWithSpace"] = ("""
+            bau
+                bau
+
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["HoldingIndentationWithComment"] = ("""
+            bau
+                bau
+                # baubau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["HoldingIndentationWithMoreNestedComment"] = ("""
+            bau
+                bau
+                    # baubau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["HoldingIndentationWithLessNestedComment"] = ("""
+            bau
+                bau
+            # baubau
+                bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
+                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["TabIndents"] = ("bau\n\tbau", false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "\t", (1, 0), (1, 1)), new(Name, "bau", (1, 1), (1, 4)),
+                new(Dedent, empty, (1, 4), (1, 4)), eof(1, 4),
+            ]),
+            // No tests with form-feed, because in Python reference it's marked as UB
+            // but they're supported and interprets as spaces.
+            ["BigIndents"] = ("""
+            bau
+                    bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "        ", (1, 0), (1, 8)), new(Name, "bau", (1, 8), (1, 11)), new(NewLine, "\n", (1, 11), (1, 12)),
+                new(Dedent, empty, (2, 0), (2, 0)), new(Name, "bau", (2, 0), (2, 3)),
+                eof(2, 3),
+            ]),
+            ["MixedIndents"] = ("bau\n\t  bau\nbau", false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Indent, "\t  ", (1, 0), (1, 3)), new(Name, "bau", (1, 3), (1, 6)), new(NewLine, "\n", (1, 6), (1, 7)),
+                new(Dedent, empty, (2, 0), (2, 0)), new(Name, "bau", (2, 0), (2, 3)),
+                eof(2, 3),
+            ]),
+            ["Continuation_IndentDoesNotChanges"] = ("""
+            bau\
+                bau
+
+                bau\
+            bau
+            bau
+            """, false, [
+            new(Name, "bau", (0, 0), (0, 3)),
+            new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+            new(Indent, "    ", (3, 0), (3, 4)), new(Name, "bau", (3, 4), (3, 7)),
+            new(Name, "bau", (4, 0), (4, 3)), new(NewLine, "\n", (4, 3), (4,4)),
+            new(Dedent, empty, (5,0), (5,0)), new(Name, "bau", (5,0), (5, 3)),
+            eof(5, 3),
+            ]),
+            ["Continuation_NewLineDoesNotGenerates"] = ("""
+            bau\
+            \
+            \
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)),
+                new(Name, "bau", (3, 0), (3, 3)),
+                eof(3, 3),
+            ]),
+            ["ContinuationTrivia_IndentDoesNotChanges"] = ("""
+            bau\
+                bau
+
+                bau\
+            bau
+            bau
+            """, true, [
+            new(Name, "bau", (0, 0), (0, 3)), new(BackSlash, "\\", (0, 3), (0, 4)), new(TriviaNewLine, "\n", (0, 4), (0, 5)),
+            new(WhiteSpace, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
+            new(TriviaNewLine, "\n", (2, 0), (2, 1)),
+            new(Indent, "    ", (3, 0), (3, 4)), new(Name, "bau", (3, 4), (3, 7)), new(BackSlash, "\\", (3, 7), (3, 8)),
+                    new(TriviaNewLine, "\n", (3, 8), (3, 9)),
+            new(Name, "bau", (4, 0), (4, 3)), new(NewLine, "\n", (4, 3), (4,4)),
+            new(Dedent, empty, (5,0), (5,0)), new(Name, "bau", (5,0), (5, 3)),
+            eof(5, 3),
+            ]),
+            ["ContinuationTrivia_NewLineDoesNotGenerates"] = ("""
+            bau\
+            \
+            \
+            bau
+            """, true, [
+                new(Name, "bau", (0, 0), (0, 3)), new(BackSlash, "\\", (0, 3), (0, 4)), new(TriviaNewLine, "\n", (0, 4), (0, 5)),
+                new(BackSlash, "\\", (1, 0), (1, 1)), new(TriviaNewLine, "\n", (1, 1), (1, 2)),
+                new(BackSlash, "\\", (2, 0), (2, 1)), new(TriviaNewLine, "\n", (2, 1), (2, 2)),
+                new(Name, "bau", (3, 0), (3, 3)),
+                eof(3, 3),
+            ]),
+            ["LineFeed_LF"] = ("bau\nbau", false, [
+                new(Name, "bau", (0, 0), (0, 3)),
+                new(NewLine, "\n", (0, 3), (0, 4)),
+                new(Name, "bau", (1, 0), (1, 3)),
+                eof(1, 3),
+            ]),
+            ["LineFeed_CR"] = ("bau\rbau", false, [
+                new(Name, "bau", (0, 0), (0, 3)),
+                new(NewLine, "\r", (0, 3), (0, 4)),
+                new(Name, "bau", (1, 0), (1, 3)),
+                eof(1, 3),
+            ]),
+            ["LineFeed_CRLF"] = ("bau\r\nbau", false, [
+                new(Name, "bau", (0, 0), (0, 3)),
+                new(NewLine, "\r\n", (0, 3), (0, 5)),
+                new(Name, "bau", (1, 0), (1, 3)),
+                eof(1, 3),
+            ]),
+            ["Comments"] = ("""
+            bau # bau bau bau
+            bau # bababau
+            bau # bau~ bau~
+            # bau
+            bau
+            """, false, [
+                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 17), (0, 18)),
+                new(Name, "bau", (1, 0), (1, 3)), new(NewLine, "\n", (1, 13), (1, 14)),
+                new(Name, "bau", (2, 0), (2, 3)), new(NewLine, "\n", (2, 15), (2, 16)),
+                new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+            ["CommentsTrivia"] = ("""
+            bau # bau bau bau
+            bau # bababau
+            bau # bau~ bau~
+            # bau
+            bau
+            """, true, [
+                new(Name, "bau", (0, 0), (0, 3)), new(WhiteSpace, " ", (0, 3), (0, 4)),
+                        new(Comment, "# bau bau bau", (0, 4), (0, 17)), new(NewLine, "\n", (0, 17), (0, 18)),
+                new(Name, "bau", (1, 0), (1, 3)), new(WhiteSpace, " ", (1, 3), (1, 4)),
+                        new(Comment, "# bababau", (1, 4), (1, 13)), new(NewLine, "\n", (1, 13), (1, 14)),
+                new(Name, "bau", (2, 0), (2, 3)), new(WhiteSpace, " ", (2, 3), (2, 4)),
+                        new(Comment, "# bau~ bau~", (2, 4), (2, 15)), new(NewLine, "\n", (2, 15), (2, 16)),
+                new(Comment, "# bau", (3, 0), (3, 5)), new(TriviaNewLine, "\n", (3, 5), (3, 6)),
+                new(Name, "bau", (4, 0), (4, 3)),
+                eof(4, 3),
+            ]),
+        };
+
+    /*
+    Ехал Грека через реку, видит Грека в реке рак. Сунул Грека руку в реку рак за руку Греку цап!
+            [""] = ("""
+
+            """, [
+                new(, "", (0, 0), ()),
+                eof(),
+            ]),
+    */
+
+    [Theory]
+    [InlineData("OneIndent")]
+    [InlineData("TwoIndents")]
+    [InlineData("OneDedent")]
+    [InlineData("TwoDedentSoft")]
+    [InlineData("TwoDedentHard")]
+    [InlineData("IndentAfterDedent")]
+    [InlineData("HoldingIndentation")]
+    [InlineData("HoldingIndentationWithSpace")]
+    [InlineData("HoldingIndentationWithComment")]
+    [InlineData("HoldingIndentationWithMoreNestedComment")]
+    [InlineData("HoldingIndentationWithLessNestedComment")]
+    [InlineData("TabIndents")]
+    [InlineData("BigIndents")]
+    [InlineData("MixedIndents")]
+    [InlineData("Continuation_IndentDoesNotChanges")]
+    [InlineData("Continuation_NewLineDoesNotGenerates")]
+    [InlineData("ContinuationTrivia_IndentDoesNotChanges")]
+    [InlineData("ContinuationTrivia_NewLineDoesNotGenerates")]
+    [InlineData("LineFeed_LF")]
+    [InlineData("LineFeed_CR")]
+    [InlineData("LineFeed_CRLF")]
+    [InlineData("Comments")]
+    [InlineData("CommentsTrivia")]
+    public void TestIndentation(string @case)
+    {
+        Debug.Assert(indentation_test_cases.ContainsKey(@case));
+
+        (string code, bool trivia, var expected) = indentation_test_cases[@case];
 
         test(code, expected, trivia: trivia);
     }
@@ -407,5 +712,7 @@ public class TestTokenizer
     }
 
     private static Token eof(int line, int col) =>
-        new(EndOfFile, "", (line, col), (line, col));
+        new(EndOfFile, empty, (line, col), (line, col));
+
+    private static readonly ReadOnlyMemory<char> empty = ReadOnlyMemory<char>.Empty;
 }

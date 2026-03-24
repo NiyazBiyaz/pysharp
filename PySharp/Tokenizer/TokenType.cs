@@ -69,4 +69,5 @@ public enum TokenType
     Comment,
     TriviaNewLine,
     WhiteSpace,
+    BackSlash,
 }
