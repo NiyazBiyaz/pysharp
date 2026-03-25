@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using PySharp.Tokenizer;
-using static PySharp.Tokenizer.TokenType;
+using PySharp.Tokens;
+using static PySharp.Tokens.TokenType;
 
 namespace PySharp.Tests.Tokenizer;
 
@@ -1042,9 +1042,9 @@ public class TestTokenizer
         Assert.Equal(message, tokenizer.ErrorMessage);
     }
 
-    private static PySharp.Tokenizer.Tokenizer test(string code, IList<Token> expected, bool trivia = false)
+    private static PySharp.Tokens.Tokenizer test(string code, IList<Token> expected, bool trivia = false)
     {
-        var tokenizer = new PySharp.Tokenizer.Tokenizer(code, trivia);
+        var tokenizer = new PySharp.Tokens.Tokenizer(code, trivia);
 
         List<Token> result = [];
         Token token;

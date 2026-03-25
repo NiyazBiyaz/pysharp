@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace PySharp.Tokenizer;
+namespace PySharp.Tokens;
 
 [DebuggerDisplay("next={nextChar.ToString()} ln={lineNumber} cl={currentColumnOffset} len={currentPos - startPos} lex={source[startPos..currentPos]}")]
 public class Tokenizer(string source, bool saveTrivia)

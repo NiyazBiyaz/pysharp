@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace PySharp.Tokenizer;
+namespace PySharp.Tokens;
 
 [DebuggerDisplay("{Type} {Lexeme} {Start} {End}")]
 public readonly record struct Token
