@@ -641,16 +641,6 @@ public class TestTokenizer
             ]),
         };
 
-    /*
-    Ехал Грека через реку, видит Грека в реке рак. Сунул Грека руку в реку рак за руку Греку цап!
-            [""] = ("""
-
-            """, [
-                new(, "", (0, 0), ()),
-                eof(),
-            ]),
-    */
-
     [Theory]
     [InlineData("OneIndent")]
     [InlineData("TwoIndents")]
@@ -684,7 +674,375 @@ public class TestTokenizer
         test(code, expected, trivia: trivia);
     }
 
-    private static void test(string code, IList<Token> expected, bool trivia = false)
+    private const string dec_inv = "Invalid decimal literal.";
+    private const string img_inv = "Invalid imaginary literal.";
+    private const string bin_inv = "Invalid binary literal.";
+    private const string hex_inv = "Invalid hexadecimal literal.";
+    private const string oct_inv = "Invalid octal literal.";
+    private const string str_prf = "'{0}' and '{1}' prefixes are incompatible.";
+    private const string unclosed = "Unclosed string literal.";
+
+    private static readonly Dictionary<string, (string code, string message, IList<Token> expected)> literal_errors_test_cases =
+        new()
+        {
+            ["Number_StopEatingInvalidOnNonAsciiLetter"] =
+            ("12baubau+bau", dec_inv,
+            [
+                new(Error, "12baubau", (0, 0), (0, 8)),
+                new(Plus, "+", (0, 8),(0, 9)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            // Valid token after error for make sure that error recovery works fine.
+            // Invalid number always 8 chars width for copy-paste.
+            ["Number_DoubleUnderscore_Integer"] =
+            ("123__123 bau", dec_inv,
+            [
+                new(Error, "123__123", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_TrailingUnderscore_Integer"] =
+            ("1231234_ bau", dec_inv,
+            [
+                new(Error, "1231234_", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidTrailingChar_Integer"] =
+            ("1231234i bau", dec_inv,
+             [
+                new(Error, "1231234i", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidChar_Integer"] =
+            ("123bb123 bau", dec_inv,
+            [
+                new(Error, "123bb123", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_DoubleUnderscore_HexInt"] =
+            ("0xff__ff bau", hex_inv,
+            [
+                new(Error, "0xff__ff", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_TrailingUnderscore_HexInt"] =
+            ("0xfafa0_ bau", hex_inv,
+            [
+                new(Error, "0xfafa0_", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidTrailingChar_HexInt"] =
+            ("0xfaFa0h bau", hex_inv,
+            [
+                new(Error, "0xfaFa0h", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidChar_HexInt"] =
+            ("0xfggFa0 bau", hex_inv,
+            [
+                new(Error, "0xfggFa0", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_DoubleUnderscore_OctInt"] =
+            ("0o77__33 bau", oct_inv,
+            [
+                new(Error, "0o77__33", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_TrailingUnderscore_OctInt"] =
+            ("0o12333_ bau", oct_inv,
+            [
+                new(Error, "0o12333_", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidTrailingChar_OctInt"] =
+            ("0o12312e bau", oct_inv,
+            [
+                new(Error, "0o12312e", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidChar_OctInt"] =
+            ("0o138813 bau", oct_inv,
+            [
+                new(Error, "0o138813", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_LeadingZerosInInteger"] =
+            ("00001234 bau", "Leading zeros in decimal integer are not permitted; use an '0o' prefix for octal numbers.",
+            [
+                new(Error, "00001234", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_DoubleUnderscore_BinInt"] =
+            ("0b11__00 bau", bin_inv,
+            [
+                new(Error, "0b11__00", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_TrailingUnderscore_BinInt"] =
+            ("0b10101_ bau", bin_inv,
+            [
+                new(Error, "0b10101_", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidTrailingChar_BinInt"] =
+            ("0b10101e bau", bin_inv,
+            [
+                new(Error, "0b10101e", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_InvalidChar_BinInt"] =
+            ("0b101020 bau", bin_inv,
+            [
+                new(Error, "0b101020", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            // Float
+            ["Number_Float_DoubleUnderscore"] =
+            ("12.12__1 bau", dec_inv,
+            [
+                new(Error, "12.12__1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreBeforeDot"] =
+            ("123_.123 bau", dec_inv,
+            [
+                new(Error, "123_.123", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_TrailingUnderscore"] =
+            ("123.123_ bau", dec_inv,
+            [
+                new(Error, "123.123_", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_InvalidChar"] =
+            ("12a.1a23 bau", dec_inv,
+            [
+                new(Error, "12a.1a23", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_InvalidTrailingChar"] =
+            ("123.123a bau", dec_inv,
+            [
+                new(Error, "123.123a", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_EmptyAfterE"] =
+            ("123.233e bau", dec_inv,
+            [
+                new(Error, "123.233e", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreBeforeE"] =
+            ("13.23_e1 bau", dec_inv,
+            [
+                new(Error, "13.23_e1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreAfterE"] =
+            ("13.23e_1 bau", dec_inv,
+            [
+                new(Error, "13.23e_1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreBeforePlus"] = (
+                "1.23e_+1 bau", dec_inv,
+            [
+                new(Error, "1.23e_+1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreAfterPlus"] =
+            ("1.23e+_1 bau", dec_inv,
+            [
+                new(Error, "1.23e+_1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreBeforeMinus"] =
+            ("1.23e_-1 bau", dec_inv,
+            [
+                new(Error, "1.23e_-1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Float_UnderscoreAfterMinus"] =
+            ("1.23e-_1 bau", dec_inv,
+            [
+                new(Error, "1.23e-_1", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Imaginary_UnderscoreBeforeJ"] =
+            ("123.13_j bau", img_inv,
+            [
+                new(Error, "123.13_j", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Imaginary_UnderscoreAfterJ"] =
+            ("123.13j_ bau", img_inv,
+            [
+                new(Error, "123.13j_", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Imaginary_InvalidCharBeforeJ"] =
+            ("123.13fj bau", img_inv,
+            [
+                new(Error, "123.13fj", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["Number_Imaginary_InvalidCharAfterJ"] =
+            ("123.13jf bau", img_inv,
+            [
+                new(Error, "123.13jf", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            // Strings (F-/T-strings are separated)
+            ["String_PrefixUR"] =
+            ("ur\"bBau\" bau", string.Format(str_prf, "r", "u"),
+            [
+                new(Error, "ur\"bBau\"", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["String_PrefixUB"] =
+            ("ub\"bBau\" bau", string.Format(str_prf, "b", "u"),
+            [
+                new(Error, "ur\"bBau\"", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+            ["String_UnclosedOnLine_SingleQuote"] =
+            // After unclosed string don't eat new line character
+            ("\"baubau\nbau", unclosed,
+            [
+                new(Error, "\"baubau", (0, 0), (0, 7)), new(NewLine, "\n", (0, 7), (0, 8)),
+                new(Name, "bau", (1, 9), (1, 12)),
+                eof(1, 12),
+            ]),
+            ["String_UnclosedOnFile_SingleQuote"] =
+            ("\"baubau", unclosed,
+            [
+                new(Error, "\"baubau", (0, 0), (0, 7)),
+                eof(0, 7),
+            ]),
+            ["String_UnclosedOnFile_TripleQuote_SingleLine"] =
+            ("'''baubabaubaubau", unclosed,
+            [
+                new(Error, "'''baubaubaubaubau", (0, 0), (0, 18)),
+                eof(0, 18),
+            ]),
+            ["String_UnclosedOnFile_TripleQuote_MultiLine"] =
+            ("'''bauba\nbauba\nbau", unclosed,
+            [
+                new(Error, "'''bauba\nbauba\nbau", (0, 0), (2, 3)),
+                eof(2, 3),
+            ]),
+            ["String_UnclosedOnFile_EscapedQuote"] =
+            // '"bau\"bau'
+            ("\"bau\\\"bau", unclosed + " Perhaps you escaped the end quote?",
+            [
+                new(Error, "\"bau\\\"bau", (0, 0), (0, 9)),
+                eof(0, 9),
+            ]),
+        };
+
+    /*
+        Когда в тебя стреляют, самое главное - это не двигаться. Тогда в тебя будет сложнее попасть.
+            [""] =
+            (" bau", _inv,
+            [
+                new(Error, "", (0, 0), (0, 8)),
+                new(Name, "bau", (0, 9), (0, 12)),
+                eof(0, 12),
+            ]),
+    */
+
+    [Theory]
+    [InlineData("Number_StopEatingInvalidOnNonAsciiLetter")]
+    [InlineData("Number_DoubleUnderscore_Integer")]
+    [InlineData("Number_TrailingUnderscore_Integer")]
+    [InlineData("Number_InvalidTrailingChar_Integer")]
+    [InlineData("Number_InvalidChar_Integer")]
+    [InlineData("Number_DoubleUnderscore_HexInt")]
+    [InlineData("Number_TrailingUnderscore_HexInt")]
+    [InlineData("Number_InvalidTrailingChar_HexInt")]
+    [InlineData("Number_InvalidChar_HexInt")]
+    [InlineData("Number_DoubleUnderscore_OctInt")]
+    [InlineData("Number_TrailingUnderscore_OctInt")]
+    [InlineData("Number_InvalidTrailingChar_OctInt")]
+    [InlineData("Number_InvalidChar_OctInt")]
+    [InlineData("Number_LeadingZerosInInteger")]
+    [InlineData("Number_DoubleUnderscore_BinInt")]
+    [InlineData("Number_TrailingUnderscore_BinInt")]
+    [InlineData("Number_InvalidTrailingChar_BinInt")]
+    [InlineData("Number_InvalidChar_BinInt")]
+    [InlineData("Number_Float_DoubleUnderscore")]
+    [InlineData("Number_Float_UnderscoreBeforeDot")]
+    [InlineData("Number_Float_TrailingUnderscore")]
+    [InlineData("Number_Float_InvalidChar")]
+    [InlineData("Number_Float_InvalidTrailingChar")]
+    [InlineData("Number_Float_EmptyAfterE")]
+    [InlineData("Number_Float_UnderscoreBeforeE")]
+    [InlineData("Number_Float_UnderscoreAfterE")]
+    [InlineData("Number_Float_UnderscoreBeforePlus")]
+    [InlineData("Number_Float_UnderscoreAfterPlus")]
+    [InlineData("Number_Float_UnderscoreBeforeMinus")]
+    [InlineData("Number_Float_UnderscoreAfterMinus")]
+    [InlineData("Number_Imaginary_UnderscoreBeforeJ")]
+    [InlineData("Number_Imaginary_UnderscoreAfterJ")]
+    [InlineData("Number_Imaginary_InvalidCharBeforeJ")]
+    [InlineData("Number_Imaginary_InvalidCharAfterJ")]
+    [InlineData("String_PrefixUR")]
+    [InlineData("String_PrefixUB")]
+    [InlineData("String_UnclosedOnLine_SingleQuote")]
+    [InlineData("String_UnclosedOnFile_SingleQuote")]
+    [InlineData("String_UnclosedOnFile_TripleQuote_SingleLine")]
+    [InlineData("String_UnclosedOnFile_TripleQuote_MultiLine")]
+    [InlineData("String_UnclosedOnFile_EscapedQuote")]
+    public void TestLiteralErrors(string @case)
+    {
+        Debug.Assert(literal_errors_test_cases.ContainsKey(@case));
+
+        (string code, string message, var expected) = literal_errors_test_cases[@case];
+
+        var tokenizer = test(code, expected);
+
+        Assert.Equal(TokenizerError.InvalidLiteral, tokenizer.Error);
+        Assert.Equal(message, tokenizer.ErrorMessage);
+    }
+
+    private static PySharp.Tokenizer.Tokenizer test(string code, IList<Token> expected, bool trivia = false)
     {
         var tokenizer = new PySharp.Tokenizer.Tokenizer(code, trivia);
 
@@ -695,7 +1053,7 @@ public class TestTokenizer
             token = tokenizer.ReadNext();
             result.Add(token);
         }
-        while (token.Type is not EndOfFile);
+        while (token.Type is not EndOfFile && !tokenizer.ShouldStop);
 
         Assert.True(tokenizer.ShouldStop);
 
@@ -709,6 +1067,8 @@ public class TestTokenizer
             Assert.Equal(exp.Start, res.Start);
             Assert.Equal(exp.End, res.End);
         }
+
+        return tokenizer;
     }
 
     private static Token eof(int line, int col) =>

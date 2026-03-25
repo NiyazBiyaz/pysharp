@@ -28,6 +28,10 @@ public class Tokenizer(string source, bool saveTrivia)
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
     private const string invalid_dec = "Invalid decimal literal.";
+    private const string invalid_imaginary = "Invalid imaginary literal.";
+    private const string invalid_hex = "Invalid hexadecimal literal.";
+    private const string invalid_oct = "Invalid octal literal.";
+    private const string invalid_bin = "Invalid binary literal.";
     private const string tab_space_err_msg = "Tabs and spaces mixing is not allowed.";
 
     private int pendingIndentation
@@ -408,7 +412,7 @@ public class Tokenizer(string source, bool saveTrivia)
                         if (nextChar == '_')
                         {
                             if (!char.IsAsciiHexDigit(nextNextChar))
-                                return errorToken(TokenizerError.InvalidLiteral, "Invalid hexadecimal literal.");
+                                return errorInvalidNumber(NumberKind.Hexadecimal);
                         }
 
                         do
@@ -418,7 +422,7 @@ public class Tokenizer(string source, bool saveTrivia)
                     while (nextChar == '_');
 
                     if (isInvalidEndOfNumber(nextChar))
-                        return errorToken(TokenizerError.InvalidLiteral, "Invalid hexadecimal literal.");
+                        return errorInvalidNumber(NumberKind.Hexadecimal);
                 }
                 // Octal.
                 else if (char.ToLower(nextChar) == 'o')
@@ -429,7 +433,7 @@ public class Tokenizer(string source, bool saveTrivia)
                         if (nextChar == '_')
                         {
                             if (!isAsciiOctDigit(nextNextChar))
-                                return errorToken(TokenizerError.InvalidLiteral, "Invalid octal literal.");
+                                return errorInvalidNumber(NumberKind.Octal);
                         }
 
                         do
@@ -439,7 +443,7 @@ public class Tokenizer(string source, bool saveTrivia)
                     while (nextChar == '_');
 
                     if (isInvalidEndOfNumber(nextChar))
-                        return errorToken(TokenizerError.InvalidLiteral, "Invalid octal literal.");
+                        return errorInvalidNumber(NumberKind.Octal);
                 }
                 // Binary.
                 else if (char.ToLower(nextChar) == 'b')
@@ -450,7 +454,7 @@ public class Tokenizer(string source, bool saveTrivia)
                         if (nextChar == '_')
                         {
                             if (!isAsciiBinDigit(nextNextChar))
-                                return errorToken(TokenizerError.InvalidLiteral, "Invalid binary literal.");
+                                return errorInvalidNumber(NumberKind.Binary);
                         }
 
                         do
@@ -460,7 +464,7 @@ public class Tokenizer(string source, bool saveTrivia)
                     while (nextChar == '_');
 
                     if (isInvalidEndOfNumber(nextChar))
-                        return errorToken(TokenizerError.InvalidLiteral, "Invalid binary literal.");
+                        return errorInvalidNumber(NumberKind.Binary);
                 }
 
                 // Decimal literal with leading zeros.
@@ -476,7 +480,7 @@ public class Tokenizer(string source, bool saveTrivia)
                         {
                             moveNext();
                             if (!char.IsAsciiDigit(nextChar))
-                                return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+                                return errorInvalidNumber(NumberKind.Decimal);
                         }
                     }
 
@@ -485,18 +489,18 @@ public class Tokenizer(string source, bool saveTrivia)
                         nonZeros = true;
                         bool ok = moveWhileDecimal();
                         if (!ok)
-                            return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+                            return errorInvalidNumber(NumberKind.Decimal);
                     }
                     if (nextChar == '.')
                         readDecimalNumber();
 
                     else if (nonZeros && !saveTrivia)
-                        return errorToken(TokenizerError.InvalidLiteral, """
+                        return errorInvalidNumber("""
                         Leading zeros in decimal integer are not permitted; use an '0o' prefix for octal numbers.
                         """);
 
                     if (isInvalidEndOfNumber(nextChar))
-                        return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+                        return errorInvalidNumber(NumberKind.Decimal);
                 }
 
                 return createToken(TokenType.Number);
@@ -515,7 +519,7 @@ public class Tokenizer(string source, bool saveTrivia)
         {
             bool ok = moveWhileDecimal();
             if (!ok)
-                return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+                return errorInvalidNumber(NumberKind.Decimal);
         }
 
         // Eat fraction part.
@@ -523,7 +527,7 @@ public class Tokenizer(string source, bool saveTrivia)
         {
             bool ok = moveFractionPart();
             if (!ok)
-                return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+                return errorInvalidNumber(NumberKind.Decimal);
         }
 
         // Eat exponent part.
@@ -531,17 +535,33 @@ public class Tokenizer(string source, bool saveTrivia)
         {
             bool ok = moveExponentPart();
             if (!ok)
-                return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+                return errorInvalidNumber(NumberKind.Decimal, true);
         }
 
         // Eat imaginary part (just one symbol).
         if (char.ToLower(nextChar) == 'j')
+        {
             moveNext();
 
-        if (isInvalidEndOfNumber(nextChar))
-            return errorToken(TokenizerError.InvalidLiteral, invalid_dec);
+            if (isInvalidEndOfNumber(nextChar))
+                return errorInvalidNumber(NumberKind.Imaginary);
+        }
+        else
+        {
+            if (isInvalidEndOfNumber(nextChar))
+                return errorInvalidNumber(NumberKind.Decimal);
+        }
 
         return createToken(TokenType.Number);
+    }
+
+    private enum NumberKind
+    {
+        Decimal,
+        Imaginary,
+        Hexadecimal,
+        Octal,
+        Binary,
     }
 
     private bool moveFractionPart()
@@ -577,6 +597,61 @@ public class Tokenizer(string source, bool saveTrivia)
         bool ok = moveWhileDecimal();
         return ok;
     }
+
+    /// <summary>
+    /// Reads character while they are ASCII letters or underscores.
+    /// If last letter is 'j' and <paramref name="kind"/> is <see cref="NumberKind.Decimal"/>
+    /// <paramref name="kind"/> would be changed to <see cref="NumberKind.Imaginary"/>.
+    /// </summary>
+    /// <param name="kind">Kind of number that was trying to read.</param>
+    /// <returns>Error token with <see cref="TokenizerError.InvalidLiteral"/> type.</returns>
+    private Token errorInvalidNumber(NumberKind kind, bool sawE = false)
+    {
+        bool lastJ = false;
+        bool sawPlusOrMinus = false;
+        while (isCharToEatIfInvalidNumber(nextChar) ||
+            !sawPlusOrMinus && sawE && (nextChar == '+' || nextChar == '-'))
+        {
+            if (char.ToLower(nextChar) == 'e')
+                sawE = true;
+            lastJ = char.ToLower(nextChar) == 'j';
+            sawPlusOrMinus = nextChar == '+' || nextChar == '-';
+
+            moveNext();
+        }
+
+        if (kind is NumberKind.Decimal && lastJ)
+            kind = NumberKind.Imaginary;
+
+        string message = kind switch
+        {
+            NumberKind.Decimal => invalid_dec,
+            NumberKind.Imaginary => invalid_imaginary,
+            NumberKind.Hexadecimal => invalid_hex,
+            NumberKind.Octal => invalid_oct,
+            NumberKind.Binary => invalid_bin,
+            _ => throw new UnreachableException(),
+        };
+
+        return errorToken(TokenizerError.InvalidLiteral, message, false);
+    }
+
+    /// <summary>
+    /// Reads character while they are ASCII letters or underscores.
+    /// </summary>
+    /// <param name="message">Message that will be set to <see cref="ErrorMessage"/>.</param>
+    /// <returns>Error token with <see cref="TokenizerError.InvalidLiteral"/> type.</returns>
+    private Token errorInvalidNumber(string message)
+    {
+        while (isCharToEatIfInvalidNumber(nextChar))
+            moveNext();
+
+        return errorToken(TokenizerError.InvalidLiteral, message, false);
+    }
+
+    // Eat all characters, that can be interpreted as part of number and ASCII letters except plus and minus.
+    private static bool isCharToEatIfInvalidNumber(char ch) =>
+        char.IsAsciiLetter(ch) || char.IsDigit(ch) || ch == '.' || ch == '_';
 
     private static bool isQuote(char ch) => ch == '"' || ch == '\'';
 
@@ -782,12 +857,11 @@ public class Tokenizer(string source, bool saveTrivia)
         };
     }
 
-    private Token errorToken(TokenizerError error, string message)
+    private Token errorToken(TokenizerError error, string message, bool emptyLexeme = true)
     {
-        ShouldStop = true;
         Error = error;
         ErrorMessage = message;
-        return createToken(TokenType.Error, true);
+        return createToken(TokenType.Error, emptyLexeme);
     }
 
     private bool moveWhileDecimal()
