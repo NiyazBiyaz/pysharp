@@ -680,7 +680,7 @@ public class TestTokenizer
     private const string hex_inv = "Invalid hexadecimal literal.";
     private const string oct_inv = "Invalid octal literal.";
     private const string str_prf = "'{0}' and '{1}' prefixes are incompatible.";
-    private const string unclosed = "Unclosed string literal.";
+    private const string unterminated = "Unterminated string literal.";
 
     private static readonly Dictionary<string, (string code, string message, IList<Token> expected)> literal_errors_test_cases =
         new()
@@ -938,39 +938,39 @@ public class TestTokenizer
             ["String_PrefixUB"] =
             ("ub\"bBau\" bau", string.Format(str_prf, "b", "u"),
             [
-                new(Error, "ur\"bBau\"", (0, 0), (0, 8)),
+                new(Error, "ub\"bBau\"", (0, 0), (0, 8)),
                 new(Name, "bau", (0, 9), (0, 12)),
                 eof(0, 12),
             ]),
             ["String_UnclosedOnLine_SingleQuote"] =
             // After unclosed string don't eat new line character
-            ("\"baubau\nbau", unclosed,
+            ("\"baubau\nbau", unterminated,
             [
                 new(Error, "\"baubau", (0, 0), (0, 7)), new(NewLine, "\n", (0, 7), (0, 8)),
-                new(Name, "bau", (1, 9), (1, 12)),
-                eof(1, 12),
+                new(Name, "bau", (1, 0), (1, 3)),
+                eof(1, 3),
             ]),
             ["String_UnclosedOnFile_SingleQuote"] =
-            ("\"baubau", unclosed,
+            ("\"baubau", unterminated,
             [
                 new(Error, "\"baubau", (0, 0), (0, 7)),
                 eof(0, 7),
             ]),
             ["String_UnclosedOnFile_TripleQuote_SingleLine"] =
-            ("'''baubabaubaubau", unclosed,
+            ("'''baubaubaubaubau", unterminated,
             [
                 new(Error, "'''baubaubaubaubau", (0, 0), (0, 18)),
                 eof(0, 18),
             ]),
             ["String_UnclosedOnFile_TripleQuote_MultiLine"] =
-            ("'''bauba\nbauba\nbau", unclosed,
+            ("'''bauba\nbauba\nbau", unterminated,
             [
                 new(Error, "'''bauba\nbauba\nbau", (0, 0), (2, 3)),
                 eof(2, 3),
             ]),
             ["String_UnclosedOnFile_EscapedQuote"] =
             // '"bau\"bau'
-            ("\"bau\\\"bau", unclosed + " Perhaps you escaped the end quote?",
+            ("\"bau\\\"bau", "Unterminated string literal. Perhaps you escaped the end quote?",
             [
                 new(Error, "\"bau\\\"bau", (0, 0), (0, 9)),
                 eof(0, 9),

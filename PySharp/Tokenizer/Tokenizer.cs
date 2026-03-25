@@ -307,7 +307,13 @@ public class Tokenizer(string source, bool saveTrivia)
                 if (nextChar == '\'' || nextChar == '"')
                 {
                     if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
-                        return errorToken(TokenizerError.InvalidLiteral, errMsg);
+                    {
+                        if (!sawF && !sawT)
+                            // If it's not partial string, read string and put it in error token.
+                            return readString(errMsg);
+                        else
+                            throw new NotImplementedException();
+                    }
 
                     if (sawF || sawT)
                         return readPartialStringStart(sawF ? PartialStringType.FormatString : PartialStringType.TemplateString, sawR);
@@ -659,12 +665,12 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private Token readPartialStringStart(PartialStringType stringType, bool prefixR) => throw new NotImplementedException();
 
-    private Token readString()
+    private Token readString(string? prefixErrMsg = null)
     {
         Debug.Assert(isQuote(nextChar));
 
         char quote = nextChar;
-        int count = 1;
+        int quotesCount = 1;
         int closingQuotesCount = 0;
         bool hasEscapedQuote = false;
 
@@ -678,19 +684,26 @@ public class Tokenizer(string source, bool saveTrivia)
             if (nextChar == quote)
             {
                 moveNext();
-                count = 3;
+                quotesCount = 3;
             }
             // Empty string found.
             else
                 closingQuotesCount = 1;
         }
 
-        while (closingQuotesCount != count)
+        while (closingQuotesCount != quotesCount)
         {
-            if (nextChar == eof || (count == 1 && nextChar == '\n'))
+            if (nextChar == eof || (quotesCount == 1 && nextChar == '\n'))
             {
-                // TODO: Error handling.
-                throw new NotImplementedException();
+                string message = "Unterminated string literal.";
+                if (hasEscapedQuote)
+                    message += " Perhaps you escaped the end quote?";
+
+                Error = TokenizerError.InvalidLiteral;
+                ErrorMessage = message;
+                return createToken(TokenType.Error, false, true);
+
+                // TODO: Partial strings.
             }
             if (nextChar == quote)
                 closingQuotesCount++;
@@ -709,6 +722,9 @@ public class Tokenizer(string source, bool saveTrivia)
             if (newLine)
                 advanceLine();
         }
+
+        if (prefixErrMsg is string msg)
+            return errorToken(TokenizerError.InvalidLiteral, msg, false);
 
         return createToken(TokenType.StringLiteral);
     }
@@ -831,11 +847,12 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private char lookAtRaw(int position, int offset) => !isEof(position, offset) ? source[position + offset] : eof;
 
-    private Token createToken(TokenType type, bool emptyLexeme = false)
+    private Token createToken(TokenType type, bool emptyLexeme = false, bool useStartLine = false)
     {
         int startLine = type switch
         {
             TokenType.StringLiteral or TokenType.FStringMiddle or TokenType.TStringMiddle => startLineNumber,
+            _ when useStartLine => startLineNumber,
             _ => lineNumber,
         };
 
