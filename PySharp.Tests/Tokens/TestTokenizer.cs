@@ -2,7 +2,7 @@ using System.Diagnostics;
 using PySharp.Tokens;
 using static PySharp.Tokens.TokenType;
 
-namespace PySharp.Tests.Tokenizer;
+namespace PySharp.Tests.Tokens;
 
 public class TestTokenizer
 {
@@ -67,7 +67,7 @@ public class TestTokenizer
 
             // Please don't touch it. I spent a lot on these indexes...
             ["Op_AllExceptParensAndDots"] = (
-                ", : := ; = == + += - -= -> * *= ** **= / /= // //= % %= & &= | |= @ @= ^ ^= ~ > >= >> >>= < <= << <<= !",
+                ", : := ; = == + += - -= -> * *= ** **= / /= // //= % %= & &= | |= @ @= ^ ^= ~ > >= >> >>= < <= << <<= ! !=",
                 [
                     new(Comma,            ",",   (0,   0),  (0,   1)),
                     new(Colon,            ":",   (0,   2),  (0,   3)),
@@ -108,7 +108,8 @@ public class TestTokenizer
                     new(LeftShift,        "<<",  (0,  95),  (0,  97)),
                     new(LeftShiftEqual,   "<<=", (0,  98),  (0, 101)),
                     new(Exclamation,      "!",   (0, 102),  (0, 103)),
-                    eof(0, 103),
+                    new(NotEqual,         "!=",  (0, 104),  (0, 106)),
+                    eof(0, 106),
                 ]
             ),
             // Since dots related to numbers they're separated.
@@ -1042,9 +1043,9 @@ public class TestTokenizer
         Assert.Equal(message, tokenizer.ErrorMessage);
     }
 
-    private static PySharp.Tokens.Tokenizer test(string code, IList<Token> expected, bool trivia = false)
+    private static Tokenizer test(string code, IList<Token> expected, bool trivia = false)
     {
-        var tokenizer = new PySharp.Tokens.Tokenizer(code, trivia);
+        var tokenizer = new Tokenizer(code, trivia);
 
         List<Token> result = [];
         Token token;

@@ -59,6 +59,7 @@ public enum TokenType
     LeftShift,
     LeftShiftEqual,
     Exclamation,
+    NotEqual,
 
     Dedent,
     Indent,
