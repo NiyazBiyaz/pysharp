@@ -48,23 +48,22 @@ dotnet_naming_rule.local_const_all_lower.severity = warning
 dotnet_naming_rule.local_const_all_lower.symbols = local_constants
 dotnet_naming_rule.local_const_all_lower.style = all_lower
 
-#ALL_UPPER for non private constants/static readonlys
-dotnet_naming_style.all_upper.capitalization = all_upper
-dotnet_naming_style.all_upper.word_separator = _
+#PascalCase for non private constants/static readonlys
+dotnet_naming_style.all_upper.capitalization = pascalcase
 
 dotnet_naming_symbols.public_constants.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
 dotnet_naming_symbols.public_constants.required_modifiers = const
 dotnet_naming_symbols.public_constants.applicable_kinds = field
 dotnet_naming_rule.public_const_all_upper.severity = warning
 dotnet_naming_rule.public_const_all_upper.symbols = public_constants
-dotnet_naming_rule.public_const_all_upper.style = all_upper
+dotnet_naming_rule.public_const_all_upper.style = pascalcase
 
 dotnet_naming_symbols.public_static_readonly.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
 dotnet_naming_symbols.public_static_readonly.required_modifiers = static,readonly
 dotnet_naming_symbols.public_static_readonly.applicable_kinds = field
 dotnet_naming_rule.public_static_readonly_all_upper.severity = warning
 dotnet_naming_rule.public_static_readonly_all_upper.symbols = public_static_readonly
-dotnet_naming_rule.public_static_readonly_all_upper.style = all_upper
+dotnet_naming_rule.public_static_readonly_all_upper.style = pascalcase
 
 #PascalCase for public and protected members
 dotnet_naming_style.pascalcase.capitalization = pascal_case

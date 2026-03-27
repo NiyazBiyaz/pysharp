@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace PySharp.Tokens;
 
-[DebuggerDisplay("next={nextChar.ToString()} ln={lineNumber} cl={currentColumnOffset} len={currentPos - startPos} lex={source[startPos..currentPos]}")]
+[DebuggerDisplay("next={nextChar.ToString()} ln={lineNumber} cl={currentColumnOffset} lex={source[startPos..currentPos]} len={currentPos - startPos}")]
 public class Tokenizer(string source, bool saveTrivia)
 {
     private readonly string source = source;
@@ -147,12 +147,12 @@ public class Tokenizer(string source, bool saveTrivia)
                 if (column == indentStack.Peek())
                 {
                     if (alternateColumn != alternateIndentStack.Peek())
-                        return errorToken(TokenizerError.IndentationError, tab_space_err_msg);
+                        return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
                 }
                 else if (column > indentStack.Peek())
                 {
                     if (alternateColumn <= alternateIndentStack.Peek())
-                        return errorToken(TokenizerError.IndentationError, tab_space_err_msg);
+                        return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
 
                     pendingIndentation++;
                     indentStack.Push(column);
@@ -193,10 +193,10 @@ public class Tokenizer(string source, bool saveTrivia)
         }
 
         if (column != indentStack.Peek())
-            return errorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.");
+            return emptyErrorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.");
 
         if (alternateColumn != alternateIndentStack.Peek())
-            return errorToken(TokenizerError.IndentationError, tab_space_err_msg);
+            return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
 
         return null;
     }
@@ -208,12 +208,12 @@ public class Tokenizer(string source, bool saveTrivia)
             pendingIndentation++;
             // Dedent tokens are empty with zero-width.
             resetStart();
-            return createToken(TokenType.Dedent, true);
+            return createEmptyToken(TokenType.Dedent);
         }
         else if (pendingIndentation > 0)
         {
             pendingIndentation--;
-            return createToken(TokenType.Indent);
+            return createValuedToken(TokenType.Indent);
         }
 
         return null;
@@ -226,7 +226,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
         // TODO: probably need to separate types of whitespace.
         if (saveTrivia && currentPos != startPos)
-            return createToken(TokenType.WhiteSpace);
+            return createValuedToken(TokenType.WhiteSpace);
 
         return null;
     }
@@ -248,7 +248,7 @@ public class Tokenizer(string source, bool saveTrivia)
             if (saveTrivia)
             {
                 isBlankLineWithComment = isBlankLine;
-                return createToken(TokenType.Comment);
+                return createValuedToken(TokenType.Comment);
             }
         }
 
@@ -268,7 +268,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
             // Request stop and return EOF.
             ShouldStop = true;
-            return createToken(TokenType.EndOfFile, true);
+            return createEmptyToken(TokenType.EndOfFile);
         }
 
         return null;
@@ -325,7 +325,7 @@ public class Tokenizer(string source, bool saveTrivia)
             while (isPotentialNameChar(nextChar))
                 moveNext();
 
-            return createToken(TokenType.Name);
+            return createValuedToken(TokenType.Name);
         }
 
         return null;
@@ -346,7 +346,7 @@ public class Tokenizer(string source, bool saveTrivia)
                 {
                     if (isBlankLineWithComment)
                         isBlankLineWithComment = false;
-                    tok = createToken(TokenType.TriviaNewLine);
+                    tok = createValuedToken(TokenType.TriviaNewLine);
                 }
                 // Or force reading next token (advance line before it).
                 else
@@ -360,11 +360,11 @@ public class Tokenizer(string source, bool saveTrivia)
             else if (isBlankLineWithComment && saveTrivia)
             {
                 isBlankLineWithComment = false;
-                tok = createToken(TokenType.TriviaNewLine);
+                tok = createValuedToken(TokenType.TriviaNewLine);
             }
             // If we have valued new line
             else
-                tok = createToken(TokenType.NewLine);
+                tok = createValuedToken(TokenType.NewLine);
 
             if (increaseLine)
                 advanceLine();
@@ -393,10 +393,10 @@ public class Tokenizer(string source, bool saveTrivia)
             {
                 moveNext();
                 moveNext();
-                return createToken(TokenType.Ellipsis);
+                return createValuedToken(TokenType.Ellipsis);
             }
 
-            return createToken(TokenType.Dot);
+            return createValuedToken(TokenType.Dot);
         }
 
         return null;
@@ -509,7 +509,7 @@ public class Tokenizer(string source, bool saveTrivia)
                         return errorInvalidNumber(NumberKind.Decimal);
                 }
 
-                return createToken(TokenType.Number);
+                return createValuedToken(TokenType.Number);
             }
 
             else
@@ -558,7 +558,7 @@ public class Tokenizer(string source, bool saveTrivia)
                 return errorInvalidNumber(NumberKind.Decimal);
         }
 
-        return createToken(TokenType.Number);
+        return createValuedToken(TokenType.Number);
     }
 
     private enum NumberKind
@@ -639,7 +639,7 @@ public class Tokenizer(string source, bool saveTrivia)
             _ => throw new UnreachableException(),
         };
 
-        return errorToken(TokenizerError.InvalidLiteral, message, false);
+        return valuedErrorToken(TokenizerError.InvalidLiteral, message);
     }
 
     /// <summary>
@@ -652,7 +652,7 @@ public class Tokenizer(string source, bool saveTrivia)
         while (isCharToEatIfInvalidNumber(nextChar))
             moveNext();
 
-        return errorToken(TokenizerError.InvalidLiteral, message, false);
+        return valuedErrorToken(TokenizerError.InvalidLiteral, message);
     }
 
     // Eat all characters, that can be interpreted as part of number and ASCII letters except plus and minus.
@@ -699,9 +699,7 @@ public class Tokenizer(string source, bool saveTrivia)
                 if (hasEscapedQuote)
                     message += " Perhaps you escaped the end quote?";
 
-                Error = TokenizerError.InvalidLiteral;
-                ErrorMessage = message;
-                return createToken(TokenType.Error, false, true);
+                return valuedErrorToken(TokenizerError.InvalidLiteral, message, useStartLine: true);
 
                 // TODO: Partial strings.
             }
@@ -724,9 +722,9 @@ public class Tokenizer(string source, bool saveTrivia)
         }
 
         if (prefixErrMsg is string msg)
-            return errorToken(TokenizerError.InvalidLiteral, msg, false);
+            return valuedErrorToken(TokenizerError.InvalidLiteral, msg);
 
-        return createToken(TokenType.StringLiteral);
+        return createValuedToken(TokenType.StringLiteral, useStartLine: true);
     }
 
     private Token? tryLineContinuation()
@@ -748,15 +746,15 @@ public class Tokenizer(string source, bool saveTrivia)
         if (nextChar != '\n')
         {
             if (nextChar == eof)
-                return errorToken(TokenizerError.InvalidLineContinuation, "Expected new line.");
+                return emptyErrorToken(TokenizerError.InvalidLineContinuation, "Expected new line.");
             else
-                return errorToken(TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.");
+                return emptyErrorToken(TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.");
         }
 
         atContinuedLine = true;
 
         if (saveTrivia)
-            return createToken(TokenType.BackSlash);
+            return createValuedToken(TokenType.BackSlash);
 
         return ReadNext();
     }
@@ -771,11 +769,11 @@ public class Tokenizer(string source, bool saveTrivia)
             {
                 moveNext();
                 moveNext();
-                return createToken(tok3Type);
+                return createValuedToken(tok3Type);
             }
 
             moveNext();
-            return createToken(tok2Type);
+            return createValuedToken(tok2Type);
         }
 
         switch (nextChar)
@@ -796,7 +794,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
         TokenType? tok = opOneChar(nextChar);
         moveNext();
-        return tok is TokenType tok1Type ? createToken(tok1Type) : errorToken(TokenizerError.CharacterError, "Unknown symbol.");
+        return tok is TokenType tok1Type ? createValuedToken(tok1Type) : valuedErrorToken(TokenizerError.CharacterError, "Unknown symbol.");
     }
 
     #region Helpers
@@ -849,12 +847,11 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private Token createToken(TokenType type, bool emptyLexeme = false, bool useStartLine = false)
     {
-        int startLine = type switch
-        {
-            TokenType.StringLiteral or TokenType.FStringMiddle or TokenType.TStringMiddle => startLineNumber,
-            _ when useStartLine => startLineNumber,
-            _ => lineNumber,
-        };
+        int startLine;
+        if (useStartLine)
+            startLine = startLineNumber;
+        else
+            startLine = lineNumber;
 
         ReadOnlyMemory<char> lexeme = emptyLexeme ? ReadOnlyMemory<char>.Empty
                                                   : source.AsMemory(startPos, currentPos - startPos);
@@ -874,11 +871,26 @@ public class Tokenizer(string source, bool saveTrivia)
         };
     }
 
-    private Token errorToken(TokenizerError error, string message, bool emptyLexeme = true)
+    private Token createEmptyToken(TokenType type, bool useStartLine = false) => createToken(type, true, useStartLine);
+
+    private Token createValuedToken(TokenType type, bool useStartLine = false) => createToken(type, false, useStartLine);
+
+    private Token emptyErrorToken(TokenizerError error, string message, bool useStartLine = false)
+    {
+        setError(error, message);
+        return createEmptyToken(TokenType.Error, useStartLine);
+    }
+
+    private Token valuedErrorToken(TokenizerError error, string message, bool useStartLine = false)
+    {
+        setError(error, message);
+        return createValuedToken(TokenType.Error, useStartLine);
+    }
+
+    private void setError(TokenizerError error, string message)
     {
         Error = error;
         ErrorMessage = message;
-        return createToken(TokenType.Error, emptyLexeme);
     }
 
     private bool moveWhileDecimal()
@@ -993,6 +1005,7 @@ public class Tokenizer(string source, bool saveTrivia)
         ('>', '>') => TokenType.RightShift,
         ('<', '=') => TokenType.LessEqual,
         ('<', '<') => TokenType.LeftShift,
+        ('!', '=') => TokenType.NotEqual,
         _ => null,
     };
 

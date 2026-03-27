@@ -9,115 +9,115 @@ public class TestTokenizer
     private static readonly Dictionary<string, (string code, IList<Token> expected)> one_row_test_cases =
         new()
         {
-            ["String_SimpleSingle"] = ("'123'", [new(StringLiteral, "'123'", (0, 0), (0, 5)), eof(0, 5)]),
-            ["String_SimpleDouble"] = ("\"123\"", [new(StringLiteral, "\"123\"", (0, 0), (0, 5)), eof(0, 5)]),
-            ["String_SpaceBoth"] = ("'123' \"123\"", [new(StringLiteral, "'123'", (0, 0), (0, 5)),
-                                                      new(StringLiteral, "\"123\"", (0, 6), (0, 11)), eof(0, 11)]),
-            ["String_Empty"] = ("''", [new(StringLiteral, "''", (0, 0), (0, 2)), eof(0, 2)]),
-            ["String_raw"] = ("r'123'", [new(StringLiteral, "r'123'", (0, 0), (0, 6)), eof(0, 6)]),
-            ["String_RAW"] = ("R'123'", [new(StringLiteral, "R'123'", (0, 0), (0, 6)), eof(0, 6)]),
-            ["String_byte"] = ("b'123'", [new(StringLiteral, "b'123'", (0, 0), (0, 6)), eof(0, 6)]),
-            ["String_BYTE"] = ("B'123'", [new(StringLiteral, "B'123'", (0, 0), (0, 6)), eof(0, 6)]),
-            ["String_RawByte"] = ("rb'123'", [new(StringLiteral, "rb'123'", (0, 0), (0, 7)), eof(0, 7)]),
-            ["String_ByteRaw"] = ("br'123'", [new(StringLiteral, "br'123'", (0, 0), (0, 7)), eof(0, 7)]),
-            ["String_EscapedQuote"] = (@"'bau\'bau'", [new(StringLiteral, @"'bau\'bau'", (0, 0), (0, 10)), eof(0, 10)]),
+            ["String_SimpleSingle"] = ("'123'", [new(StringLiteral, "'123'", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["String_SimpleDouble"] = ("\"123\"", [new(StringLiteral, "\"123\"", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["String_SpaceBoth"] = ("'123' \"123\"", [new(StringLiteral, "'123'", p(0, 0), p(0, 5)),
+                                                      new(StringLiteral, "\"123\"", p(0, 6), p(0, 11)), eof(0, 11)]),
+            ["String_Empty"] = ("''", [new(StringLiteral, "''", p(0, 0), p(0, 2)), eof(0, 2)]),
+            ["String_raw"] = ("r'123'", [new(StringLiteral, "r'123'", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["String_RAW"] = ("R'123'", [new(StringLiteral, "R'123'", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["String_byte"] = ("b'123'", [new(StringLiteral, "b'123'", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["String_BYTE"] = ("B'123'", [new(StringLiteral, "B'123'", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["String_RawByte"] = ("rb'123'", [new(StringLiteral, "rb'123'", p(0, 0), p(0, 7)), eof(0, 7)]),
+            ["String_ByteRaw"] = ("br'123'", [new(StringLiteral, "br'123'", p(0, 0), p(0, 7)), eof(0, 7)]),
+            ["String_EscapedQuote"] = (@"'bau\'bau'", [new(StringLiteral, @"'bau\'bau'", p(0, 0), p(0, 10)), eof(0, 10)]),
 
-            ["Name_Simple"] = ("bau", [new(Name, "bau", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Name_Space"] = ("bau bau", [new(Name, "bau", (0, 0), (0, 3)), new(Name, "bau", (0, 4), (0, 7)), eof(0, 7)]),
-            ["Name_TrailingUnderscore"] = ("baubau__", [new(Name, "baubau__", (0, 0), (0, 8)), eof(0, 8)]),
-            ["Name_LeadingUnderscore"] = ("__bau", [new(Name, "__bau", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Name_BetweenUnderscore"] = ("__bau__", [new(Name, "__bau__", (0, 0), (0, 7)), eof(0, 7)]),
-            ["Name_WithDigits"] = ("b123", [new(Name, "b123", (0, 0), (0, 4)), eof(0, 4)]),
-            ["Name_Complex"] = ("bau_123_bau__", [new(Name, "bau_123_bau__", (0, 0), (0, 13)), eof(0, 13)]),
+            ["Name_Simple"] = ("bau", [new(Name, "bau", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Name_Space"] = ("bau bau", [new(Name, "bau", p(0, 0), p(0, 3)), new(Name, "bau", p(0, 4), p(0, 7)), eof(0, 7)]),
+            ["Name_TrailingUnderscore"] = ("baubau__", [new(Name, "baubau__", p(0, 0), p(0, 8)), eof(0, 8)]),
+            ["Name_LeadingUnderscore"] = ("__bau", [new(Name, "__bau", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Name_BetweenUnderscore"] = ("__bau__", [new(Name, "__bau__", p(0, 0), p(0, 7)), eof(0, 7)]),
+            ["Name_WithDigits"] = ("b123", [new(Name, "b123", p(0, 0), p(0, 4)), eof(0, 4)]),
+            ["Name_Complex"] = ("bau_123_bau__", [new(Name, "bau_123_bau__", p(0, 0), p(0, 13)), eof(0, 13)]),
 
-            ["Number_Simple"] = ("123", [new(Number, "123", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_Space"] = ("10 10", [new(Number, "10", (0, 0), (0, 2)), new(Number, "10", (0, 3), (0, 5)), eof(0, 5)]),
-            ["Number_Zeros"] = ("000", [new(Number, "000", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_FractionZeros"] = ("0.0", [new(Number, "0.0", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_FractionLeadingZeros"] = ("01.10", [new(Number, "01.10", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Number_FractionLeadingZerosDot"] = ("01.", [new(Number, "01.", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_LeadingDot"] = (".10", [new(Number, ".10", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_TrailingDot"] = ("10.", [new(Number, "10.", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_SimpleExponent"] = ("10e2", [new(Number, "10e2", (0, 0), (0, 4)), eof(0, 4)]),
-            ["Number_PlusExponent"] = ("10e+2", [new(Number, "10e+2", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Number_MinusExponent"] = ("10e-2", [new(Number, "10e-2", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Number_DotExponent"] = ("10.e2", [new(Number, "10.e2", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Number_SimpleImaginary"] = ("10j", [new(Number, "10j", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Number_ImaginaryAfterDot"] = ("10.j", [new(Number, "10.j", (0, 0), (0, 4)), eof(0, 4)]),
-            ["Number_ImaginaryAfterExpo"] = ("10e1j", [new(Number, "10e1j", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Number_ImaginaryAfterDotExpo"] = ("10.e1j", [new(Number, "10.e1j", (0, 0), (0, 6)), eof(0, 6)]),
-            ["Number_NormalUnderscores"] = ("1_000_000", [new(Number, "1_000_000", (0, 0), (0, 9)), eof(0, 9)]),
-            ["Number_WildUnderscores"] = ("10_0_0_0_0", [new(Number, "10_0_0_0_0", (0, 0), (0, 10)), eof(0, 10)]),
-            ["Number_FractionUnderscores"] = ("1_1.1_1", [new(Number, "1_1.1_1", (0, 0), (0, 7)), eof(0, 7)]),
-            ["Number_Complex1"] = ("1_2_3.1_2_3e+2j", [new(Number, "1_2_3.1_2_3e+2j", (0, 0), (0, 15)), eof(0, 15)]),
-            ["Number_Complex2"] = (".1_2_3e-2j", [new(Number, ".1_2_3e-2j", (0, 0), (0, 10)), eof(0, 10)]),
-            ["Number_Complex3"] = ("1_2_3.1_2_3e+2_0j", [new(Number, "1_2_3.1_2_3e+2_0j", (0, 0), (0, 17)), eof(0, 17)]),
+            ["Number_Simple"] = ("123", [new(Number, "123", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_Space"] = ("10 10", [new(Number, "10", p(0, 0), p(0, 2)), new(Number, "10", p(0, 3), p(0, 5)), eof(0, 5)]),
+            ["Number_Zeros"] = ("000", [new(Number, "000", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_FractionZeros"] = ("0.0", [new(Number, "0.0", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_FractionLeadingZeros"] = ("01.10", [new(Number, "01.10", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Number_FractionLeadingZerosDot"] = ("01.", [new(Number, "01.", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_LeadingDot"] = (".10", [new(Number, ".10", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_TrailingDot"] = ("10.", [new(Number, "10.", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_SimpleExponent"] = ("10e2", [new(Number, "10e2", p(0, 0), p(0, 4)), eof(0, 4)]),
+            ["Number_PlusExponent"] = ("10e+2", [new(Number, "10e+2", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Number_MinusExponent"] = ("10e-2", [new(Number, "10e-2", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Number_DotExponent"] = ("10.e2", [new(Number, "10.e2", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Number_SimpleImaginary"] = ("10j", [new(Number, "10j", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Number_ImaginaryAfterDot"] = ("10.j", [new(Number, "10.j", p(0, 0), p(0, 4)), eof(0, 4)]),
+            ["Number_ImaginaryAfterExpo"] = ("10e1j", [new(Number, "10e1j", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Number_ImaginaryAfterDotExpo"] = ("10.e1j", [new(Number, "10.e1j", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["Number_NormalUnderscores"] = ("1_000_000", [new(Number, "1_000_000", p(0, 0), p(0, 9)), eof(0, 9)]),
+            ["Number_WildUnderscores"] = ("10_0_0_0_0", [new(Number, "10_0_0_0_0", p(0, 0), p(0, 10)), eof(0, 10)]),
+            ["Number_FractionUnderscores"] = ("1_1.1_1", [new(Number, "1_1.1_1", p(0, 0), p(0, 7)), eof(0, 7)]),
+            ["Number_Complex1"] = ("1_2_3.1_2_3e+2j", [new(Number, "1_2_3.1_2_3e+2j", p(0, 0), p(0, 15)), eof(0, 15)]),
+            ["Number_Complex2"] = (".1_2_3e-2j", [new(Number, ".1_2_3e-2j", p(0, 0), p(0, 10)), eof(0, 10)]),
+            ["Number_Complex3"] = ("1_2_3.1_2_3e+2_0j", [new(Number, "1_2_3.1_2_3e+2_0j", p(0, 0), p(0, 17)), eof(0, 17)]),
 
-            ["Number_Hexadecimal"] = ("0x123", [new(Number, "0x123", (0, 0), (0, 5)), eof(0, 5)]),
-            ["Number_HexadecimalFullLower"] = ("0x0123456789abcdef", [new(Number, "0x0123456789abcdef", (0, 0), (0, 18)), eof(0, 18)]),
-            ["Number_HexadecimalFullUpper"] = ("0x0123456789ABCDEF", [new(Number, "0x0123456789ABCDEF", (0, 0), (0, 18)), eof(0, 18)]),
-            ["Number_HexadecimalMixed"] = ("0xAbCdEf", [new(Number, "0xAbCdEf", (0, 0), (0, 8)), eof(0, 8)]),
-            ["Number_HexadecimalUnderscores"] = ("0x33_22_11", [new(Number, "0x33_22_11", (0, 0), (0, 10)), eof(0, 10)]),
-            ["Number_HexadecimalLeadUnderscores"] = ("0x_33_22_11", [new(Number, "0x_33_22_11", (0, 0), (0, 11)), eof(0, 11)]),
-            ["Number_OctalFull"] = ("0o01234567", [new(Number, "0o01234567", (0, 0), (0, 10)), eof(0, 10)]),
-            ["Number_OctalUnderscores"] = ("0o_123_456_7", [new(Number, "0o_123_456_7", (0, 0), (0, 12)), eof(0, 12)]),
-            ["Number_BinaryFull"] = ("0b01", [new(Number, "0b01", (0, 0), (0, 4)), eof(0, 4)]),
-            ["Number_BinaryUnderscores"] = ("0b_1_0", [new(Number, "0b_1_0", (0, 0), (0, 6)), eof(0, 6)]),
-            ["Number_BinaryLong"] = ("0b101010100100100010101001", [new(Number, "0b101010100100100010101001", (0, 0), (0, 26)), eof(0, 26)]),
+            ["Number_Hexadecimal"] = ("0x123", [new(Number, "0x123", p(0, 0), p(0, 5)), eof(0, 5)]),
+            ["Number_HexadecimalFullLower"] = ("0x0123456789abcdef", [new(Number, "0x0123456789abcdef", p(0, 0), p(0, 18)), eof(0, 18)]),
+            ["Number_HexadecimalFullUpper"] = ("0x0123456789ABCDEF", [new(Number, "0x0123456789ABCDEF", p(0, 0), p(0, 18)), eof(0, 18)]),
+            ["Number_HexadecimalMixed"] = ("0xAbCdEf", [new(Number, "0xAbCdEf", p(0, 0), p(0, 8)), eof(0, 8)]),
+            ["Number_HexadecimalUnderscores"] = ("0x33_22_11", [new(Number, "0x33_22_11", p(0, 0), p(0, 10)), eof(0, 10)]),
+            ["Number_HexadecimalLeadUnderscores"] = ("0x_33_22_11", [new(Number, "0x_33_22_11", p(0, 0), p(0, 11)), eof(0, 11)]),
+            ["Number_OctalFull"] = ("0o01234567", [new(Number, "0o01234567", p(0, 0), p(0, 10)), eof(0, 10)]),
+            ["Number_OctalUnderscores"] = ("0o_123_456_7", [new(Number, "0o_123_456_7", p(0, 0), p(0, 12)), eof(0, 12)]),
+            ["Number_BinaryFull"] = ("0b01", [new(Number, "0b01", p(0, 0), p(0, 4)), eof(0, 4)]),
+            ["Number_BinaryUnderscores"] = ("0b_1_0", [new(Number, "0b_1_0", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["Number_BinaryLong"] = ("0b101010100100100010101001", [new(Number, "0b101010100100100010101001", p(0, 0), p(0, 26)), eof(0, 26)]),
 
             // Please don't touch it. I spent a lot on these indexes...
             ["Op_AllExceptParensAndDots"] = (
                 ", : := ; = == + += - -= -> * *= ** **= / /= // //= % %= & &= | |= @ @= ^ ^= ~ > >= >> >>= < <= << <<= ! !=",
                 [
-                    new(Comma,            ",",   (0,   0),  (0,   1)),
-                    new(Colon,            ":",   (0,   2),  (0,   3)),
-                    new(ColonEqual,       ":=",  (0,   4),  (0,   6)),
-                    new(Semicolon,        ";",   (0,   7),  (0,   8)),
-                    new(Equal,            "=",   (0,   9),  (0,  10)),
-                    new(EqEqual,          "==",  (0,  11),  (0,  13)),
-                    new(Plus,             "+",   (0,  14),  (0,  15)),
-                    new(PlusEqual,        "+=",  (0,  16),  (0,  18)),
-                    new(Minus,            "-",   (0,  19),  (0,  20)),
-                    new(MinusEqual,       "-=",  (0,  21),  (0,  23)),
-                    new(RightArrow,       "->",  (0,  24),  (0,  26)),
-                    new(Star,             "*",   (0,  27),  (0,  28)),
-                    new(StarEqual,        "*=",  (0,  29),  (0,  31)),
-                    new(DoubleStar,       "**",  (0,  32),  (0,  34)),
-                    new(DoubleStarEqual,  "**=", (0,  35),  (0,  38)),
-                    new(Slash,            "/",   (0,  39),  (0,  40)),
-                    new(SlashEqual,       "/=",  (0,  41),  (0,  43)),
-                    new(DoubleSlash,      "//",  (0,  44),  (0,  46)),
-                    new(DoubleSlashEqual, "//=", (0,  47),  (0,  50)),
-                    new(Percent,          "%",   (0,  51),  (0,  52)),
-                    new(PercentEqual,     "%=",  (0,  53),  (0,  55)),
-                    new(Ampersand,        "&",   (0,  56),  (0,  57)),
-                    new(AmpersandEqual,   "&=",  (0,  58),  (0,  60)),
-                    new(VertBar,          "|",   (0,  61),  (0,  62)),
-                    new(VertBarEqual,     "|=",  (0,  63),  (0,  65)),
-                    new(At,               "@",   (0,  66),  (0,  67)),
-                    new(AtEqual,          "@=",  (0,  68),  (0,  70)),
-                    new(Circumflex,       "^",   (0,  71),  (0,  72)),
-                    new(CircumflexEqual,  "^=",  (0,  73),  (0,  75)),
-                    new(Tilde,            "~",   (0,  76),  (0,  77)),
-                    new(Greater,          ">",   (0,  78),  (0,  79)),
-                    new(GreaterEqual,     ">=",  (0,  80),  (0,  82)),
-                    new(RightShift,       ">>",  (0,  83),  (0,  85)),
-                    new(RightShiftEqual,  ">>=", (0,  86),  (0,  89)),
-                    new(Less,             "<",   (0,  90),  (0,  91)),
-                    new(LessEqual,        "<=",  (0,  92),  (0,  94)),
-                    new(LeftShift,        "<<",  (0,  95),  (0,  97)),
-                    new(LeftShiftEqual,   "<<=", (0,  98),  (0, 101)),
-                    new(Exclamation,      "!",   (0, 102),  (0, 103)),
-                    new(NotEqual,         "!=",  (0, 104),  (0, 106)),
+                    new(Comma,            ",",   p(0,   0),  p(0,   1)),
+                    new(Colon,            ":",   p(0,   2),  p(0,   3)),
+                    new(ColonEqual,       ":=",  p(0,   4),  p(0,   6)),
+                    new(Semicolon,        ";",   p(0,   7),  p(0,   8)),
+                    new(Equal,            "=",   p(0,   9),  p(0,  10)),
+                    new(EqEqual,          "==",  p(0,  11),  p(0,  13)),
+                    new(Plus,             "+",   p(0,  14),  p(0,  15)),
+                    new(PlusEqual,        "+=",  p(0,  16),  p(0,  18)),
+                    new(Minus,            "-",   p(0,  19),  p(0,  20)),
+                    new(MinusEqual,       "-=",  p(0,  21),  p(0,  23)),
+                    new(RightArrow,       "->",  p(0,  24),  p(0,  26)),
+                    new(Star,             "*",   p(0,  27),  p(0,  28)),
+                    new(StarEqual,        "*=",  p(0,  29),  p(0,  31)),
+                    new(DoubleStar,       "**",  p(0,  32),  p(0,  34)),
+                    new(DoubleStarEqual,  "**=", p(0,  35),  p(0,  38)),
+                    new(Slash,            "/",   p(0,  39),  p(0,  40)),
+                    new(SlashEqual,       "/=",  p(0,  41),  p(0,  43)),
+                    new(DoubleSlash,      "//",  p(0,  44),  p(0,  46)),
+                    new(DoubleSlashEqual, "//=", p(0,  47),  p(0,  50)),
+                    new(Percent,          "%",   p(0,  51),  p(0,  52)),
+                    new(PercentEqual,     "%=",  p(0,  53),  p(0,  55)),
+                    new(Ampersand,        "&",   p(0,  56),  p(0,  57)),
+                    new(AmpersandEqual,   "&=",  p(0,  58),  p(0,  60)),
+                    new(VertBar,          "|",   p(0,  61),  p(0,  62)),
+                    new(VertBarEqual,     "|=",  p(0,  63),  p(0,  65)),
+                    new(At,               "@",   p(0,  66),  p(0,  67)),
+                    new(AtEqual,          "@=",  p(0,  68),  p(0,  70)),
+                    new(Circumflex,       "^",   p(0,  71),  p(0,  72)),
+                    new(CircumflexEqual,  "^=",  p(0,  73),  p(0,  75)),
+                    new(Tilde,            "~",   p(0,  76),  p(0,  77)),
+                    new(Greater,          ">",   p(0,  78),  p(0,  79)),
+                    new(GreaterEqual,     ">=",  p(0,  80),  p(0,  82)),
+                    new(RightShift,       ">>",  p(0,  83),  p(0,  85)),
+                    new(RightShiftEqual,  ">>=", p(0,  86),  p(0,  89)),
+                    new(Less,             "<",   p(0,  90),  p(0,  91)),
+                    new(LessEqual,        "<=",  p(0,  92),  p(0,  94)),
+                    new(LeftShift,        "<<",  p(0,  95),  p(0,  97)),
+                    new(LeftShiftEqual,   "<<=", p(0,  98),  p(0, 101)),
+                    new(Exclamation,      "!",   p(0, 102),  p(0, 103)),
+                    new(NotEqual,         "!=",  p(0, 104),  p(0, 106)),
                     eof(0, 106),
                 ]
             ),
             // Since dots related to numbers they're separated.
-            ["Op_Dot"] = (".", [new(Dot, ".", (0, 0), (0, 1)), eof(0, 1)]),
-            ["Op_DotSpace"] = (". .", [new(Dot, ".", (0, 0), (0, 1)), new(Dot, ".", (0, 2), (0, 3)), eof(0, 3)]),
-            ["Op_Ellipsis"] = ("...", [new(Ellipsis, "...", (0, 0), (0, 3)), eof(0, 3)]),
-            ["Op_EllipsisSpace"] = ("... ...", [new(Ellipsis, "...", (0, 0), (0, 3)), new(Ellipsis, "...", (0, 4), (0, 7)), eof(0, 7)]),
-            ["Op_EllipsisDot"] = ("... .", [new(Ellipsis, "...", (0, 0), (0, 3)), new(Dot, ".", (0, 4), (0, 5)), eof(0, 5)]),
+            ["Op_Dot"] = (".", [new(Dot, ".", p(0, 0), p(0, 1)), eof(0, 1)]),
+            ["Op_DotSpace"] = (". .", [new(Dot, ".", p(0, 0), p(0, 1)), new(Dot, ".", p(0, 2), p(0, 3)), eof(0, 3)]),
+            ["Op_Ellipsis"] = ("...", [new(Ellipsis, "...", p(0, 0), p(0, 3)), eof(0, 3)]),
+            ["Op_EllipsisSpace"] = ("... ...", [new(Ellipsis, "...", p(0, 0), p(0, 3)), new(Ellipsis, "...", p(0, 4), p(0, 7)), eof(0, 7)]),
+            ["Op_EllipsisDot"] = ("... .", [new(Ellipsis, "...", p(0, 0), p(0, 3)), new(Dot, ".", p(0, 4), p(0, 5)), eof(0, 5)]),
         };
 
     [Theory]
@@ -196,26 +196,26 @@ public class TestTokenizer
         {
             ["InOneLine"] = ("""
             '''bau'''
-            """, [new(StringLiteral, "'''bau'''", (0, 0), (0, 9)), eof(0, 9)]),
-            ["MixedQuotes"] = ("''' \"\"\" '''", [new(StringLiteral, "''' \"\"\" '''", (0, 0), (0, 11)), eof(0, 11)]),
+            """, [new(StringLiteral, "'''bau'''", p(0, 0), p(0, 9)), eof(0, 9)]),
+            ["MixedQuotes"] = ("''' \"\"\" '''", [new(StringLiteral, "''' \"\"\" '''", p(0, 0), p(0, 11)), eof(0, 11)]),
             ["EscapedQuote"] = ("""
             ''' \' '''
             """,
-            [new(StringLiteral, "''' \\' '''", (0, 0), (0, 10)), eof(0, 10)]),
+            [new(StringLiteral, "''' \\' '''", p(0, 0), p(0, 10)), eof(0, 10)]),
             ["OneLineFeed"] = ("""
             '''bau
             bau'''
-            """, [new(StringLiteral, "'''bau\nbau'''", (0, 0), (1, 6)), eof(1, 6)]),
+            """, [new(StringLiteral, "'''bau\nbau'''", p(0, 0), p(1, 6)), eof(1, 6)]),
             ["EscapedEndOfLine"] = ("""
             '''bau\
             bau'''
-            """, [new(StringLiteral, "'''bau\\\nbau'''", (0, 0), (1, 6)), eof(1, 6)]),
-            ["LineFeedCRLF"] = ("'''bau\r\nbau'''", [new(StringLiteral, "'''bau\r\nbau'''", (0, 0), (1, 6)), eof(1, 6)]),
-            ["LineFeedCR"] = ("'''bau\rbau'''", [new(StringLiteral, "'''bau\rbau'''", (0, 0), (1, 6)), eof(1, 6)]),
-            ["Empty"] = ("''''''", [new(StringLiteral, "''''''", (0, 0), (0, 6)), eof(0, 6)]),
-            ["Raw"] = (@"r'''b\au'''", [new(StringLiteral, @"r'''b\au'''", (0, 0), (0, 11)), eof(0, 11)]),
-            ["Byte"] = (@"b'''r\au'''", [new(StringLiteral, @"b'''r\au'''", (0, 0), (0, 11)), eof(0, 11)]),
-            ["ByteRaw"] = (@"rb'''me\ow'''", [new(StringLiteral, @"rb'''me\ow'''", (0, 0), (0, 13)), eof(0, 13)]),
+            """, [new(StringLiteral, "'''bau\\\nbau'''", p(0, 0), p(1, 6)), eof(1, 6)]),
+            ["LineFeedCRLF"] = ("'''bau\r\nbau'''", [new(StringLiteral, "'''bau\r\nbau'''", p(0, 0), p(1, 6)), eof(1, 6)]),
+            ["LineFeedCR"] = ("'''bau\rbau'''", [new(StringLiteral, "'''bau\rbau'''", p(0, 0), p(1, 6)), eof(1, 6)]),
+            ["Empty"] = ("''''''", [new(StringLiteral, "''''''", p(0, 0), p(0, 6)), eof(0, 6)]),
+            ["Raw"] = (@"r'''b\au'''", [new(StringLiteral, @"r'''b\au'''", p(0, 0), p(0, 11)), eof(0, 11)]),
+            ["Byte"] = (@"b'''r\au'''", [new(StringLiteral, @"b'''r\au'''", p(0, 0), p(0, 11)), eof(0, 11)]),
+            ["ByteRaw"] = (@"rb'''me\ow'''", [new(StringLiteral, @"rb'''me\ow'''", p(0, 0), p(0, 13)), eof(0, 13)]),
             ["LongString"] = ("""
             '''bau1"
             bau2'
@@ -223,7 +223,7 @@ public class TestTokenizer
             bau4'
             '''
             """,
-            [new(StringLiteral, "'''bau1\"\nbau2'\nbau3\nbau4'\n'''", (0, 0), (4, 3)), eof(4, 3)]),
+            [new(StringLiteral, "'''bau1\"\nbau2'\nbau3\nbau4'\n'''", p(0, 0), p(4, 3)), eof(4, 3)]),
         };
 
     [Theory]
@@ -252,30 +252,30 @@ public class TestTokenizer
         new()
         {
             ["AllInRow"] = ("({[]})", false, [
-                new(LeftParen, "(", (0, 0), (0, 1)),
-                new(LeftBrace, "{", (0, 1), (0, 2)),
-                new(LeftSquareBracket, "[", (0, 2), (0, 3)),
-                new(RightSquareBracket, "]", (0, 3), (0, 4)),
-                new(RightBrace, "}", (0, 4), (0, 5)),
-                new(RightParen, ")", (0, 5), (0, 6)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)),
+                new(LeftBrace, "{", p(0, 1), p(0, 2)),
+                new(LeftSquareBracket, "[", p(0, 2), p(0, 3)),
+                new(RightSquareBracket, "]", p(0, 3), p(0, 4)),
+                new(RightBrace, "}", p(0, 4), p(0, 5)),
+                new(RightParen, ")", p(0, 5), p(0, 6)),
                 eof(0, 6),
             ]),
             ["TriviaNewLine_Paren"] = ("(\n)", true, [
-                new(LeftParen, "(", (0, 0), (0, 1)),
-                new(TriviaNewLine, "\n", (0, 1), (0, 2)),
-                new(RightParen, ")", (1, 0), (1, 1)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)),
+                new(TriviaNewLine, "\n", p(0, 1), p(0, 2)),
+                new(RightParen, ")", p(1, 0), p(1, 1)),
                 eof(1, 1),
             ]),
             ["TriviaNewLine_Brace"] = ("{\n}", true, [
-                new(LeftBrace, "{", (0, 0), (0, 1)),
-                new(TriviaNewLine, "\n", (0, 1), (0, 2)),
-                new(RightBrace, "}", (1, 0), (1, 1)),
+                new(LeftBrace, "{", p(0, 0), p(0, 1)),
+                new(TriviaNewLine, "\n", p(0, 1), p(0, 2)),
+                new(RightBrace, "}", p(1, 0), p(1, 1)),
                 eof(1, 1),
             ]),
             ["TriviaNewLine_SqBrt"] = ("[\n]", true, [
-                new(LeftSquareBracket, "[", (0, 0), (0, 1)),
-                new(TriviaNewLine, "\n", (0, 1), (0, 2)),
-                new(RightSquareBracket, "]", (1, 0), (1, 1)),
+                new(LeftSquareBracket, "[", p(0, 0), p(0, 1)),
+                new(TriviaNewLine, "\n", p(0, 1), p(0, 2)),
+                new(RightSquareBracket, "]", p(1, 0), p(1, 1)),
                 eof(1, 1),
             ]),
             ["TriviaNewLine_ReducingNesting"] = ("""
@@ -284,10 +284,10 @@ public class TestTokenizer
             ]
             )
             """, true, [
-                new(LeftParen, "(", (0, 0), (0, 1)), new(TriviaNewLine, "\n", (0, 1), (0, 2)),
-                new(LeftSquareBracket, "[", (1, 0), (1, 1)), new(TriviaNewLine, "\n", (1, 1), (1, 2)),
-                new(RightSquareBracket, "]", (2, 0), (2, 1)), new(TriviaNewLine, "\n", (2, 1), (2, 2) /* This token expected */),
-                new(RightParen, ")", (3, 0), (3, 1)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)), new(TriviaNewLine, "\n", p(0, 1), p(0, 2)),
+                new(LeftSquareBracket, "[", p(1, 0), p(1, 1)), new(TriviaNewLine, "\n", p(1, 1), p(1, 2)),
+                new(RightSquareBracket, "]", p(2, 0), p(2, 1)), new(TriviaNewLine, "\n", p(2, 1), p(2, 2) /* This token expected */),
+                new(RightParen, ")", p(3, 0), p(3, 1)),
                 eof(3, 1),
             ]),
             ["TriviaNewLine_RestoreLogicalNewLines"] = ("""
@@ -297,11 +297,11 @@ public class TestTokenizer
             )
             bau
             """, true, [
-                new(LeftParen, "(", (0, 0), (0, 1)), new(TriviaNewLine, "\n", (0, 1), (0, 2)),
-                new(LeftSquareBracket, "[", (1, 0), (1, 1)), new(TriviaNewLine, "\n", (1, 1), (1, 2)),
-                new(RightSquareBracket, "]", (2, 0), (2, 1)), new(TriviaNewLine, "\n", (2, 1), (2, 2)),
-                new(RightParen, ")", (3, 0), (3, 1)), new(NewLine, "\n", (3, 1), (3, 2)),
-                new(Name, "bau", (4, 0), (4, 3)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)), new(TriviaNewLine, "\n", p(0, 1), p(0, 2)),
+                new(LeftSquareBracket, "[", p(1, 0), p(1, 1)), new(TriviaNewLine, "\n", p(1, 1), p(1, 2)),
+                new(RightSquareBracket, "]", p(2, 0), p(2, 1)), new(TriviaNewLine, "\n", p(2, 1), p(2, 2)),
+                new(RightParen, ")", p(3, 0), p(3, 1)), new(NewLine, "\n", p(3, 1), p(3, 2)),
+                new(Name, "bau", p(4, 0), p(4, 3)),
                 eof(4, 3),
             ]),
             ["WithoutTrivia_ReducingNesting"] = ("""
@@ -310,10 +310,10 @@ public class TestTokenizer
             ]
             )
             """, false, [
-                new(LeftParen, "(", (0, 0), (0, 1)),
-                new(LeftSquareBracket, "[", (1, 0), (1, 1)),
-                new(RightSquareBracket, "]", (2, 0), (2, 1)),
-                new(RightParen, ")", (3, 0), (3, 1)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)),
+                new(LeftSquareBracket, "[", p(1, 0), p(1, 1)),
+                new(RightSquareBracket, "]", p(2, 0), p(2, 1)),
+                new(RightParen, ")", p(3, 0), p(3, 1)),
                 eof(3, 1),
             ]),
             ["WithoutTrivia_RestoreLogicalNewLines"] = ("""
@@ -323,11 +323,11 @@ public class TestTokenizer
             )
             bau
             """, false, [
-                new(LeftParen, "(", (0, 0), (0, 1)),
-                new(LeftSquareBracket, "[", (1, 0), (1, 1)),
-                new(RightSquareBracket, "]", (2, 0), (2, 1)),
-                new(RightParen, ")", (3, 0), (3, 1)), new(NewLine, "\n", (3, 1), (3, 2)),
-                new(Name, "bau", (4, 0), (4, 3)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)),
+                new(LeftSquareBracket, "[", p(1, 0), p(1, 1)),
+                new(RightSquareBracket, "]", p(2, 0), p(2, 1)),
+                new(RightParen, ")", p(3, 0), p(3, 1)), new(NewLine, "\n", p(3, 1), p(3, 2)),
+                new(Name, "bau", p(4, 0), p(4, 3)),
                 eof(4, 3),
             ]),
             ["WithoutTrivia_NoIndents"] = ("""
@@ -335,9 +335,9 @@ public class TestTokenizer
                 bau
             )
             """, false, [
-                new(LeftParen, "(", (0, 0), (0, 1)),
-                new(Name, "bau", (1, 4), (1, 7)),
-                new(RightParen, ")", (2, 0), (2, 1)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)),
+                new(Name, "bau", p(1, 4), p(1, 7)),
+                new(RightParen, ")", p(2, 0), p(2, 1)),
                 eof(2, 1),
             ]),
             ["TriviaWhiteSpace_NoIndents"] = ("""
@@ -345,9 +345,9 @@ public class TestTokenizer
                 bau
             )
             """, true, [
-                new(LeftParen, "(", (0, 0), (0, 1)), new(TriviaNewLine, "\n", (0, 1), (0, 2)),
-                new(WhiteSpace, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(TriviaNewLine, "\n", (1, 7), (1, 8)),
-                new(RightParen, ")", (2, 0), (2, 1)),
+                new(LeftParen, "(", p(0, 0), p(0, 1)), new(TriviaNewLine, "\n", p(0, 1), p(0, 2)),
+                new(WhiteSpace, "    ", p(1, 0), p(1, 4)), new(Name, "bau", p(1, 4), p(1, 7)), new(TriviaNewLine, "\n", p(1, 7), p(1, 8)),
+                new(RightParen, ")", p(2, 0), p(2, 1)),
                 eof(2, 1),
             ]),
         };
@@ -379,8 +379,8 @@ public class TestTokenizer
             bau
                 bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(Dedent, empty, (1, 7), (1, 7)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(Dedent, empty,p(1, 7),p(1, 7)),
                 eof(1, 7),
             ]),
             ["TwoIndents"] = ("""
@@ -388,10 +388,10 @@ public class TestTokenizer
                 bau
                     bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)),
-                new(Dedent, empty, (2, 11), (2, 11)), new(Dedent, empty, (2, 11), (2, 11)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Indent, "        ",p(2, 0),p(2, 8)), new(Name, "bau",p(2, 8),p(2, 11)),
+                new(Dedent, empty,p(2, 11),p(2, 11)), new(Dedent, empty,p(2, 11),p(2, 11)),
                 eof(2, 11),
             ]),
             ["OneDedent"] = ("""
@@ -399,9 +399,9 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Dedent, empty, (2, 0), (2, 0)), new(Name, "bau", (2, 0), (2, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Dedent, empty,p(2, 0),p(2, 0)), new(Name, "bau",p(2, 0),p(2, 3)),
                 eof(2, 3),
             ]),
             ["TwoDedentSoft"] = ("""
@@ -411,11 +411,11 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)), new(NewLine, "\n", (2, 11), (2, 12)),
-                new(Dedent, empty, (3, 4), (3, 4)), new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Indent, "        ",p(2, 0),p(2, 8)), new(Name, "bau",p(2, 8),p(2, 11)), new(NewLine, "\n",p(2, 11),p(2, 12)),
+                new(Dedent, empty,p(3, 4),p(3, 4)), new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Dedent, empty,p(4, 0),p(4, 0)), new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["TwoDedentHard"] = ("""
@@ -424,10 +424,10 @@ public class TestTokenizer
                     bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)), new(NewLine, "\n", (2, 11), (2, 12)),
-                new(Dedent, empty, (3, 0), (3, 0)), new(Dedent, empty, (3, 0), (3, 0)), new(Name, "bau", (3, 0), (3, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Indent, "        ",p(2, 0),p(2, 8)), new(Name, "bau",p(2, 8),p(2, 11)), new(NewLine, "\n",p(2, 11),p(2, 12)),
+                new(Dedent, empty,p(3, 0),p(3, 0)), new(Dedent, empty,p(3, 0),p(3, 0)), new(Name, "bau",p(3, 0),p(3, 3)),
                 eof(3, 3),
             ]),
             ["IndentAfterDedent"] = ("""
@@ -439,14 +439,14 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Indent, "        ", (2, 0), (2, 8)), new(Name, "bau", (2, 8), (2, 11)), new(NewLine, "\n", (2, 11), (2, 12)),
-                new(Dedent, empty, (3, 4), (3, 4)), new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Indent, "        " /* Re-indent will have all chars from start to valued token */, (4, 0), (4, 8)),
-                new(Name, "bau", (4, 8), (4, 11)), new(NewLine, "\n", (4, 11), (4, 12)),
-                new(Dedent, empty, (5, 4), (5, 4)), new(Name, "bau", (5, 4), (5, 7)), new(NewLine, "\n", (5, 7), (5, 8)),
-                new(Dedent, empty, (6, 0), (6, 0)), new(Name, "bau", (6, 0), (6, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Indent, "        ",p(2, 0),p(2, 8)), new(Name, "bau",p(2, 8),p(2, 11)), new(NewLine, "\n",p(2, 11),p(2, 12)),
+                new(Dedent, empty,p(3, 4),p(3, 4)), new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Indent, "        " /* Re-indent will have all chars from start to valued token */,p(4, 0),p(4, 8)),
+                new(Name, "bau",p(4, 8),p(4, 11)), new(NewLine, "\n",p(4, 11),p(4, 12)),
+                new(Dedent, empty,p(5, 4),p(5, 4)), new(Name, "bau",p(5, 4),p(5, 7)), new(NewLine, "\n",p(5, 7),p(5, 8)),
+                new(Dedent, empty,p(6, 0),p(6, 0)), new(Name, "bau",p(6, 0),p(6, 3)),
                 eof(6, 3),
             ]),
             ["HoldingIndentation"] = ("""
@@ -456,11 +456,11 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Name, "bau", (2, 4), (2, 7)), new(NewLine, "\n", (2, 7), (2, 8)),
-                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Name, "bau",p(2, 4),p(2, 7)), new(NewLine, "\n",p(2, 7),p(2, 8)),
+                new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Dedent, empty,p(4, 0),p(4, 0)), new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["HoldingIndentationWithSpace"] = ("""
@@ -470,10 +470,10 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Dedent, empty,p(4, 0),p(4, 0)), new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["HoldingIndentationWithComment"] = ("""
@@ -483,10 +483,10 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Dedent, empty,p(4, 0),p(4, 0)), new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["HoldingIndentationWithMoreNestedComment"] = ("""
@@ -496,10 +496,10 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Dedent, empty,p(4, 0),p(4, 0)), new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["HoldingIndentationWithLessNestedComment"] = ("""
@@ -509,16 +509,16 @@ public class TestTokenizer
                 bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-                new(Name, "bau", (3, 4), (3, 7)), new(NewLine, "\n", (3, 7), (3, 8)),
-                new(Dedent, empty, (4, 0), (4, 0)), new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+                new(Name, "bau",p(3, 4),p(3, 7)), new(NewLine, "\n",p(3, 7),p(3, 8)),
+                new(Dedent, empty,p(4, 0),p(4, 0)), new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["TabIndents"] = ("bau\n\tbau", false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "\t", (1, 0), (1, 1)), new(Name, "bau", (1, 1), (1, 4)),
-                new(Dedent, empty, (1, 4), (1, 4)), eof(1, 4),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "\t",p(1, 0),p(1, 1)), new(Name, "bau",p(1, 1),p(1, 4)),
+                new(Dedent, empty,p(1, 4),p(1, 4)), eof(1, 4),
             ]),
             // No tests with form-feed, because in Python reference it's marked as UB
             // but they're supported and interprets as spaces.
@@ -527,15 +527,15 @@ public class TestTokenizer
                     bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "        ", (1, 0), (1, 8)), new(Name, "bau", (1, 8), (1, 11)), new(NewLine, "\n", (1, 11), (1, 12)),
-                new(Dedent, empty, (2, 0), (2, 0)), new(Name, "bau", (2, 0), (2, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "        ",p(1, 0),p(1, 8)), new(Name, "bau",p(1, 8),p(1, 11)), new(NewLine, "\n",p(1, 11),p(1, 12)),
+                new(Dedent, empty,p(2, 0),p(2, 0)), new(Name, "bau",p(2, 0),p(2, 3)),
                 eof(2, 3),
             ]),
             ["MixedIndents"] = ("bau\n\t  bau\nbau", false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Indent, "\t  ", (1, 0), (1, 3)), new(Name, "bau", (1, 3), (1, 6)), new(NewLine, "\n", (1, 6), (1, 7)),
-                new(Dedent, empty, (2, 0), (2, 0)), new(Name, "bau", (2, 0), (2, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Indent, "\t  ",p(1, 0),p(1, 3)), new(Name, "bau",p(1, 3),p(1, 6)), new(NewLine, "\n",p(1, 6),p(1, 7)),
+                new(Dedent, empty,p(2, 0),p(2, 0)), new(Name, "bau",p(2, 0),p(2, 3)),
                 eof(2, 3),
             ]),
             ["Continuation_IndentDoesNotChanges"] = ("""
@@ -546,11 +546,11 @@ public class TestTokenizer
             bau
             bau
             """, false, [
-            new(Name, "bau", (0, 0), (0, 3)),
-            new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-            new(Indent, "    ", (3, 0), (3, 4)), new(Name, "bau", (3, 4), (3, 7)),
-            new(Name, "bau", (4, 0), (4, 3)), new(NewLine, "\n", (4, 3), (4,4)),
-            new(Dedent, empty, (5,0), (5,0)), new(Name, "bau", (5,0), (5, 3)),
+            new(Name, "bau",p(0, 0),p(0, 3)),
+            new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+            new(Indent, "    ",p(3, 0),p(3, 4)), new(Name, "bau",p(3, 4),p(3, 7)),
+            new(Name, "bau",p(4, 0),p(4, 3)), new(NewLine, "\n",p(4, 3),p(4,4)),
+            new(Dedent, empty,p(5,0),p(5,0)), new(Name, "bau",p(5,0),p(5, 3)),
             eof(5, 3),
             ]),
             ["Continuation_NewLineDoesNotGenerates"] = ("""
@@ -559,8 +559,8 @@ public class TestTokenizer
             \
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)),
-                new(Name, "bau", (3, 0), (3, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)),
+                new(Name, "bau",p(3, 0),p(3, 3)),
                 eof(3, 3),
             ]),
             ["ContinuationTrivia_IndentDoesNotChanges"] = ("""
@@ -571,13 +571,13 @@ public class TestTokenizer
             bau
             bau
             """, true, [
-            new(Name, "bau", (0, 0), (0, 3)), new(BackSlash, "\\", (0, 3), (0, 4)), new(TriviaNewLine, "\n", (0, 4), (0, 5)),
-            new(WhiteSpace, "    ", (1, 0), (1, 4)), new(Name, "bau", (1, 4), (1, 7)), new(NewLine, "\n", (1, 7), (1, 8)),
-            new(TriviaNewLine, "\n", (2, 0), (2, 1)),
-            new(Indent, "    ", (3, 0), (3, 4)), new(Name, "bau", (3, 4), (3, 7)), new(BackSlash, "\\", (3, 7), (3, 8)),
-                    new(TriviaNewLine, "\n", (3, 8), (3, 9)),
-            new(Name, "bau", (4, 0), (4, 3)), new(NewLine, "\n", (4, 3), (4,4)),
-            new(Dedent, empty, (5,0), (5,0)), new(Name, "bau", (5,0), (5, 3)),
+            new(Name, "bau",p(0, 0),p(0, 3)), new(BackSlash, "\\",p(0, 3),p(0, 4)), new(TriviaNewLine, "\n",p(0, 4),p(0, 5)),
+            new(WhiteSpace, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
+            new(TriviaNewLine, "\n",p(2, 0),p(2, 1)),
+            new(Indent, "    ",p(3, 0),p(3, 4)), new(Name, "bau",p(3, 4),p(3, 7)), new(BackSlash, "\\",p(3, 7),p(3, 8)),
+                    new(TriviaNewLine, "\n",p(3, 8),p(3, 9)),
+            new(Name, "bau",p(4, 0),p(4, 3)), new(NewLine, "\n",p(4, 3),p(4,4)),
+            new(Dedent, empty,p(5,0),p(5,0)), new(Name, "bau",p(5,0),p(5, 3)),
             eof(5, 3),
             ]),
             ["ContinuationTrivia_NewLineDoesNotGenerates"] = ("""
@@ -586,28 +586,28 @@ public class TestTokenizer
             \
             bau
             """, true, [
-                new(Name, "bau", (0, 0), (0, 3)), new(BackSlash, "\\", (0, 3), (0, 4)), new(TriviaNewLine, "\n", (0, 4), (0, 5)),
-                new(BackSlash, "\\", (1, 0), (1, 1)), new(TriviaNewLine, "\n", (1, 1), (1, 2)),
-                new(BackSlash, "\\", (2, 0), (2, 1)), new(TriviaNewLine, "\n", (2, 1), (2, 2)),
-                new(Name, "bau", (3, 0), (3, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(BackSlash, "\\",p(0, 3),p(0, 4)), new(TriviaNewLine, "\n",p(0, 4),p(0, 5)),
+                new(BackSlash, "\\",p(1, 0),p(1, 1)), new(TriviaNewLine, "\n",p(1, 1),p(1, 2)),
+                new(BackSlash, "\\",p(2, 0),p(2, 1)), new(TriviaNewLine, "\n",p(2, 1),p(2, 2)),
+                new(Name, "bau",p(3, 0),p(3, 3)),
                 eof(3, 3),
             ]),
             ["LineFeed_LF"] = ("bau\nbau", false, [
-                new(Name, "bau", (0, 0), (0, 3)),
-                new(NewLine, "\n", (0, 3), (0, 4)),
-                new(Name, "bau", (1, 0), (1, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)),
+                new(NewLine, "\n",p(0, 3),p(0, 4)),
+                new(Name, "bau",p(1, 0),p(1, 3)),
                 eof(1, 3),
             ]),
             ["LineFeed_CR"] = ("bau\rbau", false, [
-                new(Name, "bau", (0, 0), (0, 3)),
-                new(NewLine, "\r", (0, 3), (0, 4)),
-                new(Name, "bau", (1, 0), (1, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)),
+                new(NewLine, "\r",p(0, 3),p(0, 4)),
+                new(Name, "bau",p(1, 0),p(1, 3)),
                 eof(1, 3),
             ]),
             ["LineFeed_CRLF"] = ("bau\r\nbau", false, [
-                new(Name, "bau", (0, 0), (0, 3)),
-                new(NewLine, "\r\n", (0, 3), (0, 5)),
-                new(Name, "bau", (1, 0), (1, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)),
+                new(NewLine, "\r\n",p(0, 3),p(0, 5)),
+                new(Name, "bau",p(1, 0),p(1, 3)),
                 eof(1, 3),
             ]),
             ["Comments"] = ("""
@@ -617,10 +617,10 @@ public class TestTokenizer
             # bau
             bau
             """, false, [
-                new(Name, "bau", (0, 0), (0, 3)), new(NewLine, "\n", (0, 17), (0, 18)),
-                new(Name, "bau", (1, 0), (1, 3)), new(NewLine, "\n", (1, 13), (1, 14)),
-                new(Name, "bau", (2, 0), (2, 3)), new(NewLine, "\n", (2, 15), (2, 16)),
-                new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(NewLine, "\n",p(0, 17),p(0, 18)),
+                new(Name, "bau",p(1, 0),p(1, 3)), new(NewLine, "\n",p(1, 13),p(1, 14)),
+                new(Name, "bau",p(2, 0),p(2, 3)), new(NewLine, "\n",p(2, 15),p(2, 16)),
+                new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
             ["CommentsTrivia"] = ("""
@@ -630,14 +630,14 @@ public class TestTokenizer
             # bau
             bau
             """, true, [
-                new(Name, "bau", (0, 0), (0, 3)), new(WhiteSpace, " ", (0, 3), (0, 4)),
-                        new(Comment, "# bau bau bau", (0, 4), (0, 17)), new(NewLine, "\n", (0, 17), (0, 18)),
-                new(Name, "bau", (1, 0), (1, 3)), new(WhiteSpace, " ", (1, 3), (1, 4)),
-                        new(Comment, "# bababau", (1, 4), (1, 13)), new(NewLine, "\n", (1, 13), (1, 14)),
-                new(Name, "bau", (2, 0), (2, 3)), new(WhiteSpace, " ", (2, 3), (2, 4)),
-                        new(Comment, "# bau~ bau~", (2, 4), (2, 15)), new(NewLine, "\n", (2, 15), (2, 16)),
-                new(Comment, "# bau", (3, 0), (3, 5)), new(TriviaNewLine, "\n", (3, 5), (3, 6)),
-                new(Name, "bau", (4, 0), (4, 3)),
+                new(Name, "bau",p(0, 0),p(0, 3)), new(WhiteSpace, " ",p(0, 3),p(0, 4)),
+                        new(Comment, "# bau bau bau",p(0, 4),p(0, 17)), new(NewLine, "\n",p(0, 17),p(0, 18)),
+                new(Name, "bau",p(1, 0),p(1, 3)), new(WhiteSpace, " ",p(1, 3),p(1, 4)),
+                        new(Comment, "# bababau",p(1, 4),p(1, 13)), new(NewLine, "\n",p(1, 13),p(1, 14)),
+                new(Name, "bau",p(2, 0),p(2, 3)), new(WhiteSpace, " ",p(2, 3),p(2, 4)),
+                        new(Comment, "# bau~ bau~",p(2, 4),p(2, 15)), new(NewLine, "\n",p(2, 15),p(2, 16)),
+                new(Comment, "# bau",p(3, 0),p(3, 5)), new(TriviaNewLine, "\n",p(3, 5),p(3, 6)),
+                new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
         };
@@ -689,9 +689,9 @@ public class TestTokenizer
             ["Number_StopEatingInvalidOnNonAsciiLetter"] =
             ("12baubau+bau", dec_inv,
             [
-                new(Error, "12baubau", (0, 0), (0, 8)),
-                new(Plus, "+", (0, 8),(0, 9)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "12baubau",p(0, 0),p(0, 8)),
+                new(Plus, "+", p(0, 8), p(0, 9)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             // Valid token after error for make sure that error recovery works fine.
@@ -699,281 +699,281 @@ public class TestTokenizer
             ["Number_DoubleUnderscore_Integer"] =
             ("123__123 bau", dec_inv,
             [
-                new(Error, "123__123", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123__123",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_TrailingUnderscore_Integer"] =
             ("1231234_ bau", dec_inv,
             [
-                new(Error, "1231234_", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "1231234_",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidTrailingChar_Integer"] =
             ("1231234i bau", dec_inv,
              [
-                new(Error, "1231234i", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "1231234i",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidChar_Integer"] =
             ("123bb123 bau", dec_inv,
             [
-                new(Error, "123bb123", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123bb123",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_DoubleUnderscore_HexInt"] =
             ("0xff__ff bau", hex_inv,
             [
-                new(Error, "0xff__ff", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0xff__ff",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_TrailingUnderscore_HexInt"] =
             ("0xfafa0_ bau", hex_inv,
             [
-                new(Error, "0xfafa0_", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0xfafa0_",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidTrailingChar_HexInt"] =
             ("0xfaFa0h bau", hex_inv,
             [
-                new(Error, "0xfaFa0h", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0xfaFa0h",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidChar_HexInt"] =
             ("0xfggFa0 bau", hex_inv,
             [
-                new(Error, "0xfggFa0", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0xfggFa0",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_DoubleUnderscore_OctInt"] =
             ("0o77__33 bau", oct_inv,
             [
-                new(Error, "0o77__33", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0o77__33",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_TrailingUnderscore_OctInt"] =
             ("0o12333_ bau", oct_inv,
             [
-                new(Error, "0o12333_", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0o12333_",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidTrailingChar_OctInt"] =
             ("0o12312e bau", oct_inv,
             [
-                new(Error, "0o12312e", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0o12312e",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidChar_OctInt"] =
             ("0o138813 bau", oct_inv,
             [
-                new(Error, "0o138813", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0o138813",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_LeadingZerosInInteger"] =
             ("00001234 bau", "Leading zeros in decimal integer are not permitted; use an '0o' prefix for octal numbers.",
             [
-                new(Error, "00001234", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "00001234",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_DoubleUnderscore_BinInt"] =
             ("0b11__00 bau", bin_inv,
             [
-                new(Error, "0b11__00", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0b11__00",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_TrailingUnderscore_BinInt"] =
             ("0b10101_ bau", bin_inv,
             [
-                new(Error, "0b10101_", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0b10101_",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidTrailingChar_BinInt"] =
             ("0b10101e bau", bin_inv,
             [
-                new(Error, "0b10101e", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0b10101e",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_InvalidChar_BinInt"] =
             ("0b101020 bau", bin_inv,
             [
-                new(Error, "0b101020", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "0b101020",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             // Float
             ["Number_Float_DoubleUnderscore"] =
             ("12.12__1 bau", dec_inv,
             [
-                new(Error, "12.12__1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "12.12__1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreBeforeDot"] =
             ("123_.123 bau", dec_inv,
             [
-                new(Error, "123_.123", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123_.123",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_TrailingUnderscore"] =
             ("123.123_ bau", dec_inv,
             [
-                new(Error, "123.123_", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.123_",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_InvalidChar"] =
             ("12a.1a23 bau", dec_inv,
             [
-                new(Error, "12a.1a23", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "12a.1a23",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_InvalidTrailingChar"] =
             ("123.123a bau", dec_inv,
             [
-                new(Error, "123.123a", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.123a",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_EmptyAfterE"] =
             ("123.233e bau", dec_inv,
             [
-                new(Error, "123.233e", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.233e",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreBeforeE"] =
             ("13.23_e1 bau", dec_inv,
             [
-                new(Error, "13.23_e1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "13.23_e1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreAfterE"] =
             ("13.23e_1 bau", dec_inv,
             [
-                new(Error, "13.23e_1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "13.23e_1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreBeforePlus"] = (
                 "1.23e_+1 bau", dec_inv,
             [
-                new(Error, "1.23e_+1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "1.23e_+1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreAfterPlus"] =
             ("1.23e+_1 bau", dec_inv,
             [
-                new(Error, "1.23e+_1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "1.23e+_1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreBeforeMinus"] =
             ("1.23e_-1 bau", dec_inv,
             [
-                new(Error, "1.23e_-1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "1.23e_-1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Float_UnderscoreAfterMinus"] =
             ("1.23e-_1 bau", dec_inv,
             [
-                new(Error, "1.23e-_1", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "1.23e-_1",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Imaginary_UnderscoreBeforeJ"] =
             ("123.13_j bau", img_inv,
             [
-                new(Error, "123.13_j", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.13_j",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Imaginary_UnderscoreAfterJ"] =
             ("123.13j_ bau", img_inv,
             [
-                new(Error, "123.13j_", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.13j_",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Imaginary_InvalidCharBeforeJ"] =
             ("123.13fj bau", img_inv,
             [
-                new(Error, "123.13fj", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.13fj",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["Number_Imaginary_InvalidCharAfterJ"] =
             ("123.13jf bau", img_inv,
             [
-                new(Error, "123.13jf", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "123.13jf",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             // Strings (F-/T-strings are separated)
             ["String_PrefixUR"] =
             ("ur\"bBau\" bau", string.Format(str_prf, "r", "u"),
             [
-                new(Error, "ur\"bBau\"", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "ur\"bBau\"",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["String_PrefixUB"] =
             ("ub\"bBau\" bau", string.Format(str_prf, "b", "u"),
             [
-                new(Error, "ub\"bBau\"", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "ub\"bBau\"",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
             ["String_UnclosedOnLine_SingleQuote"] =
             // After unclosed string don't eat new line character
             ("\"baubau\nbau", unterminated,
             [
-                new(Error, "\"baubau", (0, 0), (0, 7)), new(NewLine, "\n", (0, 7), (0, 8)),
-                new(Name, "bau", (1, 0), (1, 3)),
+                new(Error, "\"baubau",p(0, 0),p(0, 7)), new(NewLine, "\n",p(0, 7),p(0, 8)),
+                new(Name, "bau",p(1, 0),p(1, 3)),
                 eof(1, 3),
             ]),
             ["String_UnclosedOnFile_SingleQuote"] =
             ("\"baubau", unterminated,
             [
-                new(Error, "\"baubau", (0, 0), (0, 7)),
+                new(Error, "\"baubau",p(0, 0),p(0, 7)),
                 eof(0, 7),
             ]),
             ["String_UnclosedOnFile_TripleQuote_SingleLine"] =
             ("'''baubaubaubaubau", unterminated,
             [
-                new(Error, "'''baubaubaubaubau", (0, 0), (0, 18)),
+                new(Error, "'''baubaubaubaubau",p(0, 0),p(0, 18)),
                 eof(0, 18),
             ]),
             ["String_UnclosedOnFile_TripleQuote_MultiLine"] =
             ("'''bauba\nbauba\nbau", unterminated,
             [
-                new(Error, "'''bauba\nbauba\nbau", (0, 0), (2, 3)),
+                new(Error, "'''bauba\nbauba\nbau",p(0, 0),p(2, 3)),
                 eof(2, 3),
             ]),
             ["String_UnclosedOnFile_EscapedQuote"] =
             // '"bau\"bau'
             ("\"bau\\\"bau", "Unterminated string literal. Perhaps you escaped the end quote?",
             [
-                new(Error, "\"bau\\\"bau", (0, 0), (0, 9)),
+                new(Error, "\"bau\\\"bau",p(0, 0),p(0, 9)),
                 eof(0, 9),
             ]),
         };
@@ -983,8 +983,8 @@ public class TestTokenizer
             [""] =
             (" bau", _inv,
             [
-                new(Error, "", (0, 0), (0, 8)),
-                new(Name, "bau", (0, 9), (0, 12)),
+                new(Error, "",p(0, 0),p(0, 8)),
+                new(Name, "bau",p(0, 9),p(0, 12)),
                 eof(0, 12),
             ]),
     */
@@ -1073,7 +1073,9 @@ public class TestTokenizer
     }
 
     private static Token eof(int line, int col) =>
-        new(EndOfFile, empty, (line, col), (line, col));
+        new(EndOfFile, empty, new(line, col), new(line, col));
+
+    private static TokenPosition p(int line, int column) => new(line, column);
 
     private static readonly ReadOnlyMemory<char> empty = ReadOnlyMemory<char>.Empty;
 }
