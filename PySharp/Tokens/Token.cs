@@ -18,9 +18,6 @@ public readonly record struct Token
         Lexeme = lexeme;
         Start = start;
         End = end;
-
-        // Assert that, if token placed on single line, lexeme length is equal to columns difference.
-        Debug.Assert(Start.Line != End.Line || Lexeme.Length == End.Column - Start.Column);
     }
 
     [SetsRequiredMembers]

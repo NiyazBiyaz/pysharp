@@ -193,10 +193,16 @@ public class Tokenizer(string source, bool saveTrivia)
         }
 
         if (column != indentStack.Peek())
+        {
+            pendingIndentation = 0;
             return emptyErrorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.");
+        }
 
         if (alternateColumn != alternateIndentStack.Peek())
+        {
+            pendingIndentation = 0;
             return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
+        }
 
         return null;
     }

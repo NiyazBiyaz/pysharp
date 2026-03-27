@@ -978,17 +978,6 @@ public class TestTokenizer
             ]),
         };
 
-    /*
-        Когда в тебя стреляют, самое главное - это не двигаться. Тогда в тебя будет сложнее попасть.
-            [""] =
-            (" bau", _inv,
-            [
-                new(Error, "",p(0, 0),p(0, 8)),
-                new(Name, "bau",p(0, 9),p(0, 12)),
-                eof(0, 12),
-            ]),
-    */
-
     [Theory]
     [InlineData("Number_StopEatingInvalidOnNonAsciiLetter")]
     [InlineData("Number_DoubleUnderscore_Integer")]
@@ -1041,6 +1030,69 @@ public class TestTokenizer
 
         Assert.Equal(TokenizerError.InvalidLiteral, tokenizer.Error);
         Assert.Equal(message, tokenizer.ErrorMessage);
+    }
+
+    private const string tabs = "Tabs and spaces mixing is not allowed.";
+
+    private static readonly Dictionary<string, (string code, string message, List<Token> expected)> indentation_errors_test_cases =
+        new()
+        {
+            ["IndentationMismatch"] = ("""
+            bau
+                    bau
+                bau
+            """,
+            "Can dedent only on existing indentation level.",
+            [
+                new(Name, "bau", p(0, 0), p(0, 3)), new(NewLine, "\n", p(0, 3), p(0, 4)),
+                new(Indent, "        ", p(1, 0), p(1, 8)), new(Name, "bau", p(1, 8), p(1, 11)), new(NewLine, "\n", p(1, 11), p(1, 12)),
+                new(Error, empty, p(2, 0), p(2, 4)), new(Name, "bau", p(2, 4), p(2, 7)),
+                // Error token replaces Dedent, so we releasing it is not needed.
+                eof(2, 7),
+            ]),
+            ["AlternateIndentOnSameLevel"] = ("bau\n        bau\n\tbau", tabs,
+            [
+                new(Name, "bau", p(0, 0), p(0, 3)), new(NewLine, "\n", p(0, 3), p(0, 4)),
+                new(Indent, "        ", p(1, 0), p(1, 8)), new(Name, "bau", p(1, 8), p(1, 11)), new(NewLine, "\n", p(1, 11), p(1, 12)),
+                new(Error, empty, p(2, 0), p(2, 1)), new(Name, "bau", p(2, 1), p(2, 4)),
+                new(Dedent, empty, p(2, 4), p(2, 4)), // Release indentation at the EOF.
+                eof(2, 4),
+            ]),
+            ["AlternateIndentOnReducingLevel"] = ("bau\n        bau\n            bau\n\tbau", tabs,
+            [
+                new(Name, "bau", p(0, 0), p(0, 3)), new(NewLine, "\n", p(0, 3), p(0, 4)),
+                new(Indent, "        ", p(1, 0), p(1, 8)), new(Name, "bau", p(1, 8), p(1, 11)), new(NewLine, "\n", p(1, 11), p(1, 12)),
+                new(Indent, "            ", p(2, 0), p(2, 12)), new(Name, "bau", p(2, 12), p(2, 15)), new(NewLine, "\n", p(2, 15), p(2, 16)),
+                new(Error, empty, p(3, 0), p(3, 1)), new(Name, "bau", p(3, 1), p(3, 4)),
+                new(Dedent, empty, p(3, 4), p(3, 4)), // Release indentation at the EOF.
+                eof(3, 4),
+            ]),
+            ["AlternateIndentOnIncreaseLevel"] = ("bau\n    bau\n\tbau", tabs,
+            [
+                new(Name, "bau", p(0, 0), p(0, 3)), new(NewLine, "\n", p(0, 3), p(0, 4)),
+                new(Indent, "    ", p(1, 0), p(1, 4)), new(Name, "bau", p(1, 4), p(1, 7)), new(NewLine, "\n", p(1, 7), p(1, 8)),
+                new(Error, empty, p(2, 0), p(2, 1)), new(Name, "bau", p(2, 1), p(2, 4)),
+                new(Dedent, empty, p(2, 4), p(2, 4)), // Release indentation at the EOF.
+                eof(2, 4)
+            ]),
+        };
+
+    [Theory]
+    [InlineData("IndentationMismatch")]
+    [InlineData("AlternateIndentOnSameLevel")]
+    [InlineData("AlternateIndentOnReducingLevel")]
+    [InlineData("AlternateIndentOnIncreaseLevel")]
+    public void TestIndentationErrors(string @case)
+    {
+        Debug.Assert(indentation_errors_test_cases.ContainsKey(@case));
+        (string code, string message, var expected) = indentation_errors_test_cases[@case];
+
+        Debugger.Break();
+
+        var tok = test(code, expected);
+
+        Assert.Equal(TokenizerError.IndentationError, tok.Error);
+        Assert.Equal(message, tok.ErrorMessage);
     }
 
     private static Tokenizer test(string code, IList<Token> expected, bool trivia = false)
