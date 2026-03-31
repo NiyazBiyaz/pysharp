@@ -1,4 +1,5 @@
-﻿using PySharp.Tokens;
+﻿using System.Text;
+using PySharp.Tokens;
 
 namespace PySharp;
 
@@ -26,7 +27,9 @@ public static class Program
 
             string outPath = arg + ".tokens";
 
-            var tokenizer = new Tokenizer(source, true);
+            var sync = SynchronizationPoint.ClearPoint(new StringBuffer(source));
+
+            var tokenizer = new Tokenizer(sync, true);
             List<Token> tokens = [];
 
             var startTime = DateTime.UtcNow;
@@ -39,7 +42,7 @@ public static class Program
             var file = File.CreateText(outPath);
             file.NewLine = "\n";
             foreach (var token in tokens)
-                file.WriteLine(token);
+                file.WriteLine(token.MakeItNoice(120));
 
             file.Flush();
             file.Close();
@@ -54,7 +57,7 @@ public static class Program
     {
         Console.CancelKeyPress += (_, _) =>
         {
-            Console.WriteLine("Bau!");
+            Console.WriteLine("exit\nBau!");
         };
 
         string? input;
@@ -65,12 +68,14 @@ public static class Program
 
             if (input is string source && !source.SequenceEqual("exit"))
             {
-                var tokenizer = new Tokenizer(source, false);
+                var sync = SynchronizationPoint.ClearPoint(new StringBuffer(source));
+
+                var tokenizer = new Tokenizer(sync, false);
 
                 while (!tokenizer.ShouldStop)
                 {
                     var tok = tokenizer.ReadNext();
-                    Console.WriteLine(tok);
+                    Console.WriteLine(tok.MakeItNoice(Console.WindowWidth));
                 }
             }
             else
@@ -81,5 +86,45 @@ public static class Program
         }
 
         Console.WriteLine("\nBau!");
+    }
+}
+
+public static class TokenExtensions
+{
+    extension(Token token)
+    {
+        public string MakeItNoice(int width)
+        {
+            StringBuilder builder = new(width);
+
+            builder.Append(token.Type);
+
+            while (builder.Length < 20)
+            {
+                builder.Append(' ');
+            }
+
+            if (token.Lexeme.Length > 0)
+            {
+                builder.Append($"'{token.Lexeme.ToString().Replace("\n", "\\n").Replace("\r", "\\r")}'");
+            }
+
+            builder.Append("        ");
+
+            string start = $"Start: {token.Start.Line},{token.Start.Column}";
+            string end = $"End: {token.End.Line},{token.End.Column}";
+            int together = start.Length + end.Length + 1;
+
+            while (together + builder.Length + 1 < width)
+            {
+                builder.Append(' ');
+            }
+
+            builder.Append(start);
+            builder.Append(' ');
+            builder.Append(end);
+
+            return builder.ToString();
+        }
     }
 }

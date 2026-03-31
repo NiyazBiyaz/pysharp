@@ -2,29 +2,17 @@ using System.Diagnostics;
 
 namespace PySharp.Tokens;
 
-[DebuggerDisplay("next={nextChar.ToString()} ln={lineNumber} cl={currentColumnOffset} lex={source[startPos..currentPos]} len={currentPos - startPos}")]
-public class Tokenizer(string source, bool saveTrivia)
+public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTokenizer(syncPoint, saveTrivia)
 {
-    private readonly string source = source;
-    private readonly bool saveTrivia = saveTrivia;
-
-    private int currentPos = 0;
-    private int startPos = 0;
     private bool atLineBeginning = true;
-    private int lineNumber = 0;
-    private int startLineNumber = -1;
-
-    private int startColumnOffset = 0;
-    private int currentColumnOffset = 0;
 
     private bool isBlankLine = false;
     private bool isBlankLineWithComment = false;
     private bool atContinuedLine = false;
 
-    private readonly Stack<int> indentStack = new([0]);
-    private readonly Stack<int> alternateIndentStack = new([0]);
+    private readonly Stack<int> indentStack = syncPoint.IndentStack;
+    private readonly Stack<int> alternateIndentStack = syncPoint.AltIndentStack;
 
-    private const char eof = '\0';
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
     private const string invalid_dec = "Invalid decimal literal.";
@@ -53,49 +41,40 @@ public class Tokenizer(string source, bool saveTrivia)
         }
     } = 0;
 
-    /// <summary>
-    /// Non-inclusive end of the current token's lexeme.
-    /// </summary>
-    private char nextChar => lookAt(currentPos, 0);
-    private char nextNextChar => lookAt(currentPos, 1);
-
-    public bool ShouldStop { get; private set; } = false;
-
-    public TokenizerError Error = TokenizerError.NoError;
-    public string? ErrorMessage = null;
-
     public Token ReadNext()
     {
-        resetStart();
-        Token? maybeToken = tryNextLine() ?? tryIndentation();
+        var span = Source.Span;
+
+        ResetStart();
+        Token? maybeToken = tryNextLine(span) ?? tryIndentation();
         if (maybeToken is Token token)
             return token;
 
-        resetStart();
-        maybeToken = skipAndTryWhitespace();
+        ResetStart();
+        maybeToken = skipAndTryWhitespace(span);
         if (maybeToken is Token whiteSpace)
             return whiteSpace;
 
-        resetStart();
-        maybeToken = tryComment();
+        ResetStart();
+        maybeToken = tryComment(span);
         if (maybeToken is Token comment)
             return comment;
 
-        resetStart();
+        ResetStart();
         Token definitelyToken =
             tryEof() ??
-            tryName() ??
-            tryLineFeed() ??
-            tryDotOrFraction() ??
-            tryNumber() ??
-            tryString() ??
-            tryLineContinuation() ??
-            readOperatorOrErrorToken();
+            tryName(span) ??
+            tryLineFeed(span) ??
+            tryDotOrFraction(span) ??
+            tryNumber(span) ??
+            tryString(span) ??
+            tryLineContinuation(span) ??
+            readOperatorOrErrorToken(span);
 
         return definitelyToken;
     }
 
-    private Token? tryNextLine()
+    private Token? tryNextLine(ReadOnlySpan<char> span)
     {
         if (atLineBeginning)
         {
@@ -114,22 +93,22 @@ public class Tokenizer(string source, bool saveTrivia)
 
             while (true)
             {
-                if (nextChar == ' ' || nextChar == '\f')
+                if (NextChar == ' ' || NextChar == '\f')
                 {
                     column++;
                     alternateColumn++;
-                    moveNext();
+                    Advance(span);
                 }
-                else if (nextChar == '\t')
+                else if (NextChar == '\t')
                 {
                     column = (column / tab_size + 1) * tab_size;
                     alternateColumn = (alternateColumn / alter_tab_size + 1) * alter_tab_size;
-                    moveNext();
+                    Advance(span);
                 }
-                else if (nextChar == '\\')
+                else if (NextChar == '\\')
                 {
                     continuationColumn = continuationColumn != 0 ? continuationColumn : column;
-                    var lineCont = readLineContinuation();
+                    var lineCont = readLineContinuation(span);
                     if (lineCont.Type is TokenType.Error)
                         return lineCont;
                 }
@@ -137,7 +116,7 @@ public class Tokenizer(string source, bool saveTrivia)
                     break;
             }
 
-            isBlankLine = nextChar == '#' || nextChar == '\n';
+            isBlankLine = NextChar == '#' || NextChar == '\n';
 
             if (!isBlankLine)
             {
@@ -147,12 +126,12 @@ public class Tokenizer(string source, bool saveTrivia)
                 if (column == indentStack.Peek())
                 {
                     if (alternateColumn != alternateIndentStack.Peek())
-                        return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
+                        return ErrorToken(TokenizerError.IndentationError, tab_space_err_msg, true);
                 }
                 else if (column > indentStack.Peek())
                 {
                     if (alternateColumn <= alternateIndentStack.Peek())
-                        return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
+                        return ErrorToken(TokenizerError.IndentationError, tab_space_err_msg, true);
 
                     pendingIndentation++;
                     indentStack.Push(column);
@@ -195,13 +174,13 @@ public class Tokenizer(string source, bool saveTrivia)
         if (column != indentStack.Peek())
         {
             pendingIndentation = 0;
-            return emptyErrorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.");
+            return ErrorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.", true);
         }
 
         if (alternateColumn != alternateIndentStack.Peek())
         {
             pendingIndentation = 0;
-            return emptyErrorToken(TokenizerError.IndentationError, tab_space_err_msg);
+            return ErrorToken(TokenizerError.IndentationError, tab_space_err_msg, true);
         }
 
         return null;
@@ -213,48 +192,46 @@ public class Tokenizer(string source, bool saveTrivia)
         {
             pendingIndentation++;
             // Dedent tokens are empty with zero-width.
-            resetStart();
-            return createEmptyToken(TokenType.Dedent);
+            ResetStart();
+            return CreateToken(TokenType.Dedent, true);
         }
         else if (pendingIndentation > 0)
         {
             pendingIndentation--;
-            return createValuedToken(TokenType.Indent);
+            return CreateToken(TokenType.Indent);
         }
 
         return null;
     }
 
-    private Token? skipAndTryWhitespace()
+    private Token? skipAndTryWhitespace(ReadOnlySpan<char> span)
     {
-        while (nextChar == ' ' || nextChar == '\t' || nextChar == '\f')
-            moveNext();
+        bool hasWhiteSpace = false;
+        while (NextChar == ' ' || NextChar == '\t' || NextChar == '\f')
+        {
+            hasWhiteSpace = true;
+            Advance(span);
+        }
 
         // TODO: probably need to separate types of whitespace.
-        if (saveTrivia && currentPos != startPos)
-            return createValuedToken(TokenType.WhiteSpace);
+        if (SaveTrivia && hasWhiteSpace)
+            return CreateToken(TokenType.WhiteSpace);
 
         return null;
     }
 
-    private void resetStart()
+    private Token? tryComment(ReadOnlySpan<char> span)
     {
-        startPos = currentPos;
-        startColumnOffset = currentColumnOffset;
-    }
-
-    private Token? tryComment()
-    {
-        if (nextChar == '#')
+        if (NextChar == '#')
         {
             // Skip while not on the line feed.
-            while (nextChar != '\n')
-                moveNext();
+            while (NextChar != '\n')
+                Advance(span);
 
-            if (saveTrivia)
+            if (SaveTrivia)
             {
                 isBlankLineWithComment = isBlankLine;
-                return createValuedToken(TokenType.Comment);
+                return CreateToken(TokenType.Comment);
             }
         }
 
@@ -263,7 +240,7 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private Token? tryEof()
     {
-        if (nextChar == eof)
+        if (NextChar == Eof)
         {
             // If indentation stack is not empty, enqueue dedent and return it.
             if (indentStack.Count > 1)
@@ -274,106 +251,107 @@ public class Tokenizer(string source, bool saveTrivia)
 
             // Request stop and return EOF.
             ShouldStop = true;
-            return createEmptyToken(TokenType.EndOfFile);
+            return CreateToken(TokenType.EndOfFile);
         }
 
         return null;
     }
 
-    private Token? tryName()
+    private Token? tryName(ReadOnlySpan<char> span)
     {
-        if (isPotentialNameStart(nextChar))
+        if (isPotentialNameStart(NextChar))
         {
             int iters = 0;
             bool sawB = false, sawR = false, sawU = false, sawF = false, sawT = false;
             // Try to read prefixed string.
             while (iters < 2)
             {
-                if (!sawB && (nextChar == 'b' || nextChar == 'B'))
+                if (!sawB && (NextChar == 'b' || NextChar == 'B'))
                     sawB = true;
 
-                else if (!sawR && (nextChar == 'r' || nextChar == 'R'))
+                else if (!sawR && (NextChar == 'r' || NextChar == 'R'))
                     sawR = true;
 
-                else if (!sawU && (nextChar == 'u' || nextChar == 'U'))
+                else if (!sawU && (NextChar == 'u' || NextChar == 'U'))
                     sawU = true;
 
-                else if (!sawF && (nextChar == 'f' || nextChar == 'F'))
+                else if (!sawF && (NextChar == 'f' || NextChar == 'F'))
                     sawF = true;
 
-                else if (!sawF && (nextChar == 't' || nextChar == 'T'))
+                else if (!sawF && (NextChar == 't' || NextChar == 'T'))
                     sawT = true;
 
                 else
                     break;
 
-                moveNext();
+                Advance(span);
                 iters++;
 
-                if (nextChar == '\'' || nextChar == '"')
+                if (NextChar == '\'' || NextChar == '"')
                 {
                     if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
                     {
                         if (!sawF && !sawT)
                             // If it's not partial string, read string and put it in error token.
-                            return readString(errMsg);
+                            return readString(span, errMsg);
                         else
+                            // TODO: Error recovery
                             throw new NotImplementedException();
                     }
 
                     if (sawF || sawT)
-                        return readPartialStringStart(sawF ? PartialStringType.FormatString : PartialStringType.TemplateString, sawR);
+                        return readPartialStringStart(sawF ? StringType.Format : StringType.Template);
 
-                    return readString();
+                    return readString(span);
                 }
             }
 
-            while (isPotentialNameChar(nextChar))
-                moveNext();
+            while (isPotentialNameChar(NextChar))
+                Advance(span);
 
-            return createValuedToken(TokenType.Name);
+            return CreateToken(TokenType.Name);
         }
 
         return null;
     }
 
-    private Token? tryLineFeed()
+    private Token? tryLineFeed(ReadOnlySpan<char> span)
     {
-        if (nextChar == '\n')
+        if (NextChar == '\n')
         {
             atLineBeginning = true;
-            bool increaseLine = moveNext();
+            bool increaseLine = Advance(span);
             Token tok;
 
             if (isBlankLine || bracketsLevel > 0 || atContinuedLine)
             {
                 // If line is empty, try to save trivia new line.
-                if (saveTrivia)
+                if (SaveTrivia)
                 {
                     if (isBlankLineWithComment)
                         isBlankLineWithComment = false;
-                    tok = createValuedToken(TokenType.TriviaNewLine);
+                    tok = CreateToken(TokenType.TriviaNewLine);
                 }
                 // Or force reading next token (advance line before it).
                 else
                 {
                     if (increaseLine)
-                        advanceLine();
+                        AdvanceLine();
                     return ReadNext();
                 }
             }
             // If line is empty but with comment save trivia.
-            else if (isBlankLineWithComment && saveTrivia)
+            else if (isBlankLineWithComment && SaveTrivia)
             {
                 isBlankLineWithComment = false;
-                tok = createValuedToken(TokenType.TriviaNewLine);
+                tok = CreateToken(TokenType.TriviaNewLine);
             }
             // If we have valued new line
             else
-                tok = createValuedToken(TokenType.NewLine);
+                tok = CreateToken(TokenType.NewLine);
 
             if (increaseLine)
-                advanceLine();
+                AdvanceLine();
 
             return tok;
         }
@@ -381,102 +359,96 @@ public class Tokenizer(string source, bool saveTrivia)
         return null;
     }
 
-    private void advanceLine()
+    private Token? tryDotOrFraction(ReadOnlySpan<char> span)
     {
-        lineNumber++;
-        currentColumnOffset = 0;
-    }
-
-    private Token? tryDotOrFraction()
-    {
-        if (nextChar == '.')
+        if (NextChar == '.')
         {
-            if (char.IsAsciiDigit(nextNextChar))
-                return readDecimalNumber();
+            if (char.IsAsciiDigit(TwoNextChar))
+                return readDecimalNumber(span);
 
-            moveNext();
-            if (nextChar == '.' && nextNextChar == '.')
+            Advance(span);
+            if (NextChar == '.' && TwoNextChar == '.')
             {
-                moveNext();
-                moveNext();
-                return createValuedToken(TokenType.Ellipsis);
+                Advance(span);
+                Advance(span);
+                return CreateToken(TokenType.Ellipsis);
             }
 
-            return createValuedToken(TokenType.Dot);
+            return CreateToken(TokenType.Dot);
         }
 
         return null;
     }
 
-    private Token? tryNumber()
+    private Token? tryNumber(ReadOnlySpan<char> span)
     {
-        if (char.IsAsciiDigit(nextChar))
+        if (char.IsAsciiDigit(NextChar))
         {
-            if (nextChar == '0')
+            if (NextChar == '0')
             {
-                moveNext();
+                Advance(span);
                 // Hexadecimal.
-                if (char.ToLower(nextChar) == 'x')
+                if (char.ToLower(NextChar) == 'x')
                 {
-                    moveNext();
+                    Advance(span);
                     do
                     {
-                        if (nextChar == '_')
+                        if (NextChar == '_')
                         {
-                            if (!char.IsAsciiHexDigit(nextNextChar))
-                                return errorInvalidNumber(NumberKind.Hexadecimal);
+                            if (!char.IsAsciiHexDigit(TwoNextChar))
+                                return errorInvalidNumber(span, NumberKind.Hexadecimal);
                         }
 
                         do
-                            moveNext();
-                        while (char.IsAsciiHexDigit(nextChar));
+                            Advance(span);
+                        while (char.IsAsciiHexDigit(NextChar));
                     }
-                    while (nextChar == '_');
+                    while (NextChar == '_');
 
-                    if (isInvalidEndOfNumber(nextChar))
-                        return errorInvalidNumber(NumberKind.Hexadecimal);
+                    if (isInvalidEndOfNumber(NextChar))
+                        return errorInvalidNumber(span, NumberKind.Hexadecimal);
                 }
                 // Octal.
-                else if (char.ToLower(nextChar) == 'o')
+                else if (char.ToLower(NextChar) == 'o')
                 {
-                    moveNext();
+                    Advance(span);
                     do
                     {
-                        if (nextChar == '_')
+                        if (NextChar == '_')
                         {
-                            if (!isAsciiOctDigit(nextNextChar))
-                                return errorInvalidNumber(NumberKind.Octal);
+                            if (!isAsciiOctDigit(TwoNextChar))
+                                return errorInvalidNumber(span, NumberKind.Octal);
                         }
 
                         do
-                            moveNext();
-                        while (isAsciiOctDigit(nextChar));
+                            Advance(span);
+                        while (isAsciiOctDigit(NextChar));
                     }
-                    while (nextChar == '_');
+                    while (NextChar == '_');
 
-                    if (isInvalidEndOfNumber(nextChar))
-                        return errorInvalidNumber(NumberKind.Octal);
+                    if (isInvalidEndOfNumber(NextChar))
+                        return errorInvalidNumber(span, NumberKind.Octal);
                 }
                 // Binary.
-                else if (char.ToLower(nextChar) == 'b')
+                else if (char.ToLower(NextChar) == 'b')
                 {
-                    moveNext();
+                    Advance(span);
                     do
                     {
-                        if (nextChar == '_')
+                        if (NextChar == '_')
                         {
-                            if (!isAsciiBinDigit(nextNextChar))
-                                return errorInvalidNumber(NumberKind.Binary);
+                            if (!isAsciiBinDigit(TwoNextChar))
+                                return errorInvalidNumber(span, NumberKind.Binary);
                         }
 
                         do
-                            moveNext();
-                        while (isAsciiBinDigit(nextChar));
+                            Advance(span);
+                        while (isAsciiBinDigit(NextChar));
                     }
-                    while (nextChar == '_');
+                    while (NextChar == '_');
 
-                    if (isInvalidEndOfNumber(nextChar))
-                        return errorInvalidNumber(NumberKind.Binary);
+                    if (isInvalidEndOfNumber(NextChar))
+                        return errorInvalidNumber(span, NumberKind.Binary);
                 }
 
                 // Decimal literal with leading zeros.
@@ -484,87 +456,87 @@ public class Tokenizer(string source, bool saveTrivia)
                 {
                     bool nonZeros = false;
 
-                    while (nextChar == '0')
+                    while (NextChar == '0')
                     {
-                        moveNext();
+                        Advance(span);
 
-                        if (nextChar == '_')
+                        if (NextChar == '_')
                         {
-                            moveNext();
-                            if (!char.IsAsciiDigit(nextChar))
-                                return errorInvalidNumber(NumberKind.Decimal);
+                            Advance(span);
+                            if (!char.IsAsciiDigit(NextChar))
+                                return errorInvalidNumber(span, NumberKind.Decimal);
                         }
                     }
 
-                    if (char.IsAsciiDigit(nextChar))
+                    if (char.IsAsciiDigit(NextChar))
                     {
                         nonZeros = true;
-                        bool ok = moveWhileDecimal();
+                        bool ok = moveWhileDecimal(span);
                         if (!ok)
-                            return errorInvalidNumber(NumberKind.Decimal);
+                            return errorInvalidNumber(span, NumberKind.Decimal);
                     }
-                    if (nextChar == '.')
-                        readDecimalNumber();
+                    if (NextChar == '.')
+                        readDecimalNumber(span);
 
-                    else if (nonZeros && !saveTrivia)
-                        return errorInvalidNumber("""
+                    else if (nonZeros && !SaveTrivia)
+                        return errorInvalidNumber(span, """
                         Leading zeros in decimal integer are not permitted; use an '0o' prefix for octal numbers.
                         """);
 
-                    if (isInvalidEndOfNumber(nextChar))
-                        return errorInvalidNumber(NumberKind.Decimal);
+                    if (isInvalidEndOfNumber(NextChar))
+                        return errorInvalidNumber(span, NumberKind.Decimal);
                 }
 
-                return createValuedToken(TokenType.Number);
+                return CreateToken(TokenType.Number);
             }
 
             else
-                return readDecimalNumber();
+                return readDecimalNumber(span);
         }
 
         return null;
     }
 
-    private Token readDecimalNumber()
+    private Token readDecimalNumber(ReadOnlySpan<char> span)
     {
         // Eat integer part.
         {
-            bool ok = moveWhileDecimal();
+            bool ok = moveWhileDecimal(span);
             if (!ok)
-                return errorInvalidNumber(NumberKind.Decimal);
+                return errorInvalidNumber(span, NumberKind.Decimal);
         }
 
         // Eat fraction part.
-        if (nextChar == '.')
+        if (NextChar == '.')
         {
-            bool ok = moveFractionPart();
+            bool ok = moveFractionPart(span);
             if (!ok)
-                return errorInvalidNumber(NumberKind.Decimal);
+                return errorInvalidNumber(span, NumberKind.Decimal);
         }
 
         // Eat exponent part.
-        if (char.ToLower(nextChar) == 'e')
+        if (char.ToLower(NextChar) == 'e')
         {
-            bool ok = moveExponentPart();
+            bool ok = moveExponentPart(span);
             if (!ok)
-                return errorInvalidNumber(NumberKind.Decimal, true);
+                return errorInvalidNumber(span, NumberKind.Decimal, true);
         }
 
         // Eat imaginary part (just one symbol).
-        if (char.ToLower(nextChar) == 'j')
+        if (char.ToLower(NextChar) == 'j')
         {
-            moveNext();
+            Advance(span);
 
-            if (isInvalidEndOfNumber(nextChar))
-                return errorInvalidNumber(NumberKind.Imaginary);
+            if (isInvalidEndOfNumber(NextChar))
+                return errorInvalidNumber(span, NumberKind.Imaginary);
         }
         else
         {
-            if (isInvalidEndOfNumber(nextChar))
-                return errorInvalidNumber(NumberKind.Decimal);
+            if (isInvalidEndOfNumber(NextChar))
+                return errorInvalidNumber(span, NumberKind.Decimal);
         }
 
-        return createValuedToken(TokenType.Number);
+        return CreateToken(TokenType.Number);
     }
 
     private enum NumberKind
@@ -576,37 +548,37 @@ public class Tokenizer(string source, bool saveTrivia)
         Binary,
     }
 
-    private bool moveFractionPart()
+    private bool moveFractionPart(ReadOnlySpan<char> span)
     {
         // Expecting a dot.
-        if (nextChar == '.')
-            moveNext();
+        if (NextChar == '.')
+            Advance(span);
         else
             return false;
 
-        bool ok = moveWhileDecimal();
+        bool ok = moveWhileDecimal(span);
         return ok;
     }
-    private bool moveExponentPart()
+    private bool moveExponentPart(ReadOnlySpan<char> span)
     {
         // Expecting a 'e' or 'E'
-        if (char.ToLower(nextChar) == 'e')
-            moveNext();
+        if (char.ToLower(NextChar) == 'e')
+            Advance(span);
         else
             return false;
 
         // Eat plus or minus in exponent.
-        if (nextChar == '+' || nextChar == '-')
+        if (NextChar == '+' || NextChar == '-')
         {
-            moveNext();
-            if (!char.IsAsciiDigit(nextChar))
+            Advance(span);
+            if (!char.IsAsciiDigit(NextChar))
                 return false;
         }
         // Invalid if after exponent not plus, minus or number.
-        else if (!char.IsAsciiDigit(nextChar))
+        else if (!char.IsAsciiDigit(NextChar))
             return false;
 
-        bool ok = moveWhileDecimal();
+        bool ok = moveWhileDecimal(span);
         return ok;
     }
 
@@ -617,19 +589,19 @@ public class Tokenizer(string source, bool saveTrivia)
     /// </summary>
     /// <param name="kind">Kind of number that was trying to read.</param>
     /// <returns>Error token with <see cref="TokenizerError.InvalidLiteral"/> type.</returns>
-    private Token errorInvalidNumber(NumberKind kind, bool sawE = false)
+    private Token errorInvalidNumber(ReadOnlySpan<char> span, NumberKind kind, bool sawE = false)
     {
         bool lastJ = false;
         bool sawPlusOrMinus = false;
-        while (isCharToEatIfInvalidNumber(nextChar) ||
-            !sawPlusOrMinus && sawE && (nextChar == '+' || nextChar == '-'))
+        while (isCharToEatIfInvalidNumber(NextChar) ||
+            !sawPlusOrMinus && sawE && (NextChar == '+' || NextChar == '-'))
         {
-            if (char.ToLower(nextChar) == 'e')
+            if (char.ToLower(NextChar) == 'e')
                 sawE = true;
-            lastJ = char.ToLower(nextChar) == 'j';
-            sawPlusOrMinus = nextChar == '+' || nextChar == '-';
+            lastJ = char.ToLower(NextChar) == 'j';
+            sawPlusOrMinus = NextChar == '+' || NextChar == '-';
 
-            moveNext();
+            Advance(span);
         }
 
         if (kind is NumberKind.Decimal && lastJ)
@@ -645,7 +617,7 @@ public class Tokenizer(string source, bool saveTrivia)
             _ => throw new UnreachableException(),
         };
 
-        return valuedErrorToken(TokenizerError.InvalidLiteral, message);
+        return ErrorToken(TokenizerError.InvalidLiteral, message);
     }
 
     /// <summary>
@@ -653,12 +625,12 @@ public class Tokenizer(string source, bool saveTrivia)
     /// </summary>
     /// <param name="message">Message that will be set to <see cref="ErrorMessage"/>.</param>
     /// <returns>Error token with <see cref="TokenizerError.InvalidLiteral"/> type.</returns>
-    private Token errorInvalidNumber(string message)
+    private Token errorInvalidNumber(ReadOnlySpan<char> span, string message)
     {
-        while (isCharToEatIfInvalidNumber(nextChar))
-            moveNext();
+        while (isCharToEatIfInvalidNumber(NextChar))
+            Advance(span);
 
-        return valuedErrorToken(TokenizerError.InvalidLiteral, message);
+        return ErrorToken(TokenizerError.InvalidLiteral, message);
     }
 
     // Eat all characters, that can be interpreted as part of number and ASCII letters except plus and minus.
@@ -667,122 +639,118 @@ public class Tokenizer(string source, bool saveTrivia)
 
     private static bool isQuote(char ch) => ch == '"' || ch == '\'';
 
-    private Token? tryString() => isQuote(nextChar) ? readString() : null;
+    private Token? tryString(ReadOnlySpan<char> span) => isQuote(NextChar) ? readString(span) : null;
 
-    private Token readPartialStringStart(PartialStringType stringType, bool prefixR) => throw new NotImplementedException();
+    private Token readPartialStringStart(StringType stringType) => throw new NotImplementedException();
 
-    private Token readString(string? prefixErrMsg = null)
+    private Token readString(ReadOnlySpan<char> span, string? prefixErrMsg = null)
     {
-        Debug.Assert(isQuote(nextChar));
+        Debug.Assert(isQuote(NextChar));
 
-        char quote = nextChar;
+        char quote = NextChar;
         int quotesCount = 1;
-        int closingQuotesCount = 0;
+        int closingQuoteCount = 0;
         bool hasEscapedQuote = false;
 
-        startLineNumber = lineNumber;
-
-        moveNext();
-        if (nextChar == quote)
+        Advance(span);
+        if (NextChar == quote)
         {
-            moveNext();
+            Advance(span);
             // Triple-quoted string.
-            if (nextChar == quote)
+            if (NextChar == quote)
             {
-                moveNext();
+                Advance(span);
                 quotesCount = 3;
             }
             // Empty string found.
             else
-                closingQuotesCount = 1;
+                closingQuoteCount = 1;
         }
 
-        while (closingQuotesCount != quotesCount)
+        while (closingQuoteCount != quotesCount)
         {
-            if (nextChar == eof || (quotesCount == 1 && nextChar == '\n'))
+            if (NextChar == Eof || (quotesCount == 1 && NextChar == '\n'))
             {
-                string message = "Unterminated string literal.";
+                string message = UnterminatedStringMessage;
                 if (hasEscapedQuote)
                     message += " Perhaps you escaped the end quote?";
 
-                return valuedErrorToken(TokenizerError.InvalidLiteral, message, useStartLine: true);
-
-                // TODO: Partial strings.
+                return ErrorToken(TokenizerError.InvalidLiteral, message);
             }
-            if (nextChar == quote)
-                closingQuotesCount++;
+            if (NextChar == quote)
+                closingQuoteCount++;
 
             else
             {
-                closingQuotesCount = 0;
-                if (nextChar == '\\')
+                closingQuoteCount = 0;
+                if (NextChar == '\\')
                 {
-                    moveNext();
-                    if (nextChar == quote)
+                    Advance(span);
+                    if (NextChar == quote)
                         hasEscapedQuote = true;
                 }
             }
-            bool newLine = moveNext();
+            bool newLine = Advance(span);
             if (newLine)
-                advanceLine();
+                AdvanceLine();
         }
 
         if (prefixErrMsg is string msg)
-            return valuedErrorToken(TokenizerError.InvalidLiteral, msg);
+            return ErrorToken(TokenizerError.InvalidLiteral, msg);
 
-        return createValuedToken(TokenType.StringLiteral, useStartLine: true);
+        return CreateToken(TokenType.StringLiteral);
     }
 
-    private Token? tryLineContinuation()
+    private Token? tryLineContinuation(ReadOnlySpan<char> span)
     {
-        if (nextChar == '\\')
+        if (NextChar == '\\')
         {
-            return readLineContinuation();
+            return readLineContinuation(span);
         }
 
         return null;
     }
 
-    private Token readLineContinuation()
+    private Token readLineContinuation(ReadOnlySpan<char> span)
     {
-        Debug.Assert(nextChar == '\\');
+        Debug.Assert(NextChar == '\\');
 
-        moveNext();
+        Advance(span);
 
-        if (nextChar != '\n')
+        if (NextChar != '\n')
         {
-            if (nextChar == eof)
-                return emptyErrorToken(TokenizerError.InvalidLineContinuation, "Expected new line.");
+            if (NextChar == Eof)
+                return ErrorToken(TokenizerError.InvalidLineContinuation, "Expected new line.", true);
             else
-                return emptyErrorToken(TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.");
+                return ErrorToken(TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.", true);
         }
 
         atContinuedLine = true;
 
-        if (saveTrivia)
-            return createValuedToken(TokenType.BackSlash);
+        if (SaveTrivia)
+            return CreateToken(TokenType.BackSlash);
 
         return ReadNext();
     }
 
-    private Token readOperatorOrErrorToken()
+    private Token readOperatorOrErrorToken(ReadOnlySpan<char> span)
     {
         char prevChar;
-        if (opTwoChars(prevChar = nextChar, nextNextChar) is TokenType tok2Type)
+        if (opTwoChars(prevChar = NextChar, TwoNextChar) is TokenType tok2Type)
         {
-            moveNext();
-            if (opThreeChars(prevChar, nextChar, nextNextChar) is TokenType tok3Type)
+            Advance(span);
+            if (opThreeChars(prevChar, NextChar, TwoNextChar) is TokenType tok3Type)
             {
-                moveNext();
-                moveNext();
-                return createValuedToken(tok3Type);
+                Advance(span);
+                Advance(span);
+                return CreateToken(tok3Type);
             }
 
-            moveNext();
-            return createValuedToken(tok2Type);
+            Advance(span);
+            return CreateToken(tok2Type);
         }
 
-        switch (nextChar)
+        switch (NextChar)
         {
             case '{':
             case '(':
@@ -798,119 +766,23 @@ public class Tokenizer(string source, bool saveTrivia)
                 break;
         }
 
-        TokenType? tok = opOneChar(nextChar);
-        moveNext();
-        return tok is TokenType tok1Type ? createValuedToken(tok1Type) : valuedErrorToken(TokenizerError.CharacterError, "Unknown symbol.");
+        TokenType? tok = opOneChar(NextChar);
+        Advance(span);
+        return tok is TokenType tok1Type ? CreateToken(tok1Type) : ErrorToken(TokenizerError.CharacterError, $"Unknown symbol: {NextChar}.");
     }
 
-    #region Helpers
-
-    private bool isEof(int position, int offset) => position + offset >= source.Length;
-
-    private bool skipNextCrlf = false;
-
-    /// <summary>
-    /// Moves current position to next character in the source.
-    /// </summary>
-    /// <returns><see langword="true"/> if needs to increase line number; otherwise <see langword="false"/>.</returns>
-    private bool moveNext()
-    {
-        if (isEof(currentPos, 0))
-        {
-            ShouldStop = true;
-            return false;
-        }
-
-        // If currently pointed char is LF, we need to increase line number.
-        bool increaseLine = lookAtRaw(currentPos, 0) == '\n' || lookAtRaw(currentPos, 0) == '\r';
-
-        currentPos++;
-        currentColumnOffset++;
-
-        if (skipNextCrlf)
-        {
-            currentPos++;
-            currentColumnOffset++;
-            skipNextCrlf = false;
-        }
-
-        // If new pointed char is CRLF skip CR and remain LF.
-        if (lookAtRaw(currentPos, 0) == '\r' && lookAtRaw(currentPos, 1) == '\n')
-            skipNextCrlf = true;
-
-        // Signal caller that need to increase line number.
-        return increaseLine;
-    }
-
-    private char lookAt(int position, int offset)
-    {
-        char ch = lookAtRaw(position, offset);
-
-        return ch == '\r' ? '\n' : ch;
-    }
-
-    private char lookAtRaw(int position, int offset) => !isEof(position, offset) ? source[position + offset] : eof;
-
-    private Token createToken(TokenType type, bool emptyLexeme = false, bool useStartLine = false)
-    {
-        int startLine;
-        if (useStartLine)
-            startLine = startLineNumber;
-        else
-            startLine = lineNumber;
-
-        ReadOnlyMemory<char> lexeme = emptyLexeme ? ReadOnlyMemory<char>.Empty
-                                                  : source.AsMemory(startPos, currentPos - startPos);
-
-        int startColumnOffset = this.startColumnOffset;
-        int endColumnOffset = currentColumnOffset;
-
-        var begPos = new TokenPosition() { Line = startLine, Column = startColumnOffset };
-        var endPos = new TokenPosition() { Line = lineNumber, Column = endColumnOffset };
-
-        return new()
-        {
-            Type = type,
-            Lexeme = lexeme,
-            Start = begPos,
-            End = endPos,
-        };
-    }
-
-    private Token createEmptyToken(TokenType type, bool useStartLine = false) => createToken(type, true, useStartLine);
-
-    private Token createValuedToken(TokenType type, bool useStartLine = false) => createToken(type, false, useStartLine);
-
-    private Token emptyErrorToken(TokenizerError error, string message, bool useStartLine = false)
-    {
-        setError(error, message);
-        return createEmptyToken(TokenType.Error, useStartLine);
-    }
-
-    private Token valuedErrorToken(TokenizerError error, string message, bool useStartLine = false)
-    {
-        setError(error, message);
-        return createValuedToken(TokenType.Error, useStartLine);
-    }
-
-    private void setError(TokenizerError error, string message)
-    {
-        Error = error;
-        ErrorMessage = message;
-    }
-
-    private bool moveWhileDecimal()
+    private bool moveWhileDecimal(ReadOnlySpan<char> span)
     {
         while (true)
         {
-            while (char.IsAsciiDigit(nextChar))
-                moveNext();
+            while (char.IsAsciiDigit(NextChar))
+                Advance(span);
 
-            if (nextChar != '_')
+            if (NextChar != '_')
                 return true;
 
-            moveNext();
-            if (!char.IsAsciiDigit(nextChar))
+            Advance(span);
+            if (!char.IsAsciiDigit(NextChar))
                 return false;
         }
     }
@@ -1024,6 +896,4 @@ public class Tokenizer(string source, bool saveTrivia)
         ('<', '<', '=') => TokenType.LeftShiftEqual,
         _ => null,
     };
-
-    #endregion
 }

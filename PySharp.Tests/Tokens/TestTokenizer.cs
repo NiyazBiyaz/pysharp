@@ -1087,17 +1087,477 @@ public class TestTokenizer
         Debug.Assert(indentation_errors_test_cases.ContainsKey(@case));
         (string code, string message, var expected) = indentation_errors_test_cases[@case];
 
-        Debugger.Break();
-
         var tok = test(code, expected);
 
         Assert.Equal(TokenizerError.IndentationError, tok.Error);
         Assert.Equal(message, tok.ErrorMessage);
     }
 
+    private static readonly Dictionary<string, (string code, List<Token> expected)> pstring_test_cases =
+        new()
+        {
+            // This test cases were taken from CPython (https://github.com/python/cpython/blob/main/Lib/test/test_tokenize.py#L450-L610)
+            ["F_Empty"] = ("""
+            f"bau"
+            """,
+            [
+                new(FStringStart, "f\"", p(0, 0), p(0, 2)),
+                new(FStringMiddle, "bau", p(0, 2), p(0, 5)),
+                new(FStringEnd, "\"", p(0, 5), p(0, 6)),
+                eof(0, 6),
+            ]),
+            ["F_BasicAndRawPrefix"] = ("""
+            fR"b{a}u"
+            """,
+            [
+                new(FStringStart, "fR\"", p(0, 0), p(0, 3)),
+                new(FStringMiddle, "b", p(0, 3), p(0, 4)),
+                new(LeftBrace, "{", p(0, 4), p(0, 5)),
+                new(Name, "a", p(0, 5), p(0, 6)),
+                new(RightBrace, "}", p(0, 6), p(0, 7)),
+                new(FStringMiddle, "u", p(0, 7), p(0, 8)),
+                new(FStringEnd, "\"", p(0, 8), p(0, 9)),
+                eof(0, 9),
+            ]),
+            ["F_ConversionSpecAndShieldedBracesAndRawPrefix"] = ("""
+            fR"b{{{a!r}}}u"
+            """,
+            [
+                new(FStringStart, "fR\"", p(0, 0), p(0, 3)),
+                new(FStringMiddle, "b{", p(0, 3), p(0, 5)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(Name, "a", p(0, 7), p(0, 8)),
+                new(Exclamation, "!", p(0, 8), p(0, 9)),
+                new(Name, "r", p(0, 9), p(0, 10)),
+                new(RightBrace, "}", p(0, 10), p(0, 11)),
+                new(FStringMiddle, "}", p(0, 11), p(0, 12)),
+                new(FStringMiddle, "u", p(0, 13), p(0, 14)),
+                new(FStringEnd, "\"", p(0, 14), p(0, 15)),
+                eof(0, 15),
+            ]),
+            ["F_ExpressionInsideAndShieldedBraces"] = ("""
+            f"{{{1+1}}}"
+            """,
+            [
+                new(FStringStart, "f\"", p(0,  0), p(0,  2)),
+                new(FStringMiddle, "{",  p(0,  2), p(0,  3)),
+                new(LeftBrace, "{",      p(0,  4), p(0,  5)),
+                new(Number, "1",         p(0,  5), p(0,  6)),
+                new(Plus, "+",           p(0,  6), p(0,  7)),
+                new(Number, "1",         p(0,  7), p(0,  8)),
+                new(RightBrace, "}",     p(0,  8), p(0,  9)),
+                new(FStringMiddle, "}",  p(0,  9), p(0, 10)),
+                new(FStringEnd, "\"",    p(0, 11), p(0, 12)),
+                eof(0, 12),
+            ]),
+            ["F_NestedFStrings"] = ("f\"\"\"{f'''{f'{f\"{1+1}\"}'}'''}\"\"\"",
+            [
+                new(FStringStart, "f\"\"\"", p(0,  0), p(0,  4)),
+                new(LeftBrace,    "{",       p(0,  4), p(0,  5)),
+                new(FStringStart, "f'''",    p(0,  5), p(1,  9)),
+                new(LeftBrace,    "{",       p(0,  9), p(0, 10)),
+                new(FStringStart, "f'",      p(0, 10), p(0, 12)),
+                new(LeftBrace,    "{",       p(0, 12), p(0, 13)),
+                new(FStringStart, "f\"",     p(0, 13), p(0, 15)),
+                new(LeftBrace,    "{",       p(0, 15), p(0, 16)),
+                new(Number,       "1",       p(0, 16), p(0, 17)),
+                new(Plus,         "+",       p(0, 17), p(0, 18)),
+                new(Number,       "1",       p(0, 18), p(0, 19)),
+                new(RightBrace,   "}",       p(0, 19), p(0, 20)),
+                new(FStringEnd,   "\"",      p(0, 20), p(0, 21)),
+                new(RightBrace,   "}",       p(0, 21), p(0, 22)),
+                new(FStringEnd,   "'",       p(0, 22), p(0, 23)),
+                new(RightBrace,   "}",       p(0, 23), p(0, 24)),
+                new(FStringEnd,   "'''",     p(0, 24), p(0, 27)),
+                new(RightBrace,   "}",       p(0, 27), p(0, 28)),
+                new(FStringEnd,   "\"\"\"",  p(0, 28), p(0, 31)),
+                eof(0, 31),
+            ]),
+            ["F_TripleQuotedWithLineFeedAndConversionSpec"] =
+            ("f\"\"\"     x\nbau(data, encoding={invalid!r})\n\"\"\"",
+            [
+                new(FStringStart,  "f\"\"\"",                     p(0,  0), p(0,  4)),
+                new(FStringMiddle, "     x\nbau(data, encoding=", p(0,  4), p(1, 19)),
+                new(LeftBrace,     "{",                           p(1, 19), p(1, 20)),
+                new(Name,          "invalid",                     p(1, 20), p(1, 27)),
+                new(Exclamation,   "!",                           p(1, 27), p(1, 28)),
+                new(Name,          "r",                           p(1, 28), p(1, 29)),
+                new(RightBrace,    "}",                           p(1, 29), p(1, 30)),
+                new(FStringMiddle, ")\n",                         p(1, 30), p(2,  0)),
+                new(FStringEnd,    "\"\"\"",                      p(2,  0), p(2,  3)),
+                eof(2, 3),
+            ]),
+            ["F_TripleQuotedBasicWithLineFeed"] =
+            ("f\"\"\"123456789\nsomething{None}bau\"\"\"",
+            [
+                new(FStringStart, "f\"\"\"", p(0, 0), p(0, 4)),
+                new(FStringMiddle, "123456789\nsomething", p(0, 4), p(1, 9)),
+                new(LeftBrace, "{", p(1, 9), p(1, 10)),
+                new(Name, "None", p(1, 10), p(1, 14)),
+                new(RightBrace, "}", p(1, 14), p(1, 15)),
+                new(FStringMiddle, "bau", p(1, 15), p(1, 18)),
+                new(FStringEnd, "\"\"\"", p(1, 18), p(1, 21)),
+                eof(1, 21),
+            ]),
+            ["F_TripleQuotedEmpty"] = ("f\"\"\"bau\"\"\"",
+            [
+                new(FStringStart, "f\"\"\"", p(0, 0), p(0, 4)),
+                new(FStringMiddle, "bau", p(0, 4), p(0, 7)),
+                new(FStringEnd, "\"\"\"", p(0, 7), p(0, 10)),
+                eof(0, 10),
+            ]),
+            ["F_StringWithJoiningLineContinuation"] = ("f\"bau\\\ndef",
+            [
+                new(FStringStart, "f\"", p(0, 0), p(0, 2)),
+                new(FStringMiddle, "bau\\\ndef", p(0, 2), p(1, 3)),
+                new(FStringEnd, "\"", p(1, 3), p(1, 4)),
+                eof(1, 4),
+            ]),
+            ["F_StringWithJoiningLineContinuationAndRaw"] =
+            ("Rf\"bau\\\ndef\"",
+            [
+                new(FStringStart, "Rf\"", p(0, 0), p(0, 3)),
+                new(FStringMiddle, "bau\\\ndef", p(0, 3), p(1, 3)),
+                new(FStringEnd, "\"", p(1, 3), p(1, 4)),
+                eof(1, 4),
+            ]),
+            ["F_MultiplePlaceholdersAndFormatSpecAndDebugSpec"] =
+            ("f'baubaubau1 {f+w:.3f} baubaubau2 {m+c=} bababababau'",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(FStringMiddle, "baubaubau1 ", p(0, 2), p(0, 13)),
+                new(LeftBrace, "{", p(0, 13), p(0, 14)),
+                new(Name, "f", p(0, 14), p(0, 15)),
+                new(Plus, "+", p(0, 15), p(0, 16)),
+                new(Name, "w", p(0, 16), p(0, 17)),
+                new(Colon, ":", p(0, 17), p(0, 18)),
+                new(FStringMiddle, ".3f", p(0, 18), p(0, 21)),
+                new(RightBrace, "}", p(0, 21), p(0, 22)),
+                new(FStringMiddle, " baubaubau2 ", p(0, 22), p(0, 34)),
+                new(RightBrace, "{", p(0, 34), p(0, 35)),
+                new(Name, "m", p(0, 35), p(0, 36)),
+                new(Plus, "+", p(0, 36), p(0, 37)),
+                new(Name, "c", p(0, 37), p(0, 38)),
+                new(Equal, "=", p(0, 38), p(0, 39)),
+                new(RightBrace, "}", p(0, 39), p(0, 40)),
+                new(FStringMiddle, " bababababau", p(0, 40), p(0, 52)),
+                new(FStringEnd, "'", p(0, 52), p(0, 53)),
+                eof(0, 53),
+            ]),
+            ["F_TripleQuotedWithLineFeedInPlaceholderAndDebugSpec"] = ("""
+            f'''{
+            3
+            =}'''
+            """,
+            [
+                new(FStringStart, "f'''", p(0, 0), p(0, 4)),
+                new(LeftBrace, "{", p(0, 4), p(0, 5)),
+                new(Number, "3", p(1, 0), p(1, 1)),
+                new(Equal, "=", p(2, 0), p(2, 1)),
+                new(RightBrace, "}", p(2, 1), p(2, 2)),
+                new(FStringEnd, "'''", p(2, 2), p(2, 5)),
+                eof(2, 5),
+            ]),
+            ["F_TripleQuotedWithLineFeedInPlaceHolderAndFormatSpec"] = ("""
+            f'''__{
+                f:m
+            }__'''
+            """,
+            [
+                new(FStringStart, "f'''", p(0, 0), p(0, 4)),
+                new(FStringMiddle, "__", p(0, 4), p(0, 6)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(Name, "f", p(1, 4), p(1, 5)),
+                new(Colon, ":", p(1, 5), p(1, 6)),
+                new(FStringMiddle, "m\n", p(1, 6), p(2, 0)),
+                new(RightBrace, "}", p(2, 0), p(2, 1)),
+                new(FStringMiddle, "__", p(2, 1), p(2, 3)),
+                new(FStringEnd, "'''", p(2, 3), p(2, 6)),
+                eof(2, 6),
+            ]),
+            ["F_TripleQuotedWithWeirdFormatSpec(ShouldToWorksAnyway)"] = ("""
+            f'''__{
+                b:f
+                w
+                 m
+                  c
+            }__'''
+            """,
+            [
+                new(FStringStart, "f'''", p(0, 0), p(0, 4)),
+                new(FStringMiddle, "__", p(0, 4), p(0, 6)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(Name, "b", p(1, 4), p(1, 5)),
+                new(Colon, ":", p(1, 5), p(1, 6)),
+                new(FStringMiddle, "f\n    w\n     m\n      c\n", p(1, 6), p(5, 0)),
+                new(RightBrace, "}", p(5, 0), p(5, 1)),
+                new(FStringMiddle, "__", p(5, 1), p(5, 3)),
+                new(FStringEnd, "'''", p(5, 3), p(5, 6)),
+                eof(5, 6),
+            ]),
+            // Copy-paste previous for t-strings.
+            ["T_Empty"] = ("""
+            t"bau"
+            """,
+            [
+                new(TStringStart, "t\"", p(0, 0), p(0, 2)),
+                new(TStringMiddle, "bau", p(0, 2), p(0, 5)),
+                new(TStringEnd, "\"", p(0, 5), p(0, 6)),
+                eof(0, 6),
+            ]),
+            ["T_BasicAndRawPrefix"] = ("""
+            tR"b{a}u"
+            """,
+            [
+                new(TStringStart, "tR\"", p(0, 0), p(0, 3)),
+                new(TStringMiddle, "b", p(0, 3), p(0, 4)),
+                new(LeftBrace, "{", p(0, 4), p(0, 5)),
+                new(Name, "a", p(0, 5), p(0, 6)),
+                new(RightBrace, "}", p(0, 6), p(0, 7)),
+                new(TStringMiddle, "u", p(0, 7), p(0, 8)),
+                new(TStringEnd, "\"", p(0, 8), p(0, 9)),
+                eof(0, 9),
+            ]),
+            ["T_ConversionSpecAndShieldedBracesAndRawPrefix"] = ("""
+            tR"b{{{a!r}}}u"
+            """,
+            [
+                new(TStringStart, "tR\"", p(0, 0), p(0, 3)),
+                new(TStringMiddle, "b{", p(0, 3), p(0, 5)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(Name, "a", p(0, 7), p(0, 8)),
+                new(Exclamation, "!", p(0, 8), p(0, 9)),
+                new(Name, "r", p(0, 9), p(0, 10)),
+                new(RightBrace, "}", p(0, 10), p(0, 11)),
+                new(TStringMiddle, "}", p(0, 11), p(0, 12)),
+                new(TStringMiddle, "u", p(0, 13), p(0, 14)),
+                new(TStringEnd, "\"", p(0, 14), p(0, 15)),
+                eof(0, 15),
+            ]),
+            ["T_ExpressionInsideAndShieldedBraces"] = ("""
+            t"{{{1+1}}}"
+            """,
+            [
+                new(TStringStart, "t\"", p(0,  0), p(0,  2)),
+                new(TStringMiddle, "{",  p(0,  2), p(0,  3)),
+                new(LeftBrace, "{",      p(0,  4), p(0,  5)),
+                new(Number, "1",         p(0,  5), p(0,  6)),
+                new(Plus, "+",           p(0,  6), p(0,  7)),
+                new(Number, "1",         p(0,  7), p(0,  8)),
+                new(RightBrace, "}",     p(0,  8), p(0,  9)),
+                new(TStringMiddle, "}",  p(0,  9), p(0, 10)),
+                new(TStringEnd, "\"",    p(0, 11), p(0, 12)),
+                eof(0, 12),
+            ]),
+            ["T_NestedTStrings"] = ("t\"\"\"{t'''{t'{t\"{1+1}\"}'}'''}\"\"\"",
+            [
+                new(TStringStart, "t\"\"\"", p(0,  0), p(0,  4)),
+                new(LeftBrace,    "{",       p(0,  4), p(0,  5)),
+                new(TStringStart, "t'''",    p(0,  5), p(1,  9)),
+                new(LeftBrace,    "{",       p(0,  9), p(0, 10)),
+                new(TStringStart, "t'",      p(0, 10), p(0, 12)),
+                new(LeftBrace,    "{",       p(0, 12), p(0, 13)),
+                new(TStringStart, "t\"",     p(0, 13), p(0, 15)),
+                new(LeftBrace,    "{",       p(0, 15), p(0, 16)),
+                new(Number,       "1",       p(0, 16), p(0, 17)),
+                new(Plus,         "+",       p(0, 17), p(0, 18)),
+                new(Number,       "1",       p(0, 18), p(0, 19)),
+                new(RightBrace,   "}",       p(0, 19), p(0, 20)),
+                new(TStringEnd,   "\"",      p(0, 20), p(0, 21)),
+                new(RightBrace,   "}",       p(0, 21), p(0, 22)),
+                new(TStringEnd,   "'",       p(0, 22), p(0, 23)),
+                new(RightBrace,   "}",       p(0, 23), p(0, 24)),
+                new(TStringEnd,   "'''",     p(0, 24), p(0, 27)),
+                new(RightBrace,   "}",       p(0, 27), p(0, 28)),
+                new(TStringEnd,   "\"\"\"",  p(0, 28), p(0, 31)),
+                eof(0, 31),
+            ]),
+            ["T_TripleQuotedWithLineFeedAndConversionSpec"] =
+            ("t\"\"\"     x\nbau(data, encoding={invalid!r})\n\"\"\"",
+            [
+                new(TStringStart,  "t\"\"\"",                     p(0,  0), p(0,  4)),
+                new(TStringMiddle, "     x\nbau(data, encoding=", p(0,  4), p(1, 19)),
+                new(LeftBrace,     "{",                           p(1, 19), p(1, 20)),
+                new(Name,          "invalid",                     p(1, 20), p(1, 27)),
+                new(Exclamation,   "!",                           p(1, 27), p(1, 28)),
+                new(Name,          "r",                           p(1, 28), p(1, 29)),
+                new(RightBrace,    "}",                           p(1, 29), p(1, 30)),
+                new(TStringMiddle, ")\n",                         p(1, 30), p(2,  0)),
+                new(TStringEnd,    "\"\"\"",                      p(2,  0), p(2,  3)),
+                eof(2, 3),
+            ]),
+            ["T_TripleQuotedBasicWithLineFeed"] =
+            ("t\"\"\"123456789\nsomething{None}bau\"\"\"",
+            [
+                new(TStringStart, "t\"\"\"", p(0, 0), p(0, 4)),
+                new(TStringMiddle, "123456789\nsomething", p(0, 4), p(1, 9)),
+                new(LeftBrace, "{", p(1, 9), p(1, 10)),
+                new(Name, "None", p(1, 10), p(1, 14)),
+                new(RightBrace, "}", p(1, 14), p(1, 15)),
+                new(TStringMiddle, "bau", p(1, 15), p(1, 18)),
+                new(TStringEnd, "\"\"\"", p(1, 18), p(1, 21)),
+                eof(1, 21),
+            ]),
+            ["T_TripleQuotedEmpty"] = ("t\"\"\"bau\"\"\"",
+            [
+                new(TStringStart, "t\"\"\"", p(0, 0), p(0, 4)),
+                new(TStringMiddle, "bau", p(0, 4), p(0, 7)),
+                new(TStringEnd, "\"\"\"", p(0, 7), p(0, 10)),
+                eof(0, 10),
+            ]),
+            ["T_StringWithJoiningLineContinuation"] = ("t\"bau\\\ndef",
+            [
+                new(TStringStart, "t\"", p(0, 0), p(0, 2)),
+                new(TStringMiddle, "bau\\\ndef", p(0, 2), p(1, 3)),
+                new(TStringEnd, "\"", p(1, 3), p(1, 4)),
+                eof(1, 4),
+            ]),
+            ["T_StringWithJoiningLineContinuationAndRaw"] =
+            ("Rt\"bau\\\ndef\"",
+            [
+                new(TStringStart, "Rt\"", p(0, 0), p(0, 3)),
+                new(TStringMiddle, "bau\\\ndef", p(0, 3), p(1, 3)),
+                new(TStringEnd, "\"", p(1, 3), p(1, 4)),
+                eof(1, 4),
+            ]),
+            ["T_MultiplePlaceholdersAndFormatSpecAndDebugSpec"] =
+            ("t'baubaubau1 {f+w:.3f} baubaubau2 {m+c=} bababababau'",
+            [
+                new(TStringStart, "t'", p(0, 0), p(0, 2)),
+                new(TStringMiddle, "baubaubau1 ", p(0, 2), p(0, 13)),
+                new(LeftBrace, "{", p(0, 13), p(0, 14)),
+                new(Name, "f", p(0, 14), p(0, 15)),
+                new(Plus, "+", p(0, 15), p(0, 16)),
+                new(Name, "w", p(0, 16), p(0, 17)),
+                new(Colon, ":", p(0, 17), p(0, 18)),
+                new(TStringMiddle, ".3f", p(0, 18), p(0, 21)),
+                new(RightBrace, "}", p(0, 21), p(0, 22)),
+                new(TStringMiddle, " baubaubau2 ", p(0, 22), p(0, 34)),
+                new(RightBrace, "{", p(0, 34), p(0, 35)),
+                new(Name, "m", p(0, 35), p(0, 36)),
+                new(Plus, "+", p(0, 36), p(0, 37)),
+                new(Name, "c", p(0, 37), p(0, 38)),
+                new(Equal, "=", p(0, 38), p(0, 39)),
+                new(RightBrace, "}", p(0, 39), p(0, 40)),
+                new(TStringMiddle, " bababababau", p(0, 40), p(0, 52)),
+                new(TStringEnd, "'", p(0, 52), p(0, 53)),
+                eof(0, 53),
+            ]),
+            ["T_TripleQuotedWithLineFeedInPlaceholderAndDebugSpec"] = ("""
+            t'''{
+            3
+            =}'''
+            """,
+            [
+                new(TStringStart, "t'''", p(0, 0), p(0, 4)),
+                new(LeftBrace, "{", p(0, 4), p(0, 5)),
+                new(Number, "3", p(1, 0), p(1, 1)),
+                new(Equal, "=", p(2, 0), p(2, 1)),
+                new(RightBrace, "}", p(2, 1), p(2, 2)),
+                new(TStringEnd, "'''", p(2, 2), p(2, 5)),
+                eof(2, 5),
+            ]),
+            ["T_TripleQuotedWithLineFeedInPlaceHolderAndFormatSpec"] = ("""
+            t'''__{
+                f:m
+            }__'''
+            """,
+            [
+                new(TStringStart, "t'''", p(0, 0), p(0, 4)),
+                new(TStringMiddle, "__", p(0, 4), p(0, 6)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(Name, "f", p(1, 4), p(1, 5)),
+                new(Colon, ":", p(1, 5), p(1, 6)),
+                new(TStringMiddle, "m\n", p(1, 6), p(2, 0)),
+                new(RightBrace, "}", p(2, 0), p(2, 1)),
+                new(TStringMiddle, "__", p(2, 1), p(2, 3)),
+                new(TStringEnd, "'''", p(2, 3), p(2, 6)),
+                eof(2, 6),
+            ]),
+            ["T_TripleQuotedWithWeirdFormatSpec(ShouldToWorksAnyway)"] = ("""
+            t'''__{
+                b:f
+                w
+                 m
+                  c
+            }__'''
+            """,
+            [
+                new(TStringStart, "t'''", p(0, 0), p(0, 4)),
+                new(TStringMiddle, "__", p(0, 4), p(0, 6)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(Name, "b", p(1, 4), p(1, 5)),
+                new(Colon, ":", p(1, 5), p(1, 6)),
+                new(TStringMiddle, "f\n    w\n     m\n      c\n", p(1, 6), p(5, 0)),
+                new(RightBrace, "}", p(5, 0), p(5, 1)),
+                new(TStringMiddle, "__", p(5, 1), p(5, 3)),
+                new(TStringEnd, "'''", p(5, 3), p(5, 6)),
+                eof(5, 6),
+            ]),
+            // Mixed scenario.
+            ["Mixed"] = ("""
+            t"BAU {f"bau={fwmc}"} IN BAUBAU"
+            """,
+            [
+                new(TStringStart, "t\"", p(0, 0), p(0, 2)),
+                new(TStringMiddle, "BAU ", p(0, 2), p(0, 6)),
+                new(LeftBrace, "{", p(0, 6), p(0, 7)),
+                new(FStringStart, "f\"", p(0, 7), p(0, 8)),
+                new(FStringMiddle, "bau=", p(0, 8), p(0, 12)),
+                new(LeftBrace, "{", p(0, 12), p(0, 13)),
+                new(Name, "fwmc", p(0, 13), p(0, 17)),
+                new(RightBrace, "}", p(0, 17), p(0, 18)),
+                new(FStringEnd, "\"", p(0, 18), p(0, 19)),
+                new(RightBrace, "}", p(0, 19), p(0, 20)),
+                new(TStringMiddle, " IN BAUBAU", p(0, 20), p(0, 30)),
+                new(TStringEnd, "\"", p(0, 30), p(0, 31)),
+                eof(0, 31),
+            ])
+        };
+
+    [Theory(Skip = "Not implemented yet.")]
+    [InlineData("F_Empty")]
+    [InlineData("F_BasicAndRawPrefix")]
+    [InlineData("F_ConversionSpecAndShieldedBracesAndRawPrefix")]
+    [InlineData("F_ExpressionInsideAndShieldedBraces")]
+    [InlineData("F_NestedFStrings")]
+    [InlineData("F_TripleQuotedWithLineFeedAndConversionSpec")]
+    [InlineData("F_TripleQuotedBasicWithLineFeed")]
+    [InlineData("F_TripleQuotedEmpty")]
+    [InlineData("F_StringWithJoiningLineContinuation")]
+    [InlineData("F_StringWithJoiningLineContinuationAndRaw")]
+    [InlineData("F_MultiplePlaceholdersAndFormatSpecAndDebugSpec")]
+    [InlineData("F_TripleQuotedWithLineFeedInPlaceholderAndDebugSpec")]
+    [InlineData("F_TripleQuotedWithLineFeedInPlaceHolderAndFormatSpec")]
+    [InlineData("F_TripleQuotedWithWeirdFormatSpec(ShouldToWorksAnyway)")]
+    [InlineData("T_Empty")]
+    [InlineData("T_BasicAndRawPrefix")]
+    [InlineData("T_ConversionSpecAndShieldedBracesAndRawPrefix")]
+    [InlineData("T_ExpressionInsideAndShieldedBraces")]
+    [InlineData("T_NestedTStrings")]
+    [InlineData("T_TripleQuotedWithLineFeedAndConversionSpec")]
+    [InlineData("T_TripleQuotedBasicWithLineFeed")]
+    [InlineData("T_TripleQuotedEmpty")]
+    [InlineData("T_StringWithJoiningLineContinuation")]
+    [InlineData("T_StringWithJoiningLineContinuationAndRaw")]
+    [InlineData("T_MultiplePlaceholdersAndFormatSpecAndDebugSpec")]
+    [InlineData("T_TripleQuotedWithLineFeedInPlaceholderAndDebugSpec")]
+    [InlineData("T_TripleQuotedWithLineFeedInPlaceHolderAndFormatSpec")]
+    [InlineData("T_TripleQuotedWithWeirdFormatSpec(ShouldToWorksAnyway)")]
+    [InlineData("Mixed")]
+    public void TestPartialStrings(string @case)
+    {
+        Debug.Assert(pstring_test_cases.ContainsKey(@case));
+
+        (string code, var expected) = pstring_test_cases[@case];
+        test(code, expected);
+    }
+
     private static Tokenizer test(string code, IList<Token> expected, bool trivia = false)
     {
-        var tokenizer = new Tokenizer(code, trivia);
+        var sync = SynchronizationPoint.ClearPoint(new StringBuffer(code));
+
+        var tokenizer = new Tokenizer(sync, trivia);
 
         List<Token> result = [];
         Token token;

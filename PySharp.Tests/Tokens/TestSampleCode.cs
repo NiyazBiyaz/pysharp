@@ -31,7 +31,9 @@ public class TestSampleCode
 
         var expected = tokensData.Tokens;
 
-        var tokenizer = new Tokenizer(code, true);
+        var sync = SynchronizationPoint.ClearPoint(new StringBuffer(code));
+
+        var tokenizer = new Tokenizer(sync, true);
         List<Token> tokens = new(expected.Count);
 
         while (!tokenizer.ShouldStop)

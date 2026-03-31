@@ -7,4 +7,5 @@ public enum TokenizerError
     InvalidLiteral,
     IndentationError,
     CharacterError,
+    PartialNestingOverflow,
 }

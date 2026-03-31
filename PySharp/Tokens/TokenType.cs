@@ -11,6 +11,7 @@ public enum TokenType
     TStringStart,
     TStringMiddle,
     TStringEnd,
+    DebugSpecifierString,
     Ellipsis,
 
     LeftParen,
