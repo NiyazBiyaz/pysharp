@@ -8,4 +8,5 @@ public enum TokenizerError
     IndentationError,
     CharacterError,
     PartialNestingOverflow,
+    PartialTooLongExpression,
 }

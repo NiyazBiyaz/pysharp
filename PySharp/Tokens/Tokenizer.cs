@@ -1,17 +1,18 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace PySharp.Tokens;
 
-public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTokenizer(syncPoint, saveTrivia)
+public class Tokenizer : BaseTokenizer
 {
-    private bool atLineBeginning = true;
-
+    private bool atLineBeginning;
     private bool isBlankLine = false;
     private bool isBlankLineWithComment = false;
     private bool atContinuedLine = false;
 
-    private readonly Stack<int> indentStack = syncPoint.IndentStack;
-    private readonly Stack<int> alternateIndentStack = syncPoint.AltIndentStack;
+    private readonly Stack<int> indentStack;
+    private readonly Stack<int> alternateIndentStack;
+    private readonly bool compatibleMode;
 
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
@@ -21,7 +22,7 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
     private const string invalid_oct = "Invalid octal literal.";
     private const string invalid_bin = "Invalid binary literal.";
     private const string tab_space_err_msg = "Tabs and spaces mixing is not allowed.";
-
+    private const string double_brackets = "Use double curly brackets '}}' to shield them in interpolated string.";
     private int pendingIndentation
     {
         get => field;
@@ -39,14 +40,108 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
             ArgumentOutOfRangeException.ThrowIfNegative(value);
             field = value;
         }
-    } = 0;
+    }
 
+    // Partial strings stuff.
+    private Tokenizer? partialNestedTokenizer;
+    private readonly char partialQuote;
+    private readonly int partialQuoteCount;
+    private readonly int partialTokenizerGeneration;
+    private readonly StringType partialStringType;
+    private PartialTokenizerMode tokenizerMode;
+    private int braceLevel = 0;
+    private int expressionStartBraceLevel = -1;
+    private int expressionStartLine;
+    private int debugSpecStringStart = -1;
+    private bool debugSpec = false;
+    private bool formatSpec = false;
+    private readonly Queue<Token> pendingErrorTokens = null!;
+
+    private const int interpolation_maximum_lines = 4;
+    private const int maximum_partial_strings_nesting = 5;
+
+    public Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool compatibleMode = false)
+        : base(syncPoint, saveTrivia)
+    {
+        indentStack = syncPoint.IndentStack;
+        alternateIndentStack = syncPoint.AltIndentStack;
+        bracketsLevel = syncPoint.BracketsLevel;
+
+        this.compatibleMode = compatibleMode;
+        atLineBeginning = true;
+
+        partialNestedTokenizer = null;
+        partialQuote = Eof;
+        partialQuoteCount = -1;
+        partialTokenizerGeneration = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool compatibleMode, int oldGeneration, StringType stringType, char quote, int quoteCount)
+        : base(syncPoint, saveTrivia)
+    {
+        // Setup synchronization point.
+        indentStack = syncPoint.IndentStack;
+        alternateIndentStack = syncPoint.AltIndentStack;
+        bracketsLevel = syncPoint.BracketsLevel;
+
+        this.compatibleMode = compatibleMode;
+        // Set it false, because in nested tokenizer it can be start of the line (if true, may create invalid dedents)
+        atLineBeginning = false;
+
+        // Setup partial string stuff.
+        partialNestedTokenizer = null;
+        partialStringType = stringType;
+        partialQuote = quote;
+        partialQuoteCount = quoteCount;
+        partialTokenizerGeneration = oldGeneration + 1;
+        tokenizerMode = PartialTokenizerMode.MiddleString;
+        pendingErrorTokens = new(1);
+
+        testGeneration();
+    }
+
+    private void testGeneration()
+    {
+        if (partialTokenizerGeneration > maximum_partial_strings_nesting)
+        {
+            var span = Source.Span;
+
+            while (NextChar == Eof)
+                Advance(span);
+
+            pendingErrorTokens.Enqueue(ErrorToken(TokenizerError.PartialNestingOverflow, "Too many nested strings."));
+        }
+    }
+
+    public override SynchronizationPoint Synchronize()
+    {
+        ResetStart();
+        return new()
+        {
+            SourceBuffer = new MemoryCharBuffer(BufferFromStart),
+            StartLine = StartLineNumber,
+            StartColumn = StartColumn,
+            BracketsLevel = bracketsLevel,
+            IndentStack = indentStack,
+            AltIndentStack = alternateIndentStack,
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Token ReadNext()
     {
+        if (ShouldStop)
+            throw new InvalidOperationException("Buffer already was read. Check ShouldStop flag before calling.");
+
+        Token? maybeToken = tryPartial();
+        if (maybeToken is Token partial)
+            return partial;
+
         var span = Source.Span;
 
         ResetStart();
-        Token? maybeToken = tryNextLine(span) ?? tryIndentation();
+        maybeToken = tryNextLine(span) ?? tryIndentation();
         if (maybeToken is Token token)
             return token;
 
@@ -72,6 +167,32 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
             readOperatorOrErrorToken(span);
 
         return definitelyToken;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Token? tryPartial()
+    {
+        if (partialNestedTokenizer is not null)
+        {
+            if (partialNestedTokenizer.ShouldStop)
+            {
+                ReSync(partialNestedTokenizer.Synchronize());
+                partialNestedTokenizer = null;
+            }
+            else
+            {
+                var tokenFromNested = partialNestedTokenizer.readNextPartialMode();
+                // Throw out errors.
+                if (tokenFromNested.Type is TokenType.Error)
+                {
+                    Error = partialNestedTokenizer.Error;
+                    ErrorMessage = partialNestedTokenizer.ErrorMessage;
+                }
+                return tokenFromNested;
+            }
+        }
+
+        return null;
     }
 
     private Token? tryNextLine(ReadOnlySpan<char> span)
@@ -261,50 +382,9 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
     {
         if (isPotentialNameStart(NextChar))
         {
-            int iters = 0;
-            bool sawB = false, sawR = false, sawU = false, sawF = false, sawT = false;
-            // Try to read prefixed string.
-            while (iters < 2)
-            {
-                if (!sawB && (NextChar == 'b' || NextChar == 'B'))
-                    sawB = true;
-
-                else if (!sawR && (NextChar == 'r' || NextChar == 'R'))
-                    sawR = true;
-
-                else if (!sawU && (NextChar == 'u' || NextChar == 'U'))
-                    sawU = true;
-
-                else if (!sawF && (NextChar == 'f' || NextChar == 'F'))
-                    sawF = true;
-
-                else if (!sawF && (NextChar == 't' || NextChar == 'T'))
-                    sawT = true;
-
-                else
-                    break;
-
-                Advance(span);
-                iters++;
-
-                if (NextChar == '\'' || NextChar == '"')
-                {
-                    if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
-                    {
-                        if (!sawF && !sawT)
-                            // If it's not partial string, read string and put it in error token.
-                            return readString(span, errMsg);
-                        else
-                            // TODO: Error recovery
-                            throw new NotImplementedException();
-                    }
-
-                    if (sawF || sawT)
-                        return readPartialStringStart(sawF ? StringType.Format : StringType.Template);
-
-                    return readString(span);
-                }
-            }
+            var maybeString = tryPrefixedString(span);
+            if (maybeString is not null)
+                return maybeString;
 
             while (isPotentialNameChar(NextChar))
                 Advance(span);
@@ -313,6 +393,70 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
         }
 
         return null;
+    }
+
+    private Token? tryPrefixedString(ReadOnlySpan<char> span)
+    {
+        bool sawB, sawR, sawU, sawF, sawT;
+
+        sawB = char.ToLower(NextChar) == 'b';
+        sawR = char.ToLower(NextChar) == 'r';
+        sawU = char.ToLower(NextChar) == 'u';
+        sawF = char.ToLower(NextChar) == 'f';
+        sawT = char.ToLower(NextChar) == 't';
+
+        if (!(sawB || sawR || sawU || sawF || sawT))
+            return null;
+
+        if (isQuote(TwoNextChar))
+        {
+            if (sawF || sawT)
+                return readPartialStringStart(span, sawF ? StringType.Format : StringType.Template);
+
+            Advance(span);
+            return readString(span);
+        }
+
+        sawB = sawB || char.ToLower(TwoNextChar) == 'b';
+        sawR = sawR || char.ToLower(TwoNextChar) == 'r';
+        sawU = sawU || char.ToLower(TwoNextChar) == 'u';
+        sawF = sawF || char.ToLower(TwoNextChar) == 'f';
+        sawT = sawT || char.ToLower(TwoNextChar) == 't';
+
+        if (isQuote(ThreeNextChar) && isPotentialPrefix(TwoNextChar))
+        {
+            if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
+            {
+                if (!sawF && !sawT)
+                {
+                    Advance(span);
+                    Advance(span);
+                    // If it's not partial string, read string and put it in error token.
+                    return readString(span, errMsg);
+                }
+                else
+                    // TODO: Error recovery
+                    throw new NotImplementedException();
+            }
+            else
+            {
+                if (sawF || sawT)
+                    return readPartialStringStart(span, sawF ? StringType.Format : StringType.Template);
+
+                Advance(span);
+                Advance(span);
+                return readString(span);
+            }
+        }
+
+        return null;
+
+        static bool isPotentialPrefix(char ch) =>
+            char.ToLower(ch) == 'r' ||
+            char.ToLower(ch) == 'b' ||
+            char.ToLower(ch) == 'u' ||
+            char.ToLower(ch) == 'f' ||
+            char.ToLower(ch) == 't';
     }
 
     private Token? tryLineFeed(ReadOnlySpan<char> span)
@@ -641,7 +785,43 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
 
     private Token? tryString(ReadOnlySpan<char> span) => isQuote(NextChar) ? readString(span) : null;
 
-    private Token readPartialStringStart(StringType stringType) => throw new NotImplementedException();
+    private Token readPartialStringStart(ReadOnlySpan<char> span, StringType stringType)
+    {
+        Advance(span); // First char always prefix.
+
+        char quote;
+        int quoteCount;
+
+        // Second char can be another letter in prefix, so skip it.
+        if (NextChar != '\'' && NextChar != '"')
+            Advance(span);
+
+        // Expect quote or fail in 'else'
+        if (NextChar == '\'' || NextChar == '"')
+        {
+            quote = NextChar;
+
+            // If next 2 chars also quotes, it's a triple-quoted string.
+            if (TwoNextChar == quote && ThreeNextChar == quote)
+            {
+                Advance(span);
+                Advance(span);
+                quoteCount = 3;
+            }
+            else
+                quoteCount = 1;
+
+            Advance(span);
+
+            var tok = CreateToken(getStart(stringType));
+
+            partialNestedTokenizer = new Tokenizer(Synchronize(), SaveTrivia, compatibleMode, partialTokenizerGeneration, stringType, quote, quoteCount);
+
+            return tok;
+        }
+        else
+            throw new ArgumentException("Given source does not contains valid string start.");
+    }
 
     private Token readString(ReadOnlySpan<char> span, string? prefixErrMsg = null)
     {
@@ -787,6 +967,200 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
         }
     }
 
+    private Token readNextPartialMode()
+    {
+        if (pendingErrorTokens.TryDequeue(out var err))
+            return err;
+
+        var span = Source.Span;
+
+        if (tokenizerMode is PartialTokenizerMode.MiddleString)
+            return readMiddleString(span);
+
+        else
+            return readExpression(span);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Token readMiddleString(ReadOnlySpan<char> span)
+    {
+        bool isAdvanced = false;
+
+        ResetStart();
+        while (true)
+        {
+            if (NextChar == '{')
+            {
+                // If shielded brace. It's not allowed in format it spec.
+                if (!formatSpec && TwoNextChar == '{')
+                {
+                    // Take first brace, but ignore second.
+                    Advance(span);
+                    var tokenWithoutSecondBrace = CreateToken(getMiddle(partialStringType));
+                    Advance(span);
+                    return tokenWithoutSecondBrace;
+                }
+
+                // If it's expression start, set debug string start next to opening brace.
+                if (expressionStartBraceLevel == -1)
+                    debugSpecStringStart = CurrentPos + 1;
+
+                expressionStartBraceLevel++;
+                tokenizerMode = PartialTokenizerMode.Regular;
+                setExprStartLine();
+
+                if (!isAdvanced)
+                    return readNextPartialMode();
+
+                return CreateToken(getMiddle(partialStringType));
+            }
+            else if (NextChar == '}')
+            {
+                if (formatSpec)
+                {
+                    tokenizerMode = PartialTokenizerMode.Regular;
+                    setExprStartLine();
+                    if (isAdvanced)
+                        return CreateToken(getMiddle(partialStringType));
+                    else
+                        return readNextPartialMode();
+                }
+                if (TwoNextChar != '}')
+                {
+                    if (isAdvanced)
+                    {
+                        var tokenWithValidPart = CreateToken(getMiddle(partialStringType));
+
+                        Advance(span);
+
+                        var invalidBrace = ErrorToken(TokenizerError.InvalidLiteral, double_brackets);
+                        pendingErrorTokens.Enqueue(invalidBrace);
+
+                        if (isAdvanced)
+                            return tokenWithValidPart;
+                    }
+                    else
+                    {
+                        Advance(span);
+                        return ErrorToken(TokenizerError.InvalidLiteral, double_brackets);
+                    }
+                }
+                // See above.
+                else if (TwoNextChar == '}')
+                {
+                    Advance(span);
+                    var tokenWithoutSecondBrace = CreateToken(getMiddle(partialStringType));
+                    Advance(span);
+                    return tokenWithoutSecondBrace;
+                }
+            }
+            else if (NextChar == '\\')
+            {
+                Advance(span);
+            }
+            else if (NextChar == Eof || partialQuoteCount == 1 && NextChar == '\n')
+            {
+                ShouldStop = NextChar == Eof;
+                return ErrorToken(TokenizerError.InvalidLiteral, UnterminatedStringMessage);
+            }
+            else if (NextChar == partialQuote)
+            {
+                bool isEndReached = (partialQuoteCount == 1 && NextChar == partialQuote) ||
+                                    (partialQuoteCount == 3 && NextChar == partialQuote
+                                                            && TwoNextChar == partialQuote
+                                                            && ThreeNextChar == partialQuote);
+
+                if (isEndReached)
+                {
+                    if (isAdvanced)
+                        return CreateToken(getMiddle(partialStringType));
+
+                    else
+                    {
+                        for (int i = 0; i < partialQuoteCount; i++)
+                            Advance(span);
+
+                        ShouldStop = true;
+                        return CreateToken(getEnd(partialStringType));
+                    }
+                }
+            }
+
+            isAdvanced = true;
+            bool shouldNewLine = Advance(span);
+            if (shouldNewLine)
+                AdvanceLine();
+        }
+
+        void setExprStartLine() => expressionStartLine = StartLineNumber;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Token readExpression(ReadOnlySpan<char> span)
+    {
+        Token? maybeToken = tryPartial();
+        if (maybeToken is Token partial)
+            return partial;
+
+        ResetStart();
+
+        // If at top of the expression and next is control char update Partial string fields.
+        if (isPartialStringPunctuation(NextChar))
+        {
+            int level = braceLevel - (NextChar != '}' ? 1 : 0);
+            bool atLevelWithMeaningfulPunctuation = (level == 1 && (debugSpec || formatSpec)) || level == 0;
+
+            if (atLevelWithMeaningfulPunctuation)
+            {
+                if (debugSpec && NextChar != '{')
+                {
+                    debugSpec = false;
+                    return CreateToken(TokenType.DebugSpecifierString, true)
+                    with
+                    { Lexeme = Source.Memory[debugSpecStringStart..CurrentPos] };
+                }
+
+                if (NextChar == ':')
+                {
+                    tokenizerMode = PartialTokenizerMode.MiddleString;
+                    formatSpec = true;
+                }
+            }
+
+            if (NextChar == '{')
+                braceLevel++;
+
+            else if (NextChar == '}')
+                braceLevel--;
+
+            if (braceLevel == expressionStartBraceLevel)
+            {
+                expressionStartBraceLevel--;
+                tokenizerMode = PartialTokenizerMode.MiddleString;
+                debugSpec = false;
+                formatSpec = expressionStartBraceLevel >= 0;
+            }
+        }
+
+        if (NextChar == '=')
+            debugSpec = true;
+
+        var next = ReadNext();
+        // Check the limit of the maximum lines in expression if no compatible mode enabled.
+        if (!compatibleMode && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
+        {
+            while (NextChar != Eof)
+                Advance(span);
+
+            return ErrorToken(
+                TokenizerError.PartialTooLongExpression,
+                $"Unclosed interpolated expression or it take too much lines. Maximum lines allowed: {interpolation_maximum_lines}"
+            );
+        }
+        return next;
+    }
+
+
     private static bool isInvalidEndOfNumber(char ch)
     {
         if (char.IsAscii(ch) && isPotentialNameChar(ch))
@@ -896,4 +1270,32 @@ public class Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia) : BaseTo
         ('<', '<', '=') => TokenType.LeftShiftEqual,
         _ => null,
     };
+
+    private static TokenType getStart(StringType type) => type switch
+    {
+        StringType.Format => TokenType.FStringStart,
+        StringType.Template => TokenType.TStringStart,
+        _ => throw new UnreachableException()
+    };
+    private static TokenType getMiddle(StringType type) => type switch
+    {
+        StringType.Format => TokenType.FStringMiddle,
+        StringType.Template => TokenType.TStringMiddle,
+        _ => throw new UnreachableException()
+    };
+    private static TokenType getEnd(StringType type) => type switch
+    {
+        StringType.Format => TokenType.FStringEnd,
+        StringType.Template => TokenType.TStringEnd,
+        _ => throw new UnreachableException()
+    };
+
+    private static bool isPartialStringPunctuation(char ch) =>
+        ch == ':' || ch == '!' || ch == '{' || ch == '}';
+
+    private enum PartialTokenizerMode
+    {
+        Regular,
+        MiddleString,
+    }
 }

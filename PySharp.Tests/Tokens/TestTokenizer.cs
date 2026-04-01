@@ -1154,7 +1154,7 @@ public class TestTokenizer
             [
                 new(FStringStart, "f\"\"\"", p(0,  0), p(0,  4)),
                 new(LeftBrace,    "{",       p(0,  4), p(0,  5)),
-                new(FStringStart, "f'''",    p(0,  5), p(1,  9)),
+                new(FStringStart, "f'''",    p(0,  5), p(0,  9)),
                 new(LeftBrace,    "{",       p(0,  9), p(0, 10)),
                 new(FStringStart, "f'",      p(0, 10), p(0, 12)),
                 new(LeftBrace,    "{",       p(0, 12), p(0, 13)),
@@ -1206,7 +1206,7 @@ public class TestTokenizer
                 new(FStringEnd, "\"\"\"", p(0, 7), p(0, 10)),
                 eof(0, 10),
             ]),
-            ["F_StringWithJoiningLineContinuation"] = ("f\"bau\\\ndef",
+            ["F_StringWithJoiningLineContinuation"] = ("f\"bau\\\ndef\"",
             [
                 new(FStringStart, "f\"", p(0, 0), p(0, 2)),
                 new(FStringMiddle, "bau\\\ndef", p(0, 2), p(1, 3)),
@@ -1234,11 +1234,12 @@ public class TestTokenizer
                 new(FStringMiddle, ".3f", p(0, 18), p(0, 21)),
                 new(RightBrace, "}", p(0, 21), p(0, 22)),
                 new(FStringMiddle, " baubaubau2 ", p(0, 22), p(0, 34)),
-                new(RightBrace, "{", p(0, 34), p(0, 35)),
+                new(LeftBrace, "{", p(0, 34), p(0, 35)),
                 new(Name, "m", p(0, 35), p(0, 36)),
                 new(Plus, "+", p(0, 36), p(0, 37)),
                 new(Name, "c", p(0, 37), p(0, 38)),
                 new(Equal, "=", p(0, 38), p(0, 39)),
+                new(DebugSpecifierString, "m+c=", p(0, 39), p(0, 39)),
                 new(RightBrace, "}", p(0, 39), p(0, 40)),
                 new(FStringMiddle, " bababababau", p(0, 40), p(0, 52)),
                 new(FStringEnd, "'", p(0, 52), p(0, 53)),
@@ -1353,7 +1354,7 @@ public class TestTokenizer
             [
                 new(TStringStart, "t\"\"\"", p(0,  0), p(0,  4)),
                 new(LeftBrace,    "{",       p(0,  4), p(0,  5)),
-                new(TStringStart, "t'''",    p(0,  5), p(1,  9)),
+                new(TStringStart, "t'''",    p(0,  5), p(0,  9)),
                 new(LeftBrace,    "{",       p(0,  9), p(0, 10)),
                 new(TStringStart, "t'",      p(0, 10), p(0, 12)),
                 new(LeftBrace,    "{",       p(0, 12), p(0, 13)),
@@ -1405,7 +1406,7 @@ public class TestTokenizer
                 new(TStringEnd, "\"\"\"", p(0, 7), p(0, 10)),
                 eof(0, 10),
             ]),
-            ["T_StringWithJoiningLineContinuation"] = ("t\"bau\\\ndef",
+            ["T_StringWithJoiningLineContinuation"] = ("t\"bau\\\ndef\"",
             [
                 new(TStringStart, "t\"", p(0, 0), p(0, 2)),
                 new(TStringMiddle, "bau\\\ndef", p(0, 2), p(1, 3)),
@@ -1433,11 +1434,12 @@ public class TestTokenizer
                 new(TStringMiddle, ".3f", p(0, 18), p(0, 21)),
                 new(RightBrace, "}", p(0, 21), p(0, 22)),
                 new(TStringMiddle, " baubaubau2 ", p(0, 22), p(0, 34)),
-                new(RightBrace, "{", p(0, 34), p(0, 35)),
+                new(LeftBrace, "{", p(0, 34), p(0, 35)),
                 new(Name, "m", p(0, 35), p(0, 36)),
                 new(Plus, "+", p(0, 36), p(0, 37)),
                 new(Name, "c", p(0, 37), p(0, 38)),
                 new(Equal, "=", p(0, 38), p(0, 39)),
+                new(DebugSpecifierString, "m+c=", p(0, 39), p(0, 39)),
                 new(RightBrace, "}", p(0, 39), p(0, 40)),
                 new(TStringMiddle, " bababababau", p(0, 40), p(0, 52)),
                 new(TStringEnd, "'", p(0, 52), p(0, 53)),
@@ -1499,23 +1501,23 @@ public class TestTokenizer
             t"BAU {f"bau={fwmc}"} IN BAUBAU"
             """,
             [
-                new(TStringStart, "t\"", p(0, 0), p(0, 2)),
-                new(TStringMiddle, "BAU ", p(0, 2), p(0, 6)),
-                new(LeftBrace, "{", p(0, 6), p(0, 7)),
-                new(FStringStart, "f\"", p(0, 7), p(0, 8)),
-                new(FStringMiddle, "bau=", p(0, 8), p(0, 12)),
-                new(LeftBrace, "{", p(0, 12), p(0, 13)),
-                new(Name, "fwmc", p(0, 13), p(0, 17)),
-                new(RightBrace, "}", p(0, 17), p(0, 18)),
-                new(FStringEnd, "\"", p(0, 18), p(0, 19)),
-                new(RightBrace, "}", p(0, 19), p(0, 20)),
-                new(TStringMiddle, " IN BAUBAU", p(0, 20), p(0, 30)),
-                new(TStringEnd, "\"", p(0, 30), p(0, 31)),
-                eof(0, 31),
+                new(TStringStart,  "t\"",        p(0,  0), p(0,  2)),
+                new(TStringMiddle, "BAU ",       p(0,  2), p(0,  6)),
+                new(LeftBrace,     "{",          p(0,  6), p(0,  7)),
+                new(FStringStart,  "f\"",        p(0,  7), p(0,  9)),
+                new(FStringMiddle, "bau=",       p(0,  9), p(0, 13)),
+                new(LeftBrace,     "{",          p(0, 13), p(0, 14)),
+                new(Name,          "fwmc",       p(0, 14), p(0, 18)),
+                new(RightBrace,    "}",          p(0, 18), p(0, 19)),
+                new(FStringEnd,    "\"",         p(0, 19), p(0, 20)),
+                new(RightBrace,    "}",          p(0, 20), p(0, 21)),
+                new(TStringMiddle, " IN BAUBAU", p(0, 21), p(0, 31)),
+                new(TStringEnd,    "\"",         p(0, 31), p(0, 32)),
+                eof(0, 32),
             ])
         };
 
-    [Theory(Skip = "Not implemented yet.")]
+    [Theory]
     [InlineData("F_Empty")]
     [InlineData("F_BasicAndRawPrefix")]
     [InlineData("F_ConversionSpecAndShieldedBracesAndRawPrefix")]

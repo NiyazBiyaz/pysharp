@@ -3,48 +3,60 @@ using System.Runtime.CompilerServices;
 
 namespace PySharp.Tokens;
 
-[DebuggerDisplay("next={NextChar} ln={currentLineNumber} cl={currentColumn} lex={Source.Span[startPos..currentPos]} len={currentPos-startPos}")]
+[DebuggerDisplay("next={NextChar} ln={currentLineNumber} cl={currentColumn} len={currentPos-startPos}")]
 public abstract class BaseTokenizer
 {
-    protected readonly IReadOnlyMemoryBuffer<char> Source;
+    protected IReadOnlyMemoryBuffer<char> Source = null!;
     protected readonly bool SaveTrivia;
 
     protected char NextChar { get; private set; }
     protected char TwoNextChar { get; private set; }
     protected char ThreeNextChar { get; private set; }
 
+    protected ReadOnlyMemory<char> BufferFromStart => Source.Memory[startPos..];
+
+    protected int CurrentPos => currentPos;
+
     public bool ShouldStop { get; protected set; } = false;
-    public TokenizerError Error { get; private set; } = TokenizerError.NoError;
-    public string? ErrorMessage { get; private set; } = null;
+    public TokenizerError Error { get; protected set; } = TokenizerError.NoError;
+    public string? ErrorMessage { get; protected set; } = null;
 
     private int currentPos;
     private int startPos = 0;
 
     private int currentColumn;
-    private int startColumn;
+    protected int StartColumn { get; private set; }
 
     private int currentLineNumber;
-    private int startLineNumber;
+    protected int StartLineNumber { get; private set; }
 
     private bool skipNextCrlf = false;
 
     protected const char Eof = '\0';
     protected const string UnterminatedStringMessage = "Unterminated string literal.";
 
-    public BaseTokenizer(SynchronizationPoint sync, bool saveTrivia)
-    {
-        Source = sync.SourceBuffer;
-        SaveTrivia = saveTrivia;
+    public abstract SynchronizationPoint Synchronize();
 
-        startColumn = sync.StartColumn;
-        startLineNumber = currentLineNumber = sync.StartLine;
+    protected void ReSync(SynchronizationPoint syncPoint)
+    {
+        Source = syncPoint.SourceBuffer;
+
+        StartColumn = syncPoint.StartColumn;
+        StartLineNumber = currentLineNumber = syncPoint.StartLine;
 
         // Initialize current position with -1...
         currentPos = -1;
-        currentColumn = -1;
+        currentColumn = syncPoint.StartColumn - 1;
 
         // ...And set *NextChar properties.
         advance(Source.Span);
+    }
+
+    protected BaseTokenizer(SynchronizationPoint sync, bool saveTrivia)
+    {
+        SaveTrivia = saveTrivia;
+
+        ReSync(sync);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,8 +66,8 @@ public abstract class BaseTokenizer
     protected void ResetStart()
     {
         startPos = currentPos;
-        startColumn = currentColumn;
-        startLineNumber = currentLineNumber;
+        StartColumn = currentColumn;
+        StartLineNumber = currentLineNumber;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -78,9 +90,12 @@ public abstract class BaseTokenizer
         };
         var startPosition = new TokenPosition()
         {
-            Line = startLineNumber,
-            Column = startColumn,
+            Line = StartLineNumber,
+            Column = StartColumn,
         };
+
+        if (Debugger.IsLogging())
+            Debugger.Log(1, Debugger.DefaultCategory, $"Created new token: {type} '{lexeme}' {startPosition} {endPosition}\n");
 
         return new(type, lexeme, startPosition, endPosition);
     }

@@ -17,6 +17,7 @@ public class TestSampleCode
 
     [Theory]
     [InlineData("TokensSample1")]
+    [InlineData("pkgutil")]
     public void Test(string name)
     {
         string codePath = Path.Combine(AppContext.BaseDirectory, "Data", name);
@@ -40,7 +41,7 @@ public class TestSampleCode
         {
             var tok = tokenizer.ReadNext();
             // CPython does not generate whitespace tokens.
-            if (tok.Type is not TokenType.WhiteSpace)
+            if (tok.Type != TokenType.WhiteSpace && tok.Type != TokenType.DebugSpecifierString)
                 tokens.Add(tok);
         }
 
