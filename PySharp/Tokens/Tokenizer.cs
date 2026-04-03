@@ -12,7 +12,7 @@ public class Tokenizer : BaseTokenizer
 
     private readonly Stack<int> indentStack;
     private readonly Stack<int> alternateIndentStack;
-    private readonly bool compatibleMode;
+    private readonly bool limitInterpolationLines;
 
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
@@ -57,17 +57,27 @@ public class Tokenizer : BaseTokenizer
     private bool formatSpec = false;
     private readonly Queue<Token> pendingErrorTokens = null!;
 
+    /// <summary>
+    /// Maximum lines for one interpolation. It limited by the UX reasons, because in IDE
+    /// if user somehow breaks closing brackets he would to see all file red of errors.
+    /// This constant prevents such scenarios and saves error locality.
+    /// Another reason for it is the fact, that such a long interpolations are ugly.
+    /// </summary>
     private const int interpolation_maximum_lines = 4;
+    /// <summary>
+    /// Maximum F-/T-strings that can be nested to each other by the Python reference
+    /// https://docs.python.org/3/reference/lexical_analysis.html#formatted-string-literals
+    /// </summary>
     private const int maximum_partial_strings_nesting = 5;
 
-    public Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool compatibleMode = false)
+    public Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines = false)
         : base(syncPoint, saveTrivia)
     {
         indentStack = syncPoint.IndentStack;
         alternateIndentStack = syncPoint.AltIndentStack;
         bracketsLevel = syncPoint.BracketsLevel;
 
-        this.compatibleMode = compatibleMode;
+        this.limitInterpolationLines = limitInterpolationLines;
         atLineBeginning = true;
 
         partialNestedTokenizer = null;
@@ -77,7 +87,7 @@ public class Tokenizer : BaseTokenizer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool compatibleMode, int oldGeneration, StringType stringType, char quote, int quoteCount)
+    private Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
         : base(syncPoint, saveTrivia)
     {
         // Setup synchronization point.
@@ -85,7 +95,7 @@ public class Tokenizer : BaseTokenizer
         alternateIndentStack = syncPoint.AltIndentStack;
         bracketsLevel = syncPoint.BracketsLevel;
 
-        this.compatibleMode = compatibleMode;
+        this.limitInterpolationLines = limitInterpolationLines;
         // Set it false, because in nested tokenizer it can be start of the line (if true, may create invalid dedents)
         atLineBeginning = false;
 
@@ -815,7 +825,7 @@ public class Tokenizer : BaseTokenizer
 
             var tok = CreateToken(getStart(stringType));
 
-            partialNestedTokenizer = new Tokenizer(Synchronize(), SaveTrivia, compatibleMode, partialTokenizerGeneration, stringType, quote, quoteCount);
+            partialNestedTokenizer = new Tokenizer(Synchronize(), SaveTrivia, limitInterpolationLines, partialTokenizerGeneration, stringType, quote, quoteCount);
 
             return tok;
         }
@@ -984,6 +994,7 @@ public class Tokenizer : BaseTokenizer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token readMiddleString(ReadOnlySpan<char> span)
     {
+        // If false, next Middle string will not be emitted, because it's empty.
         bool isAdvanced = false;
 
         ResetStart();
@@ -1000,6 +1011,7 @@ public class Tokenizer : BaseTokenizer
                     Advance(span);
                     return tokenWithoutSecondBrace;
                 }
+                // Else we need to switch to regular mode.
 
                 // If it's expression start, set debug string start next to opening brace.
                 if (expressionStartBraceLevel == -1)
@@ -1016,6 +1028,7 @@ public class Tokenizer : BaseTokenizer
             }
             else if (NextChar == '}')
             {
+                // In format spec shielded braces aren't allowed.
                 if (formatSpec)
                 {
                     tokenizerMode = PartialTokenizerMode.Regular;
@@ -1025,6 +1038,7 @@ public class Tokenizer : BaseTokenizer
                     else
                         return readNextPartialMode();
                 }
+                // In other we expecting shielded brace.
                 if (TwoNextChar != '}')
                 {
                     if (isAdvanced)
@@ -1054,6 +1068,7 @@ public class Tokenizer : BaseTokenizer
                     return tokenWithoutSecondBrace;
                 }
             }
+            // Skip any escaped character.
             else if (NextChar == '\\')
             {
                 Advance(span);
@@ -1063,7 +1078,9 @@ public class Tokenizer : BaseTokenizer
                 ShouldStop = NextChar == Eof;
                 return ErrorToken(TokenizerError.InvalidLiteral, UnterminatedStringMessage);
             }
-            else if (NextChar == partialQuote)
+            // If NextChar is quote, check that we can end string.
+            // In format spec we are not done yet.
+            else if (NextChar == partialQuote && !formatSpec)
             {
                 bool isEndReached = (partialQuoteCount == 1 && NextChar == partialQuote) ||
                                     (partialQuoteCount == 3 && NextChar == partialQuote
@@ -1072,9 +1089,11 @@ public class Tokenizer : BaseTokenizer
 
                 if (isEndReached)
                 {
+                    // In next iteration we will point to the same symbols, but not advanced...
                     if (isAdvanced)
                         return CreateToken(getMiddle(partialStringType));
 
+                    // ...so we create end token.
                     else
                     {
                         for (int i = 0; i < partialQuoteCount; i++)
@@ -1098,6 +1117,7 @@ public class Tokenizer : BaseTokenizer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token readExpression(ReadOnlySpan<char> span)
     {
+        // Maybe another nested tokenizer.
         Token? maybeToken = tryPartial();
         if (maybeToken is Token partial)
             return partial;
@@ -1107,11 +1127,14 @@ public class Tokenizer : BaseTokenizer
         // If at top of the expression and next is control char update Partial string fields.
         if (isPartialStringPunctuation(NextChar))
         {
-            int level = braceLevel - (NextChar != '}' ? 1 : 0);
+            // This code block executes before braceLevel incremented by opening brace '{'
+            // so for ensuring we are on the level 0 we need to adjust it manually.
+            int level = braceLevel - (NextChar != '{' ? 1 : 0);
             bool atLevelWithMeaningfulPunctuation = (level == 1 && (debugSpec || formatSpec)) || level == 0;
 
             if (atLevelWithMeaningfulPunctuation)
             {
+                // If debug spec enabled, dump DebugSpecString.
                 if (debugSpec && NextChar != '{')
                 {
                     debugSpec = false;
@@ -1120,6 +1143,7 @@ public class Tokenizer : BaseTokenizer
                     { Lexeme = Source.Memory[debugSpecStringStart..CurrentPos] };
                 }
 
+                // Enable format spec string.
                 if (NextChar == ':')
                 {
                     tokenizerMode = PartialTokenizerMode.MiddleString;
@@ -1127,12 +1151,14 @@ public class Tokenizer : BaseTokenizer
                 }
             }
 
+            // Increase/Decrease level of the braces before mode switching.
             if (NextChar == '{')
                 braceLevel++;
 
             else if (NextChar == '}')
                 braceLevel--;
 
+            // If we on the same level where we start, go back to MiddleString mode.
             if (braceLevel == expressionStartBraceLevel)
             {
                 expressionStartBraceLevel--;
@@ -1142,12 +1168,13 @@ public class Tokenizer : BaseTokenizer
             }
         }
 
-        if (NextChar == '=')
+        // If at top of the expression, we can enable debug spec.
+        if (NextChar == '=' && braceLevel - expressionStartBraceLevel == 1)
             debugSpec = true;
 
         var next = ReadNext();
         // Check the limit of the maximum lines in expression if no compatible mode enabled.
-        if (!compatibleMode && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
+        if (!limitInterpolationLines && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
         {
             while (NextChar != Eof)
                 Advance(span);
