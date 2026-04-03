@@ -94,9 +94,6 @@ public abstract class BaseTokenizer
             Column = StartColumn,
         };
 
-        if (Debugger.IsLogging())
-            Debugger.Log(1, Debugger.DefaultCategory, $"Created new token: {type} '{lexeme}' {startPosition} {endPosition}\n");
-
         return new(type, lexeme, startPosition, endPosition);
     }
 

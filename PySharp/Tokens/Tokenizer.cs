@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace PySharp.Tokens;
 
@@ -86,7 +85,6 @@ public class Tokenizer : BaseTokenizer
         partialTokenizerGeneration = 0;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
         : base(syncPoint, saveTrivia)
     {
@@ -138,7 +136,6 @@ public class Tokenizer : BaseTokenizer
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Token ReadNext()
     {
         if (ShouldStop)
@@ -179,7 +176,6 @@ public class Tokenizer : BaseTokenizer
         return definitelyToken;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token? tryPartial()
     {
         if (partialNestedTokenizer is not null)
@@ -991,7 +987,6 @@ public class Tokenizer : BaseTokenizer
             return readExpression(span);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token readMiddleString(ReadOnlySpan<char> span)
     {
         // If false, next Middle string will not be emitted, because it's empty.
@@ -1114,7 +1109,6 @@ public class Tokenizer : BaseTokenizer
         void setExprStartLine() => expressionStartLine = StartLineNumber;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token readExpression(ReadOnlySpan<char> span)
     {
         // Maybe another nested tokenizer.
