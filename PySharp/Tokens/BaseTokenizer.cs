@@ -33,7 +33,6 @@ public abstract class BaseTokenizer
     private bool skipNextCrlf = false;
 
     protected const char Eof = '\0';
-    protected const string UnterminatedStringMessage = "Unterminated string literal.";
 
     public abstract SynchronizationPoint Synchronize();
 

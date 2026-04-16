@@ -9,4 +9,5 @@ public enum TokenizerError
     CharacterError,
     PartialNestingOverflow,
     PartialTooLongExpression,
+    PartialUnclosedExpression,
 }

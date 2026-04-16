@@ -575,7 +575,7 @@ public class TestTokenizer
             new(WhiteSpace, "    ",p(1, 0),p(1, 4)), new(Name, "bau",p(1, 4),p(1, 7)), new(NewLine, "\n",p(1, 7),p(1, 8)),
             new(TriviaNewLine, "\n",p(2, 0),p(2, 1)),
             new(Indent, "    ",p(3, 0),p(3, 4)), new(Name, "bau",p(3, 4),p(3, 7)), new(BackSlash, "\\",p(3, 7),p(3, 8)),
-                    new(TriviaNewLine, "\n",p(3, 8),p(3, 9)),
+            new(TriviaNewLine, "\n",p(3, 8),p(3, 9)),
             new(Name, "bau",p(4, 0),p(4, 3)), new(NewLine, "\n",p(4, 3),p(4,4)),
             new(Dedent, empty,p(5,0),p(5,0)), new(Name, "bau",p(5,0),p(5, 3)),
             eof(5, 3),
@@ -976,6 +976,165 @@ public class TestTokenizer
                 new(Error, "\"bau\\\"bau",p(0, 0),p(0, 9)),
                 eof(0, 9),
             ]),
+
+            ["Partial_SingleQuoteUnterminatedEOF"] =
+            ("f'abc", unterminated,
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(Error, "abc", p(0, 2), p(0, 5)),
+                eof(0, 5)
+            ]),
+
+            ["Partial_SingleQuoteUnterminatedNewline"] =
+            ("f'abc\n", unterminated,
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(Error, "abc", p(0, 2), p(0, 5)),
+                new(NewLine, "\n", p(0, 5), p(0, 6)),
+                eof(1, 0)
+            ]),
+            ["Partial_TripleQuoteUnterminatedEOF"] =
+            ("f'''content", unterminated,
+            [
+                new(FStringStart, "f'''", p(0, 0), p(0, 4)),
+                new(Error, "content", p(0, 4), p(0, 11)),
+                eof(0, 11)
+            ]),
+            ["Partial_InterpolationUnclosedBraceEOF"] =
+            ("f'{expr", "Unexpected EOF in multi-line statement.",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(LeftBrace, "{", p(0, 2), p(0, 3)),
+                new(Name, "expr", p(0, 3), p(0, 7)),
+                new(Error, "", p(0, 7), p(0, 7)),
+                eof(0, 7)
+            ]),
+            ["Partial_InterpolationLineLimitExceeded_Fatal"] =
+            ("""
+            f'{b
+            a
+            u
+            b
+            a
+            u}'
+            """, "Interpolation exceeds maximum line limit. Allowed maximum 4 lines.",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(LeftBrace, "{", p(0, 2), p(0, 3)),
+                new(Name, "b", p(0, 3), p(0, 4)),
+                new(Name, "a", p(1, 0), p(1, 1)),
+                new(Name, "u", p(2, 0), p(2, 1)),
+                new(Name, "b", p(3, 0), p(3, 1)),
+                new(Name, "a", p(4, 0), p(4, 1)),
+                new(Error, "u}'", p(5, 0), p(5, 3)),
+                eof(5, 3)
+            ]),
+            ["Partial_NestedUnterminatedString(Only one error expecting)"] =
+            ("f'{x'", unterminated,
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(LeftBrace, "{", p(0, 2), p(0, 3)),
+                new(Name, "x", p(0, 3), p(0, 4)),
+                new(Error, "'", p(0, 4), p(0, 5)),
+                eof(0, 5)
+            ]),
+            ["Partial_NestingDepthExceeded_Fatal"] =
+            ("f'1{f'2{f'3{f'4{f'5{f'6'}'}'}'}'}'", "f-string: nesting depth exceeded (limit: 5).",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(FStringMiddle, "1", p(0, 2), p(0, 3)),
+                new(LeftBrace, "{", p(0, 3), p(0, 4)),
+                new(FStringStart, "f'", p(0, 4), p(0, 6)),
+                new(FStringMiddle, "2", p(0, 6), p(0, 7)),
+                new(LeftBrace, "{", p(0, 7), p(0, 8)),
+                new(FStringStart, "f'", p(0, 8), p(0, 10)),
+                new(FStringMiddle, "3", p(0, 10), p(0, 11)),
+                new(LeftBrace, "{", p(0, 11), p(0, 12)),
+                new(FStringStart, "f'", p(0, 12), p(0, 14)),
+                new(FStringMiddle, "4", p(0, 14), p(0, 15)),
+                new(LeftBrace, "{", p(0, 15), p(0, 16)),
+                new(FStringStart, "f'", p(0, 16), p(0, 18)),
+                new(FStringMiddle, "5", p(0, 18), p(0, 19)),
+                new(LeftBrace, "{", p(0, 19), p(0, 20)),
+                new(Error, "f'6'}'}'}'}'}'", p(0, 20), p(0, 34)),
+                eof(0, 34)
+            ]),
+            ["Partial_FormatSpecNestedInterpolationLineLimit_Fatal"] =
+            ("""
+            f'{x:
+
+
+
+
+            {y}}'
+            """, "Interpolation exceeds maximum line limit. Allowed maximum 4 lines.",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(LeftBrace, "{", p(0, 2), p(0, 3)),
+                new(Name, "x", p(0, 3), p(0, 4)),
+                new(Colon, ":", p(0, 4), p(0, 5)),
+                new(FStringMiddle, "\n\n\n\n\n", p(0, 5), p(5,0)),
+                new(Error, "{y}}'", p(5, 0), p(5, 5)),
+                eof(5, 5)
+            ]),
+
+            ["Partial_InvalidPrefix_bf"] =
+            ("bf'hello'", string.Format(str_prf, "b", "f"),
+            [
+                new(Error, "bf", p(0, 0), p(0, 2)),
+                new(StringLiteral, "'hello'", p(0, 2), p(0, 9)),
+                eof(0, 9)
+            ]),
+
+            ["Partial_InvalidPrefix_fb"] =
+            ("fb'h{1}o'", string.Format(str_prf, "b", "f"),
+            [
+                new(Error, "fb", p(0, 0), p(0, 2)),
+                new(StringLiteral, "'h{1}o'", p(0, 2), p(0, 9)),
+                eof(0, 9)
+            ]),
+
+            ["Partial_InvalidPrefix_bt"] =
+            ("bt'''hello'''", string.Format(str_prf, "b", "t"),
+            [
+                new(Error, "bt", p(0, 0), p(0, 2)),
+                new(StringLiteral, "'''hello'''", p(0, 2), p(0, 13)),
+                eof(0, 13)
+            ]),
+
+            ["Partial_InvalidPrefix_tb"] =
+            ("tb'''hello'''", string.Format(str_prf, "b", "t"),
+            [
+                new(Error, "tb", p(0, 0), p(0, 2)),
+                new(StringLiteral, "'''hello'''", p(0, 2), p(0, 13)),
+                eof(0, 13)
+            ]),
+
+            ["Partial_InvalidPrefix_ft"] =
+            ("ft'h{1}o'", string.Format(str_prf, "f", "t"),
+            [
+                new(Error, "ft", p(0, 0), p(0, 2)),
+                new(StringLiteral, "'h{1}o'", p(0, 2), p(0, 9)),
+                eof(0, 9)
+            ]),
+
+            ["Partial_InvalidPrefix_tf"] =
+            ("tf'''hello'''", string.Format(str_prf, "f", "t"),
+            [
+                new(Error, "tf", p(0, 0), p(0, 2)),
+                new(StringLiteral, "'''hello'''", p(0, 2), p(0, 13)),
+                eof(0, 13)
+            ]),
+            ["Partial_InvalidShieldedBrace"] =
+            ("f' } '", "Use double curly brackets '}}' to shield it in interpolated string.",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(FStringMiddle, " ", p(0, 2), p(0, 3)),
+                new(Error, "}", p(0, 3), p(0, 4)),
+                new(FStringMiddle, " ", p(0, 4), p(0, 5)),
+                new(FStringEnd, "'", p(0, 5), p(0, 6)),
+                eof(0, 6)
+            ])
         };
 
     [Theory]
@@ -1020,7 +1179,22 @@ public class TestTokenizer
     [InlineData("String_UnclosedOnFile_TripleQuote_SingleLine")]
     [InlineData("String_UnclosedOnFile_TripleQuote_MultiLine")]
     [InlineData("String_UnclosedOnFile_EscapedQuote")]
-    public void TestLiteralErrors(string @case)
+    [InlineData("Partial_SingleQuoteUnterminatedEOF")]
+    [InlineData("Partial_SingleQuoteUnterminatedNewline")]
+    [InlineData("Partial_TripleQuoteUnterminatedEOF")]
+    [InlineData("Partial_InterpolationUnclosedBraceEOF", TokenizerError.PartialUnclosedExpression)]
+    [InlineData("Partial_InterpolationLineLimitExceeded_Fatal", TokenizerError.PartialTooLongExpression)]
+    [InlineData("Partial_NestedUnterminatedString(Only one error expecting)")]
+    [InlineData("Partial_NestingDepthExceeded_Fatal", TokenizerError.PartialNestingOverflow)]
+    [InlineData("Partial_FormatSpecNestedInterpolationLineLimit_Fatal", TokenizerError.PartialTooLongExpression)]
+    [InlineData("Partial_InvalidPrefix_bf")]
+    [InlineData("Partial_InvalidPrefix_fb")]
+    [InlineData("Partial_InvalidPrefix_bt")]
+    [InlineData("Partial_InvalidPrefix_tb")]
+    [InlineData("Partial_InvalidPrefix_ft")]
+    [InlineData("Partial_InvalidPrefix_tf")]
+    [InlineData("Partial_InvalidShieldedBrace")]
+    public void TestLiteralErrors(string @case, TokenizerError error = TokenizerError.InvalidLiteral)
     {
         Debug.Assert(literal_errors_test_cases.ContainsKey(@case));
 
@@ -1028,7 +1202,7 @@ public class TestTokenizer
 
         var tokenizer = test(code, expected);
 
-        Assert.Equal(TokenizerError.InvalidLiteral, tokenizer.Error);
+        Assert.Equal(error, tokenizer.Error);
         Assert.Equal(message, tokenizer.ErrorMessage);
     }
 
@@ -1255,6 +1429,7 @@ public class TestTokenizer
                 new(LeftBrace, "{", p(0, 4), p(0, 5)),
                 new(Number, "3", p(1, 0), p(1, 1)),
                 new(Equal, "=", p(2, 0), p(2, 1)),
+                new(DebugSpecifierString, "\n3\n=", p(2, 1), p(2, 1)),
                 new(RightBrace, "}", p(2, 1), p(2, 2)),
                 new(FStringEnd, "'''", p(2, 2), p(2, 5)),
                 eof(2, 5),
@@ -1295,6 +1470,65 @@ public class TestTokenizer
                 new(FStringMiddle, "__", p(5, 1), p(5, 3)),
                 new(FStringEnd, "'''", p(5, 3), p(5, 6)),
                 eof(5, 6),
+            ]),
+            ["F_VariousDebugStrings"] = ("""
+            f"{bau=}"
+            f"{bau =}"
+            f"{bau= }"
+            f"{bau = }"
+            """,
+            [
+                new(FStringStart,         "f\"",    p(0, 0), p(0, 2)),
+                new(LeftBrace,            "{",      p(0, 2), p(0, 3)),
+                new(Name,                 "bau",    p(0, 3), p(0, 6)),
+                new(Equal,                "=",      p(0, 6), p(0, 7)),
+                new(DebugSpecifierString, "bau=",   p(0, 7), p(0, 7)),
+                new(RightBrace,           "}",      p(0, 7), p(0, 8)),
+                new(FStringEnd,           "\"",     p(0, 8), p(0, 9)),
+                new(NewLine,              "\n",     p(0, 9), p(0,10)),
+
+                new(FStringStart,         "f\"",    p(1, 0), p(1, 2)),
+                new(LeftBrace,            "{",      p(1, 2), p(1, 3)),
+                new(Name,                 "bau",    p(1, 3), p(1, 6)),
+                new(Equal,                "=",      p(1, 7), p(1, 8)),
+                new(DebugSpecifierString, "bau =",  p(1, 8), p(1, 8)),
+                new(RightBrace,           "}",      p(1, 8), p(1, 9)),
+                new(FStringEnd,           "\"",     p(1, 9), p(1,10)),
+                new(NewLine,              "\n",     p(1,10), p(1,11)),
+
+                new(FStringStart,         "f\"",    p(2, 0), p(2, 2)),
+                new(LeftBrace,            "{",      p(2, 2), p(2, 3)),
+                new(Name,                 "bau",    p(2, 3), p(2, 6)),
+                new(Equal,                "=",      p(2, 6), p(2, 7)),
+                new(DebugSpecifierString, "bau= ",  p(2, 8), p(2, 8)),
+                new(RightBrace,           "}",      p(2, 8), p(2, 9)),
+                new(FStringEnd,           "\"",     p(2, 9), p(2,10)),
+                new(NewLine,              "\n",     p(2,10), p(2,11)),
+
+                new(FStringStart,         "f\"",    p(3, 0), p(3, 2)),
+                new(LeftBrace,            "{",      p(3, 2), p(3, 3)),
+                new(Name,                 "bau",    p(3, 3), p(3, 6)),
+                new(Equal,                "=",      p(3, 7), p(3, 8)),
+                new(DebugSpecifierString, "bau = ", p(3, 9), p(3, 9)),
+                new(RightBrace,           "}",      p(3, 9), p(3,10)),
+                new(FStringEnd,           "\"",     p(3,10), p(3,11)),
+                eof(3, 11),
+            ]),
+            ["F_InterpolatedFormatSpec"] =
+            ("f'{bau:.0{fwmc}f}'",
+            [
+                new(FStringStart, "f'", p(0, 0), p(0, 2)),
+                new(LeftBrace, "{", p(0, 2), p(0, 3)),
+                new(Name, "bau", p(0, 3), p(0, 6)),
+                new(Colon, ":", p(0, 6), p(0, 7)),
+                new(FStringMiddle, ".0", p(0, 7), p(0, 9)),
+                new(LeftBrace, "{", p(0, 9), p(0, 10)),
+                new(Name, "fwmc", p(0, 10), p(0, 14)),
+                new(RightBrace, "}", p(0, 14), p(0, 15)),
+                new(FStringMiddle, "f", p(0, 15), p(0, 16)),
+                new(RightBrace, "}", p(0, 16), p(0, 17)),
+                new(FStringEnd, "'", p(0, 17), p(0, 18)),
+                eof(0, 18),
             ]),
             // Copy-paste previous for t-strings.
             ["T_Empty"] = ("""
@@ -1455,6 +1689,7 @@ public class TestTokenizer
                 new(LeftBrace, "{", p(0, 4), p(0, 5)),
                 new(Number, "3", p(1, 0), p(1, 1)),
                 new(Equal, "=", p(2, 0), p(2, 1)),
+                new(DebugSpecifierString, "\n3\n=", p(2, 1), p(2, 1)),
                 new(RightBrace, "}", p(2, 1), p(2, 2)),
                 new(TStringEnd, "'''", p(2, 2), p(2, 5)),
                 eof(2, 5),
@@ -1496,6 +1731,65 @@ public class TestTokenizer
                 new(TStringEnd, "'''", p(5, 3), p(5, 6)),
                 eof(5, 6),
             ]),
+            ["T_VariousDebugStrings"] = ("""
+            t"{bau=}"
+            t"{bau =}"
+            t"{bau= }"
+            t"{bau = }"
+            """,
+            [
+                new(TStringStart,         "t\"",    p(0, 0), p(0, 2)),
+                new(LeftBrace,            "{",      p(0, 2), p(0, 3)),
+                new(Name,                 "bau",    p(0, 3), p(0, 6)),
+                new(Equal,                "=",      p(0, 6), p(0, 7)),
+                new(DebugSpecifierString, "bau=",   p(0, 7), p(0, 7)),
+                new(RightBrace,           "}",      p(0, 7), p(0, 8)),
+                new(TStringEnd,           "\"",     p(0, 8), p(0, 9)),
+                new(NewLine,              "\n",     p(0, 9), p(0,10)),
+
+                new(TStringStart,         "t\"",    p(1, 0), p(1, 2)),
+                new(LeftBrace,            "{",      p(1, 2), p(1, 3)),
+                new(Name,                 "bau",    p(1, 3), p(1, 6)),
+                new(Equal,                "=",      p(1, 7), p(1, 8)),
+                new(DebugSpecifierString, "bau =",  p(1, 8), p(1, 8)),
+                new(RightBrace,           "}",      p(1, 8), p(1, 9)),
+                new(TStringEnd,           "\"",     p(1, 9), p(1,10)),
+                new(NewLine,              "\n",     p(1,10), p(1,11)),
+
+                new(TStringStart,         "t\"",    p(2, 0), p(2, 2)),
+                new(LeftBrace,            "{",      p(2, 2), p(2, 3)),
+                new(Name,                 "bau",    p(2, 3), p(2, 6)),
+                new(Equal,                "=",      p(2, 6), p(2, 7)),
+                new(DebugSpecifierString, "bau= ",  p(2, 8), p(2, 8)),
+                new(RightBrace,           "}",      p(2, 8), p(2, 9)),
+                new(TStringEnd,           "\"",     p(2, 9), p(2,10)),
+                new(NewLine,              "\n",     p(2,10), p(2,11)),
+
+                new(TStringStart,         "t\"",    p(3, 0), p(3, 2)),
+                new(LeftBrace,            "{",      p(3, 2), p(3, 3)),
+                new(Name,                 "bau",    p(3, 3), p(3, 6)),
+                new(Equal,                "=",      p(3, 7), p(3, 8)),
+                new(DebugSpecifierString, "bau = ", p(3, 9), p(3, 9)),
+                new(RightBrace,           "}",      p(3, 9), p(3,10)),
+                new(TStringEnd,           "\"",     p(3,10), p(3,11)),
+                eof(3, 11),
+            ]),
+            ["T_InterpolatedFormatSpec"] =
+            ("t'{bau:.0{fwmc}f}'",
+            [
+                new(TStringStart, "t'", p(0, 0), p(0, 2)),
+                new(LeftBrace, "{", p(0, 2), p(0, 3)),
+                new(Name, "bau", p(0, 3), p(0, 6)),
+                new(Colon, ":", p(0, 6), p(0, 7)),
+                new(TStringMiddle, ".0", p(0, 7), p(0, 9)),
+                new(LeftBrace, "{", p(0, 9), p(0, 10)),
+                new(Name, "fwmc", p(0, 10), p(0, 14)),
+                new(RightBrace, "}", p(0, 14), p(0, 15)),
+                new(TStringMiddle, "f", p(0, 15), p(0, 16)),
+                new(RightBrace, "}", p(0, 16), p(0, 17)),
+                new(TStringEnd, "'", p(0, 17), p(0, 18)),
+                eof(0, 18),
+            ]),
             // Mixed scenario.
             ["Mixed"] = ("""
             t"BAU {f"bau={fwmc}"} IN BAUBAU"
@@ -1514,7 +1808,17 @@ public class TestTokenizer
                 new(TStringMiddle, " IN BAUBAU", p(0, 21), p(0, 31)),
                 new(TStringEnd,    "\"",         p(0, 31), p(0, 32)),
                 eof(0, 32),
-            ])
+            ]),
+            ["Common_ShieldedBraces"] = ("""
+            f"bau {{ }}"
+            """,
+            [
+                new(FStringStart, "f\"", p(0, 0), p(0, 2)),
+                new(FStringMiddle, "bau {", p(0, 2), p(0, 7)),
+                new(FStringMiddle, " }", p(0, 8), p(0, 10)),
+                new(FStringEnd, "\"", p(0, 11), p(0, 12)),
+                eof(0, 12),
+            ]),
         };
 
     [Theory]
@@ -1532,6 +1836,8 @@ public class TestTokenizer
     [InlineData("F_TripleQuotedWithLineFeedInPlaceholderAndDebugSpec")]
     [InlineData("F_TripleQuotedWithLineFeedInPlaceHolderAndFormatSpec")]
     [InlineData("F_TripleQuotedWithWeirdFormatSpec(ShouldToWorksAnyway)")]
+    [InlineData("F_VariousDebugStrings")]
+    [InlineData("F_InterpolatedFormatSpec")]
     [InlineData("T_Empty")]
     [InlineData("T_BasicAndRawPrefix")]
     [InlineData("T_ConversionSpecAndShieldedBracesAndRawPrefix")]
@@ -1546,7 +1852,10 @@ public class TestTokenizer
     [InlineData("T_TripleQuotedWithLineFeedInPlaceholderAndDebugSpec")]
     [InlineData("T_TripleQuotedWithLineFeedInPlaceHolderAndFormatSpec")]
     [InlineData("T_TripleQuotedWithWeirdFormatSpec(ShouldToWorksAnyway)")]
+    [InlineData("T_VariousDebugStrings")]
+    [InlineData("T_InterpolatedFormatSpec")]
     [InlineData("Mixed")]
+    [InlineData("Common_ShieldedBraces")]
     public void TestPartialStrings(string @case)
     {
         Debug.Assert(pstring_test_cases.ContainsKey(@case));
@@ -1568,7 +1877,7 @@ public class TestTokenizer
             token = tokenizer.ReadNext();
             result.Add(token);
         }
-        while (token.Type is not EndOfFile && !tokenizer.ShouldStop);
+        while (!tokenizer.ShouldStop);
 
         Assert.True(tokenizer.ShouldStop);
 

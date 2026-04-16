@@ -75,6 +75,8 @@ public static class Program
                 while (!tokenizer.ShouldStop)
                 {
                     var tok = tokenizer.ReadNext();
+                    if (tok.Type == TokenType.Error)
+                        Console.WriteLine($"Bad token: {tokenizer.ErrorMessage}");
                     Console.WriteLine(tok.MakeItNoice(Console.WindowWidth));
                 }
             }

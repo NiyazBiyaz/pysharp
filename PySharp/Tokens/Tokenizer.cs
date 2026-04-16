@@ -15,13 +15,15 @@ public class Tokenizer : BaseTokenizer
 
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
-    private const string invalid_dec = "Invalid decimal literal.";
-    private const string invalid_imaginary = "Invalid imaginary literal.";
-    private const string invalid_hex = "Invalid hexadecimal literal.";
-    private const string invalid_oct = "Invalid octal literal.";
-    private const string invalid_bin = "Invalid binary literal.";
-    private const string tab_space_err_msg = "Tabs and spaces mixing is not allowed.";
-    private const string double_brackets = "Use double curly brackets '}}' to shield them in interpolated string.";
+    private const string invalid_dec_message = "Invalid decimal literal.";
+    private const string invalid_img_message = "Invalid imaginary literal.";
+    private const string invalid_hex_message = "Invalid hexadecimal literal.";
+    private const string invalid_oct_message = "Invalid octal literal.";
+    private const string invalid_bin_message = "Invalid binary literal.";
+    private const string tab_space_mixing_message = "Tabs and spaces mixing is not allowed.";
+    private const string double_brackets_message = "Use double curly brackets '}}' to shield it in interpolated string.";
+    private const string unterminated_string_message = "Unterminated string literal.";
+
     private int pendingIndentation
     {
         get => field;
@@ -43,11 +45,13 @@ public class Tokenizer : BaseTokenizer
 
     // Partial strings stuff.
     private Tokenizer? partialNestedTokenizer;
+    private readonly bool isPartialString;
     private readonly char partialQuote;
     private readonly int partialQuoteCount;
-    private readonly int partialTokenizerGeneration;
+    private readonly int partialCurrentGeneration;
     private readonly StringType partialStringType;
     private PartialTokenizerMode tokenizerMode;
+    private bool unrecoverable = false;
     private int braceLevel = 0;
     private int expressionStartBraceLevel = -1;
     private int expressionStartLine;
@@ -62,14 +66,17 @@ public class Tokenizer : BaseTokenizer
     /// This constant prevents such scenarios and saves error locality.
     /// Another reason for it is the fact, that such a long interpolations are ugly.
     /// </summary>
+    // TODO: Now we just do opposite thing and read all buffer as error. Needs something like
+    // signal to buffer to limit itself by some safe-point that doesn't was changed, but later.
     private const int interpolation_maximum_lines = 4;
     /// <summary>
     /// Maximum F-/T-strings that can be nested to each other by the Python reference
-    /// https://docs.python.org/3/reference/lexical_analysis.html#formatted-string-literals
+    ///
+    /// <see href="https://docs.python.org/3/reference/lexical_analysis.html#formatted-string-literals"/>
     /// </summary>
     private const int maximum_partial_strings_nesting = 5;
 
-    public Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines = false)
+    public Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines = true)
         : base(syncPoint, saveTrivia)
     {
         indentStack = syncPoint.IndentStack;
@@ -82,7 +89,8 @@ public class Tokenizer : BaseTokenizer
         partialNestedTokenizer = null;
         partialQuote = Eof;
         partialQuoteCount = -1;
-        partialTokenizerGeneration = 0;
+        partialCurrentGeneration = 0;
+        isPartialString = false;
     }
 
     private Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
@@ -102,24 +110,10 @@ public class Tokenizer : BaseTokenizer
         partialStringType = stringType;
         partialQuote = quote;
         partialQuoteCount = quoteCount;
-        partialTokenizerGeneration = oldGeneration + 1;
+        partialCurrentGeneration = oldGeneration + 1;
         tokenizerMode = PartialTokenizerMode.MiddleString;
         pendingErrorTokens = new(1);
-
-        testGeneration();
-    }
-
-    private void testGeneration()
-    {
-        if (partialTokenizerGeneration > maximum_partial_strings_nesting)
-        {
-            var span = Source.Span;
-
-            while (NextChar == Eof)
-                Advance(span);
-
-            pendingErrorTokens.Enqueue(ErrorToken(TokenizerError.PartialNestingOverflow, "Too many nested strings."));
-        }
+        isPartialString = true;
     }
 
     public override SynchronizationPoint Synchronize()
@@ -180,16 +174,25 @@ public class Tokenizer : BaseTokenizer
     {
         if (partialNestedTokenizer is not null)
         {
+            // Close nested if it want that.
             if (partialNestedTokenizer.ShouldStop)
             {
-                ReSync(partialNestedTokenizer.Synchronize());
-                partialNestedTokenizer = null;
+                killNested();
             }
             else
             {
-                var tokenFromNested = partialNestedTokenizer.readNextPartialMode();
+                var tokenFromNested = partialNestedTokenizer.tryNextPartialMode();
+
+                // If nested tokenizer returns null, it means that it can't more read the characters
+                // but in some weird condition. So we need to delete it now and resume tokenizing.
+                if (tokenFromNested is null)
+                {
+                    killNested();
+                    return null;
+                }
+
                 // Throw out errors.
-                if (tokenFromNested.Type is TokenType.Error)
+                if (tokenFromNested.Value.Type is TokenType.Error)
                 {
                     Error = partialNestedTokenizer.Error;
                     ErrorMessage = partialNestedTokenizer.ErrorMessage;
@@ -199,6 +202,14 @@ public class Tokenizer : BaseTokenizer
         }
 
         return null;
+
+        void killNested()
+        {
+            ReSync(partialNestedTokenizer.Synchronize());
+            if (partialNestedTokenizer.unrecoverable)
+                unrecoverable = true;
+            partialNestedTokenizer = null;
+        }
     }
 
     private Token? tryNextLine(ReadOnlySpan<char> span)
@@ -253,12 +264,12 @@ public class Tokenizer : BaseTokenizer
                 if (column == indentStack.Peek())
                 {
                     if (alternateColumn != alternateIndentStack.Peek())
-                        return ErrorToken(TokenizerError.IndentationError, tab_space_err_msg, true);
+                        return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
                 }
                 else if (column > indentStack.Peek())
                 {
                     if (alternateColumn <= alternateIndentStack.Peek())
-                        return ErrorToken(TokenizerError.IndentationError, tab_space_err_msg, true);
+                        return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
 
                     pendingIndentation++;
                     indentStack.Push(column);
@@ -307,7 +318,7 @@ public class Tokenizer : BaseTokenizer
         if (alternateColumn != alternateIndentStack.Peek())
         {
             pendingIndentation = 0;
-            return ErrorToken(TokenizerError.IndentationError, tab_space_err_msg, true);
+            return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
         }
 
         return null;
@@ -341,8 +352,16 @@ public class Tokenizer : BaseTokenizer
         }
 
         // TODO: probably need to separate types of whitespace.
-        if (SaveTrivia && hasWhiteSpace)
-            return CreateToken(TokenType.WhiteSpace);
+        if (hasWhiteSpace)
+        {
+            if (SaveTrivia)
+                return CreateToken(TokenType.WhiteSpace);
+
+            // Since some special characters may change behavior of the tokenizer
+            // after eating whitespace we need to read next token in partial mode
+            else if (isPartialString)
+                return tryNextPartialMode();
+        }
 
         return null;
     }
@@ -431,18 +450,19 @@ public class Tokenizer : BaseTokenizer
 
         if (isQuote(ThreeNextChar) && isPotentialPrefix(TwoNextChar))
         {
-            if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string errMsg)
+            if (isInvalidStringPrefixes(sawB, sawR, sawU, sawF, sawT) is string prefixErrMsg)
             {
+                Advance(span);
+                Advance(span);
                 if (!sawF && !sawT)
                 {
-                    Advance(span);
-                    Advance(span);
                     // If it's not partial string, read string and put it in error token.
-                    return readString(span, errMsg);
+                    return readString(span, prefixErrMsg);
                 }
                 else
-                    // TODO: Error recovery
-                    throw new NotImplementedException();
+                {
+                    return ErrorToken(TokenizerError.InvalidLiteral, prefixErrMsg);
+                }
             }
             else
             {
@@ -487,7 +507,9 @@ public class Tokenizer : BaseTokenizer
                 {
                     if (increaseLine)
                         AdvanceLine();
-                    return ReadNext();
+                    // Since some special characters may change behavior of the tokenizer
+                    // after eating whitespace we need to read next token in partial mode
+                    return isPartialString ? tryNextPartialMode() : ReadNext();
                 }
             }
             // If line is empty but with comment save trivia.
@@ -759,11 +781,11 @@ public class Tokenizer : BaseTokenizer
 
         string message = kind switch
         {
-            NumberKind.Decimal => invalid_dec,
-            NumberKind.Imaginary => invalid_imaginary,
-            NumberKind.Hexadecimal => invalid_hex,
-            NumberKind.Octal => invalid_oct,
-            NumberKind.Binary => invalid_bin,
+            NumberKind.Decimal => invalid_dec_message,
+            NumberKind.Imaginary => invalid_img_message,
+            NumberKind.Hexadecimal => invalid_hex_message,
+            NumberKind.Octal => invalid_oct_message,
+            NumberKind.Binary => invalid_bin_message,
             _ => throw new UnreachableException(),
         };
 
@@ -793,6 +815,9 @@ public class Tokenizer : BaseTokenizer
 
     private Token readPartialStringStart(ReadOnlySpan<char> span, StringType stringType)
     {
+        if (assertCanReadPartial() is Token err)
+            return err;
+
         Advance(span); // First char always prefix.
 
         char quote;
@@ -821,7 +846,7 @@ public class Tokenizer : BaseTokenizer
 
             var tok = CreateToken(getStart(stringType));
 
-            partialNestedTokenizer = new Tokenizer(Synchronize(), SaveTrivia, limitInterpolationLines, partialTokenizerGeneration, stringType, quote, quoteCount);
+            partialNestedTokenizer = new Tokenizer(Synchronize(), SaveTrivia, limitInterpolationLines, partialCurrentGeneration, stringType, quote, quoteCount);
 
             return tok;
         }
@@ -857,9 +882,12 @@ public class Tokenizer : BaseTokenizer
         {
             if (NextChar == Eof || (quotesCount == 1 && NextChar == '\n'))
             {
-                string message = UnterminatedStringMessage;
+                string message = unterminated_string_message;
                 if (hasEscapedQuote)
                     message += " Perhaps you escaped the end quote?";
+
+                if (NextChar == Eof)
+                    unrecoverable = true;
 
                 return ErrorToken(TokenizerError.InvalidLiteral, message);
             }
@@ -973,21 +1001,23 @@ public class Tokenizer : BaseTokenizer
         }
     }
 
-    private Token readNextPartialMode()
+    private Token? tryNextPartialMode()
     {
         if (pendingErrorTokens.TryDequeue(out var err))
+        {
             return err;
+        }
 
         var span = Source.Span;
 
         if (tokenizerMode is PartialTokenizerMode.MiddleString)
-            return readMiddleString(span);
+            return tryMiddleString(span);
 
         else
-            return readExpression(span);
+            return tryExpression(span);
     }
 
-    private Token readMiddleString(ReadOnlySpan<char> span)
+    private Token? tryMiddleString(ReadOnlySpan<char> span)
     {
         // If false, next Middle string will not be emitted, because it's empty.
         bool isAdvanced = false;
@@ -1017,7 +1047,7 @@ public class Tokenizer : BaseTokenizer
                 setExprStartLine();
 
                 if (!isAdvanced)
-                    return readNextPartialMode();
+                    return tryNextPartialMode();
 
                 return CreateToken(getMiddle(partialStringType));
             }
@@ -1031,7 +1061,7 @@ public class Tokenizer : BaseTokenizer
                     if (isAdvanced)
                         return CreateToken(getMiddle(partialStringType));
                     else
-                        return readNextPartialMode();
+                        return tryNextPartialMode();
                 }
                 // In other we expecting shielded brace.
                 if (TwoNextChar != '}')
@@ -1040,9 +1070,10 @@ public class Tokenizer : BaseTokenizer
                     {
                         var tokenWithValidPart = CreateToken(getMiddle(partialStringType));
 
+                        ResetStart();
                         Advance(span);
 
-                        var invalidBrace = ErrorToken(TokenizerError.InvalidLiteral, double_brackets);
+                        var invalidBrace = ErrorToken(TokenizerError.InvalidLiteral, double_brackets_message);
                         pendingErrorTokens.Enqueue(invalidBrace);
 
                         if (isAdvanced)
@@ -1051,7 +1082,7 @@ public class Tokenizer : BaseTokenizer
                     else
                     {
                         Advance(span);
-                        return ErrorToken(TokenizerError.InvalidLiteral, double_brackets);
+                        return ErrorToken(TokenizerError.InvalidLiteral, double_brackets_message);
                     }
                 }
                 // See above.
@@ -1068,10 +1099,10 @@ public class Tokenizer : BaseTokenizer
             {
                 Advance(span);
             }
-            else if (NextChar == Eof || partialQuoteCount == 1 && NextChar == '\n')
+            else if (!formatSpec && (NextChar == Eof || partialQuoteCount == 1 && NextChar == '\n'))
             {
-                ShouldStop = NextChar == Eof;
-                return ErrorToken(TokenizerError.InvalidLiteral, UnterminatedStringMessage);
+                ShouldStop = unrecoverable = true;
+                return ErrorToken(TokenizerError.InvalidLiteral, unterminated_string_message);
             }
             // If NextChar is quote, check that we can end string.
             // In format spec we are not done yet.
@@ -1106,10 +1137,11 @@ public class Tokenizer : BaseTokenizer
                 AdvanceLine();
         }
 
+        // Set start of the expression to be able manage lines count and create error when limit reached.
         void setExprStartLine() => expressionStartLine = StartLineNumber;
     }
 
-    private Token readExpression(ReadOnlySpan<char> span)
+    private Token? tryExpression(ReadOnlySpan<char> span)
     {
         // Maybe another nested tokenizer.
         Token? maybeToken = tryPartial();
@@ -1167,20 +1199,69 @@ public class Tokenizer : BaseTokenizer
             debugSpec = true;
 
         var next = ReadNext();
+
         // Check the limit of the maximum lines in expression if no compatible mode enabled.
-        if (!limitInterpolationLines && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
+        if (!unrecoverable && limitInterpolationLines && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
         {
             while (NextChar != Eof)
-                Advance(span);
+            {
+                if (Advance(span))
+                    AdvanceLine();
+            }
 
+            ShouldStop = true;
+            unrecoverable = true;
             return ErrorToken(
                 TokenizerError.PartialTooLongExpression,
-                $"Unclosed interpolated expression or it take too much lines. Maximum lines allowed: {interpolation_maximum_lines}"
+                $"Interpolation exceeds maximum line limit. Allowed maximum {interpolation_maximum_lines} lines."
             );
         }
+
+        // Nested tokenizers shouldn't return EOF token, only the root one.
+        if (next.Type is TokenType.EndOfFile)
+        {
+            // If it's not unrecoverable error it's mean that expression is unclosed,
+            // so we need to create such error token and in next iteration control will
+            // comeback to root tokenizer.
+            if (!unrecoverable)
+            {
+                return ErrorToken(
+                    TokenizerError.PartialUnclosedExpression,
+                    "Unexpected EOF in multi-line statement."
+                );
+            }
+
+            // ShouldStop already set to true.
+            return null;
+        }
+
         return next;
     }
 
+    private Token? assertCanReadPartial()
+    {
+        if (partialCurrentGeneration + 1 > maximum_partial_strings_nesting)
+        {
+            var span = Source.Span;
+
+            while (NextChar != Eof)
+            {
+                if (Advance(span))
+                    AdvanceLine();
+            }
+
+            ShouldStop = true;
+            unrecoverable = true;
+
+            var message = string.Format("{0}-string: nesting depth exceeded (limit: {1}).",
+                partialStringType == StringType.Format ? 'f' : 't',
+                maximum_partial_strings_nesting);
+
+            return ErrorToken(TokenizerError.PartialNestingOverflow, message);
+        }
+
+        return null;
+    }
 
     private static bool isInvalidEndOfNumber(char ch)
     {
@@ -1207,9 +1288,9 @@ public class Tokenizer : BaseTokenizer
         if (b)
         {
             if (f)
-                return string.Format(err_format, 'f', 'b');
+                return string.Format(err_format, 'b', 'f');
             if (t)
-                return string.Format(err_format, 't', 'b');
+                return string.Format(err_format, 'b', 't');
         }
         if (f && t)
             return string.Format(err_format, 'f', 't');
