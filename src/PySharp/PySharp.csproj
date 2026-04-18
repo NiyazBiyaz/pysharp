@@ -8,4 +8,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../PySharp.Tokens/PySharp.Tokens.csproj" />
+  </ItemGroup>
+
 </Project>
