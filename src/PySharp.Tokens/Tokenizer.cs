@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace PySharp.Tokens;
 
-public class Tokenizer : BaseTokenizer
+public class Tokenizer : BaseTokenizer, ITokenizer
 {
     private bool atLineBeginning;
     private bool isBlankLine = false;

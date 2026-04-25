@@ -8,9 +8,9 @@ public readonly record struct TokenPosition(int Line, int Column)
     public static readonly TokenPosition StartOfFile = new(0, 0);
 
     public static bool operator <(TokenPosition left, TokenPosition right) =>
-        left.Line > right.Line || left.Line == right.Line && left.Column > right.Column;
-    public static bool operator >(TokenPosition left, TokenPosition right) =>
         left.Line < right.Line || left.Line == right.Line && left.Column < right.Column;
+    public static bool operator >(TokenPosition left, TokenPosition right) =>
+        left.Line > right.Line || left.Line == right.Line && left.Column > right.Column;
 
     public static TokenPosition operator +(TokenPosition left, TokenPosition right) => left.AddDelta(right);
     public static TokenPosition operator -(TokenPosition left, TokenPosition right)
