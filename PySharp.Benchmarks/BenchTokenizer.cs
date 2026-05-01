@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using PySharp.Tokens;
+using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.Benchmarks;
 

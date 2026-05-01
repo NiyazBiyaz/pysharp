@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using PySharp.Tokens;
+using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp;
 

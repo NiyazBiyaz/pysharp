@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using PySharp.Tokens;
+using PySharp.SyntaxAnalysis.Tokens;
 
-namespace PySharp.Tests.Tokens;
+namespace PySharp.Tests.SyntaxAnalysis.Tokens;
 
 public class TestSampleCode
 {

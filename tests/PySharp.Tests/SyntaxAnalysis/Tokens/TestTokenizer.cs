@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using PySharp.Tokens;
-using static PySharp.Tokens.TokenType;
+using PySharp.SyntaxAnalysis.Tokens;
+using static PySharp.SyntaxAnalysis.Tokens.TokenType;
 
-namespace PySharp.Tests.Tokens;
+namespace PySharp.Tests.SyntaxAnalysis.Tokens;
 
 public class TestTokenizer
 {

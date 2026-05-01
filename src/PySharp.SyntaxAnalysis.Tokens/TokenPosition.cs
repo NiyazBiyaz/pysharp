@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace PySharp.Tokens;
+namespace PySharp.SyntaxAnalysis.Tokens;
 
 [DebuggerDisplay("({Line},{Column})")]
 public readonly record struct TokenPosition(int Line, int Column)

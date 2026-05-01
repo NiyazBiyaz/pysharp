@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace PySharp.Tokens;
+namespace PySharp.SyntaxAnalysis.Tokens;
 
 [DebuggerDisplay("next={NextChar} ln={currentLineNumber} cl={currentColumn} len={currentPos-startPos}")]
 public abstract class BaseTokenizer

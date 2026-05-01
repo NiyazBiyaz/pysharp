@@ -1,4 +1,4 @@
-namespace PySharp.Tokens;
+namespace PySharp.SyntaxAnalysis.Tokens;
 
 public enum TokenizerError
 {

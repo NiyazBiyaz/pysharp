@@ -14,7 +14,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\PySharp\PySharp.csproj" />
-    <ProjectReference Include="..\..\src\PySharp.Tokens\PySharp.Tokens.csproj" />
+    <ProjectReference Include="..\..\src\PySharp.SyntaxAnalysis.Tokens\PySharp.SyntaxAnalysis.Tokens.csproj" />
     <!-- Include test data. -->
     <Content Include="Data/**/*" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>

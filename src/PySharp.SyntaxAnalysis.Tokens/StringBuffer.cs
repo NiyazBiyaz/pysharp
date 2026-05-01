@@ -1,4 +1,4 @@
-namespace PySharp.Tokens;
+namespace PySharp.SyntaxAnalysis.Tokens;
 
 public class StringBuffer(string str) : IReadOnlyMemoryBuffer<char>
 {

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace PySharp.Tokens;
+namespace PySharp.SyntaxAnalysis.Tokens;
 
 public class Tokenizer : BaseTokenizer, ITokenizer
 {
