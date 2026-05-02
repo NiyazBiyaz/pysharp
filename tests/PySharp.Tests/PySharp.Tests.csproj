@@ -15,6 +15,7 @@
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\PySharp\PySharp.csproj" />
     <ProjectReference Include="..\..\src\PySharp.SyntaxAnalysis.Tokens\PySharp.SyntaxAnalysis.Tokens.csproj" />
+    <ProjectReference Include="..\..\src\PySharp.SyntaxAnalysis.Common\PySharp.SyntaxAnalysis.Common.csproj" />
     <!-- Include test data. -->
     <Content Include="Data/**/*" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>

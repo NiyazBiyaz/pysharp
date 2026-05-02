@@ -1,0 +1,35 @@
+# Bootstrap metagrammar
+@header """\
+using PySharp.SyntaxAnalysis.Tokens;
+using PySharp.SyntaxAnalysis.Common;
+using PySharp.SyntaxAnalysis.Common.Ast;
+using PySharp.SyntaxAnalysis.Generator.Ast;
+
+namespace PySharp.SyntaxAnalysis.Generator;
+"""
+
+Start:
+    | Metas Rules ENDOFFILE -> "new GrammarNode(metas, rules)"
+Metas:
+    | Meta Metas -> "new([meta, .. metas])"
+    | Meta -> "new([meta])"
+Meta:
+    | "@" NAME STRING NEWLINE -> "new MetadataNode(name.RawString, StringParser.ParseQuotedString(string.RawString))"
+Rules:
+    | Rule Rules -> "new([rule, .. rules])"
+    | Rule -> "new([rule])"
+Rule:
+    | NAME COLON NEWLINE INDENT Alternatives DEDENT -> "new RuleNode(name, alternatives)"
+Alternatives:
+    | Alternative Alternatives -> "new([alternative, .. alternatives])"
+    | Alternative -> "new([alternative])"
+Alternative:
+    | VERTBAR Atoms Action NEWLINE -> "new AlternativeNode(atoms, action)"
+Atoms:
+    | Atom Atoms -> "new([atom, .. atoms])"
+    | Atom -> "new([atom])"
+Atom:
+    | NAME -> "new NameAtomNode(name.RawString)"
+    | STRING -> "new StringAtomNode(string.RawString)" # Will call parse method itself.
+Action:
+    | RIGHTARROW STRING -> "new ActionNode(string.RawString)"

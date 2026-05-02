@@ -68,4 +68,6 @@ public readonly record struct TokenPosition(int Line, int Column)
             };
         }
     }
+
+    public override string ToString() => $"TokenPos({Line}, {Column})";
 }
