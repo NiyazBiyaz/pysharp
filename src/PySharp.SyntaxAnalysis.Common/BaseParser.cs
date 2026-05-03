@@ -35,10 +35,10 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
         return null;
     }
 
-    protected bool Lookahead(Func<object[]?, GreenNode?> func, bool positive, params object[]? args)
+    protected bool Lookahead(Func<GreenNode?> func, bool positive)
     {
         int mark = Mark();
-        bool isParsed = func(args) != null;
+        bool isParsed = func() is not null;
         Reset(mark);
         return isParsed == positive;
     }

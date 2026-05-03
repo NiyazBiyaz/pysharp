@@ -2,7 +2,7 @@ using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-public record MetadataNode : GreenNode
+internal record MetadataNode : GreenNode
 {
     public string Name { get; private init; }
     public string StringValue { get; private init; }

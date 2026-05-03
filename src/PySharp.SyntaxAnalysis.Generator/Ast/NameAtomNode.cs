@@ -1,6 +1,6 @@
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-public record NameAtomNode : AtomNode
+internal record NameAtomNode : AtomNode
 {
     public NameAtomNode(string name)
     {

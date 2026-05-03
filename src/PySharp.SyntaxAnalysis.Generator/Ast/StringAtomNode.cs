@@ -3,7 +3,7 @@ using PySharp.SyntaxAnalysis.Common;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-public record StringAtomNode : AtomNode
+internal record StringAtomNode : AtomNode
 {
     public StringAtomNode(string value)
     {

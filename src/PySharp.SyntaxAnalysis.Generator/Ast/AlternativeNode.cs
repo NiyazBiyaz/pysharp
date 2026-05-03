@@ -2,7 +2,7 @@ using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-public record AlternativeNode : GreenNode
+internal record AlternativeNode : GreenNode
 {
     public ActionNode? Action { get; private init; }
     public NodeArray<AtomNode> Atoms { get; private init; }

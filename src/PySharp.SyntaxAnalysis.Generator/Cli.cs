@@ -2,7 +2,7 @@ using CommandLine;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
-public class CliOptions
+internal class CliOptions
 {
     [Option('i', "input", Required = true, HelpText = "Grammar file path.")]
     public string GrammarPath { get; set; } = null!;

@@ -2,7 +2,7 @@ using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-public record ActionNode : GreenNode
+internal record ActionNode : GreenNode
 {
     public string Expression { get; private init; }
 
