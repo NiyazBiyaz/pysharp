@@ -7,37 +7,50 @@ using PySharp.SyntaxAnalysis.Generator.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 """
-@class_signature "internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
+@class_signature "internal class NewGrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
 @parse_call_return "GrammarNode"
 
+@alias "@" -> At
+@alias "->" -> RightArrow
+@alias ":" -> Colon
+@alias "[" -> LeftSquareBracket
+@alias "]" -> RightSquareBracket
+@alias "|" -> VertBar
+
 Start[GrammarNode]:
-    | Metas Rules EndOfFile -> "new GrammarNode(metas, rules)"
+    | Metas Aliases Rules EndOfFile -> "new GrammarNode(metas, aliases, rules)"
 
 Metas["NodeArray<MetadataNode>"]:
     | Meta Metas -> "new([meta, .. metas])"
     | Meta -> "new([meta])"
 
 Meta[MetadataNode]:
-    | At Name StringLiteral NewLine -> "new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))"
+    | "@" Name StringLiteral NewLine -> "new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))"
+
+Aliases["NodeArray<AliasNode>"]:
+    | Alias Aliases -> "new([alias, .. aliases])"
+    | Alias -> "new([alias])"
+
+Alias[AliasNode]:
+    | "@" "alias" StringLiteral "->" Name NewLine -> "new AliasNode(StringParser.ParseQuotedString(stringliteral.RawString), name.RawString)"
 
 Rules["NodeArray<RuleNode>"]:
     | Rule Rules -> "new([rule, .. rules])"
     | Rule -> "new([rule])"
 
 Rule[RuleNode]:
-    | Name TypeSpec Colon NewLine Indent Alternatives Dedent -> "new RuleNode(name.RawString, typespec, alternatives)"
+    | Name TypeSpec ":" NewLine Indent Alternatives Dedent -> "new RuleNode(name.RawString, typespec, alternatives)"
 
 TypeSpec[TypeSpecNode]:
-    | LeftSquareBracket Name RightSquareBracket -> "new TypeSpecNode(name.RawString)"
-    | LeftSquareBracket StringLiteral RightSquareBracket -> \
-        "new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))"
+    | "[" Name "]" -> "new TypeSpecNode(name.RawString)"
+    | "[" StringLiteral "]" -> "new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))"
 
 Alternatives["NodeArray<AlternativeNode>"]:
     | Alternative Alternatives -> "new([alternative, .. alternatives])"
     | Alternative -> "new([alternative])"
 
 Alternative[AlternativeNode]:
-    | VertBar Atoms Action NewLine -> "new AlternativeNode(atoms, action)"
+    | "|" Atoms Action NewLine -> "new AlternativeNode(atoms, action)"
 
 Atoms["NodeArray<AtomNode>"]:
     | Atom Atoms -> "new([atom, .. atoms])"
@@ -48,4 +61,4 @@ Atom[AtomNode]:
     | StringLiteral -> "new StringAtomNode(stringliteral.RawString)" # Will call parse method itself.
 
 Action[ActionNode]:
-    | RightArrow StringLiteral -> "new ActionNode(StringParser.ParseQuotedString(stringliteral.RawString))"
+    | "->" StringLiteral -> "new ActionNode(StringParser.ParseQuotedString(stringliteral.RawString))"

@@ -1,3 +1,4 @@
+using System.Text;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
@@ -26,4 +27,23 @@ public record TokenNode : GreenNode
     }
 
     public override string ToString() => $"TokenNode({Type}, '{RawString}', {Offset2D})";
+
+    public override string RecoverText()
+    {
+        var builder = new StringBuilder();
+        foreach (var trivia in Leading)
+            builder.Append(trivia.RawString);
+
+        builder.Append(RawString);
+
+        return builder.ToString();
+    }
+
+    protected override void AppendToBuilder(StringBuilder builder)
+    {
+        foreach (var trivia in Leading)
+            builder.Append(trivia.RawString);
+
+        builder.Append(RawString);
+    }
 }

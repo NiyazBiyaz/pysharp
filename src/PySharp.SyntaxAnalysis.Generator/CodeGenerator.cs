@@ -57,6 +57,7 @@ internal class CodeGenerator
                 case "token_type_prefix":
                     tokenTypePrefix = meta.StringValue;
                     break;
+
                 case "parse_call_return":
                     parseCallReturn = meta.StringValue;
                     break;
@@ -71,6 +72,11 @@ internal class CodeGenerator
             throw new IncompleteMetadataException("class_signature");
         if (parseCallReturn is null)
             throw new IncompleteMetadataException("parse_call_return");
+
+        foreach (var alias in grammar.Aliases)
+        {
+            strAliases[alias.OldValue] = alias.NewValue;
+        }
 
         // Make searching by name easier.
         foreach (var rule in grammar.Rules)
@@ -107,7 +113,8 @@ internal class CodeGenerator
 
             foreach (var alter in rule.Alternatives)
             {
-                addLine("{");
+                // Show source text of the alternate.
+                addLine($"{{ // {alter.RecoverText()[1..^1]}"); // Cut '|' at the start and new line at the end.
                 indentLevel += 1;
 
                 // Allocate/declare variables of the alternative.
