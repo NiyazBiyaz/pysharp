@@ -7,9 +7,11 @@ public record StringAtomNode : AtomNode
 {
     public StringAtomNode(string value)
     {
-        Debug.Assert(!StringParser.HasByte(value));
-        Value = StringParser.ParseQuotedString(value);
+        Debug.Assert(!StringParser.HasPrefix(value));
+        Value = value;
     }
 
-    public override string ToString() => $"StringAtomNode('{Value}')";
+    public string Parsed => StringParser.ParseQuotedString(Value);
+
+    public override string ToString() => $"StringAtomNode(`{Value}`)";
 }

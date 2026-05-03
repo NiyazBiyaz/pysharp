@@ -1,0 +1,51 @@
+# Bootstrap metagrammar
+@header """\
+using PySharp.SyntaxAnalysis.Tokens;
+using PySharp.SyntaxAnalysis.Common;
+using PySharp.SyntaxAnalysis.Common.Ast;
+using PySharp.SyntaxAnalysis.Generator.Ast;
+
+namespace PySharp.SyntaxAnalysis.Generator;
+"""
+@class_signature "internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
+@parse_call_return "GrammarNode"
+
+Start[GrammarNode]:
+    | Metas Rules EndOfFile -> "new GrammarNode(metas, rules)"
+
+Metas["NodeArray<MetadataNode>"]:
+    | Meta Metas -> "new([meta, .. metas])"
+    | Meta -> "new([meta])"
+
+Meta[MetadataNode]:
+    | At Name StringLiteral NewLine -> "new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))"
+
+Rules["NodeArray<RuleNode>"]:
+    | Rule Rules -> "new([rule, .. rules])"
+    | Rule -> "new([rule])"
+
+Rule[RuleNode]:
+    | Name TypeSpec Colon NewLine Indent Alternatives Dedent -> "new RuleNode(name.RawString, typespec, alternatives)"
+
+TypeSpec[TypeSpecNode]:
+    | LeftSquareBracket Name RightSquareBracket -> "new TypeSpecNode(name.RawString)"
+    | LeftSquareBracket StringLiteral RightSquareBracket -> \
+        "new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))"
+
+Alternatives["NodeArray<AlternativeNode>"]:
+    | Alternative Alternatives -> "new([alternative, .. alternatives])"
+    | Alternative -> "new([alternative])"
+
+Alternative[AlternativeNode]:
+    | VertBar Atoms Action NewLine -> "new AlternativeNode(atoms, action)"
+
+Atoms["NodeArray<AtomNode>"]:
+    | Atom Atoms -> "new([atom, .. atoms])"
+    | Atom -> "new([atom])"
+
+Atom[AtomNode]:
+    | Name -> "new NameAtomNode(name.RawString)"
+    | StringLiteral -> "new StringAtomNode(stringliteral.RawString)" # Will call parse method itself.
+
+Action[ActionNode]:
+    | RightArrow StringLiteral -> "new ActionNode(StringParser.ParseQuotedString(stringliteral.RawString))"

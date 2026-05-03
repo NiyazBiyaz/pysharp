@@ -2,7 +2,7 @@ using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-public record GrammarNode : GreenNode
+internal record GrammarNode : GreenNode
 {
     public NodeArray<MetadataNode> Metadata { get; private init; }
     public NodeArray<RuleNode> Rules { get; private init; }

@@ -1,36 +1,46 @@
-﻿using PySharp.SyntaxAnalysis.Common;
+﻿using CommandLine;
+using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Generator;
 using PySharp.SyntaxAnalysis.Tokens;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static void Main(string[] args) =>
+    Parser.Default.ParseArguments<CliOptions>(args).WithParsed(opt =>
     {
-        if (args.Length != 1)
+        if (!File.Exists(opt.GrammarPath))
         {
-            Console.Error.WriteLine("Specify grammar file path.");
-            Environment.Exit(1);
+            Console.Error.WriteLine($"Error: File '{opt.GrammarPath}' does not exists.");
+            return;
+        }
+        if (File.Exists(opt.OutputPath) && !opt.ForceOverwrite)
+        {
+            Console.Error.WriteLine($"Error: File '{opt.OutputPath}' already exists. Use '--force' to force overwriting file.");
+            return;
         }
 
-        string grammarPath = args.First();
+        run(opt.GrammarPath, opt.OutputPath);
+    });
 
-        // string grammarPath = "/home/biyaz/Projects/PySharp/meta.gram";
-
-        if (!File.Exists(grammarPath))
-        {
-            Console.Error.WriteLine($"File '{grammarPath}' doesn't exists.");
-            Environment.Exit(2);
-        }
-
+    private static void run(string grammarPath, string outputPath)
+    {
         string grammar = File.ReadAllText(grammarPath);
 
         var gramBuffer = new StringBuffer(grammar);
-        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(gramBuffer), false);
+        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(gramBuffer), true);
         var tokenStream = new TokenNodeStream(tokenizer);
         var parser = new GrammarParser(tokenStream);
 
-        var grammarParsed = parser.Start();
+        var grammarParsed = parser.Parse();
 
-        Console.WriteLine(grammarParsed);
+        if (grammarParsed is null)
+        {
+            Console.Error.WriteLine("Parsing error.");
+            Environment.Exit(3);
+        }
+
+        var generator = new CodeGenerator(grammarParsed);
+
+        File.WriteAllText(outputPath, generator.Generate(grammarPath));
     }
 }

@@ -6,7 +6,7 @@ namespace PySharp.SyntaxAnalysis.Common;
 public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
     where TStartNode : GreenNode
 {
-    public abstract TStartNode? Start();
+    public abstract TStartNode? Parse();
 
     protected abstract HashSet<string> Keywords { get; }
 

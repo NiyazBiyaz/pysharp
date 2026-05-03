@@ -235,4 +235,7 @@ public static class StringParser
 
         return false;
     }
+
+    public static bool HasPrefix(ReadOnlySpan<char> literal) =>
+        literal.Length == 0 || literal[0] != '\'' && literal[0] != '"';
 }

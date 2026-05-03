@@ -104,4 +104,15 @@ public class TestStringParser
         string actual = StringParser.ParseQuotedString(input);
         Assert.Equal(expected, actual);
     }
+
+    [Theory]
+    [InlineData("rb'bau'", true)]
+    [InlineData("r\"bau\"", true)]
+    [InlineData("br'bau'", true)]
+    [InlineData("\"bau\"", false)]
+    public void TestHasPrefix(string input, bool expected)
+    {
+        bool actual = StringParser.HasPrefix(input);
+        Assert.Equal(expected, actual);
+    }
 }
