@@ -640,6 +640,20 @@ public class TestTokenizer
                 new(Name, "bau",p(4, 0),p(4, 3)),
                 eof(4, 3),
             ]),
+            ["SaveTriviaInIndent"] = ("""
+            bau
+                bau
+                bau
+                # bau
+            bau
+            """, true, [
+                new(Name, "bau", p(0, 0), p(0, 3)), new(NewLine, "\n", p(0, 3), p(0, 4)),
+                new(Indent, "    ", p(1, 0), p(1, 4)), new(Name, "bau", p(1, 4), p(1, 7)), new(NewLine, "\n", p(1, 7), p(1, 8)),
+                new(WhiteSpace, "    ", p(2, 0), p(2, 4)), new(Name, "bau", p(2,4), p(2,7)), new(NewLine, "\n", p(2,7),p(2,8)),
+                new(WhiteSpace, "    ", p(3,0),p(3,4)), new(Comment, "# bau", p(3, 4), p(3, 9)), new(TriviaNewLine, "\n", p(3,9), p(3,10)),
+                new(Dedent, empty, p(4, 0), p(4, 0)), new(Name, "bau", p(4, 0), p(4, 3)),
+                eof(4,3)
+            ])
         };
 
     [Theory]
@@ -666,6 +680,7 @@ public class TestTokenizer
     [InlineData("LineFeed_CRLF")]
     [InlineData("Comments")]
     [InlineData("CommentsTrivia")]
+    [InlineData("SaveTriviaInIndent")]
     public void TestIndentation(string @case)
     {
         Debug.Assert(indentation_test_cases.ContainsKey(@case));

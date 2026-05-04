@@ -265,6 +265,9 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 {
                     if (alternateColumn != alternateIndentStack.Peek())
                         return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
+
+                    if (alternateColumn != 0)
+                        return createWhiteSpaceToken();
                 }
                 else if (column > indentStack.Peek())
                 {
@@ -281,6 +284,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                         return errTok;
                 }
             }
+            else if (alternateColumn != 0)
+                return createWhiteSpaceToken();
         }
 
         return null;
@@ -351,17 +356,21 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             Advance(span);
         }
 
-        // TODO: probably need to separate types of whitespace.
         if (hasWhiteSpace)
-        {
-            if (SaveTrivia)
-                return CreateToken(TokenType.WhiteSpace);
+            return createWhiteSpaceToken();
 
-            // Since some special characters may change behavior of the tokenizer
-            // after eating whitespace we need to read next token in partial mode
-            else if (isPartialString)
-                return tryNextPartialMode();
-        }
+        return null;
+    }
+
+    private Token? createWhiteSpaceToken()
+    {
+        if (SaveTrivia)
+            return CreateToken(TokenType.WhiteSpace);
+
+        // Since some special characters may change behavior of the tokenizer
+        // after eating whitespace we need to read next token in partial mode
+        else if (isPartialString)
+            return tryNextPartialMode();
 
         return null;
     }
