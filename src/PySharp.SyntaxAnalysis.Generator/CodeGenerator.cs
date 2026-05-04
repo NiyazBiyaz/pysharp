@@ -120,13 +120,19 @@ internal class CodeGenerator
                 // Allocate/declare variables of the alternative.
                 List<string> variables = [];
                 List<bool> wraps = [];
-                foreach ((int varNumber, var atom) in alter.Atoms.Index())
+                int lookaheadCount = 0;
+                foreach ((int varNumber, var molecule) in alter.Molecules.Index())
                 {
+                    // Lookahead can't have node value, so skip it declaration.
+                    string nameForUser = molecule switch  // TODO: Lookahead will explode
+                    {
+                        AtomMoleculeNode hydrogen => constructNameForAtom(hydrogen.Atom, varNumber),
+                        RepeatOneMoreNode repeat1 => constructNameForAtom(repeat1.Atom, varNumber) + "Plus",
+                        RepeatZeroMoreNode repeat0 => constructNameForAtom(repeat0.Atom, varNumber) + "Star",
+                        _ => throw new UnreachableException("Ты наверное добавил новую молекулу, но забыл обновить здесь"),
+                    };
                     // If some names are duplicates, we need to make inclusive by adding number (starting by 1).
                     // First duplicate wouldn't have number.
-                    string nameForUser = atom is StringAtomNode str
-                        ? aliasOrMangle(str, varNumber).ToLowerInvariant()
-                        : atom.Value.ToLowerInvariant();
                     string nameForUserCopy = nameForUser;
                     int addNumber = 1;
                     while (variables.Contains(nameForUser))
@@ -137,15 +143,24 @@ internal class CodeGenerator
                     variables.Add(nameForUser);
 
                     // Declare variables.
-                    if (rules.TryGetValue(atom.Value, out var ruleForType))
+                    if (molecule is AtomMoleculeNode h && rules.TryGetValue(h.Atom.Value, out var ruleForType))
                     {
                         wraps.Add(isNodeArray(ruleForType.TypeSpec.TypeName));
                         addLine($"{ruleForType.TypeSpec.TypeName}? {variables[varNumber]};");
                     }
+                    else if (molecule is RepeatMoleculeNode repeat)
+                    {
+                        wraps.Add(true);
+                        if (rules.TryGetValue(repeat.Atom.Value, out var _ruleForType))
+                            addLine($"NodeArray<{_ruleForType.TypeSpec.TypeName}>? {variables[varNumber]};");
+
+                        else
+                            addLine($"NodeArray<TokenNode>? {variables[varNumber]};");
+                    }
                     else
                     {
                         wraps.Add(false);
-                        addLine($"TokenNode? {variables[varNumber]};");
+                        addLine($"TokenNode? {variables[varNumber - lookaheadCount]};");
                     }
                 }
 
@@ -154,9 +169,9 @@ internal class CodeGenerator
                 // Probably it would be optimized.
                 addLine("if (true");
                 indentLevel += 1;
-                foreach ((var atom, string name) in alter.Atoms.Zip(variables))
+                foreach ((var molecule, string name) in alter.Molecules.Zip(variables))
                 {
-                    addLine($"&& ({name} = {callAtom(atom)}) is not null");
+                    addLine("&& " + callMolecule(molecule, name));
                 }
                 indentLevel -= 1;
                 addLine(")"); // -Condition checking.
@@ -184,6 +199,13 @@ internal class CodeGenerator
 
         return builder.ToString();
     }
+
+    private string constructNameForAtom(AtomNode atom, int varNumber) => atom switch
+    {
+        StringAtomNode str => aliasOrMangle(str, varNumber).ToLowerInvariant(),
+        NameAtomNode name => name.Value.ToLowerInvariant(),
+        _ => throw new UnreachableException("Ты наверное что-то добавил, но не обновил здеся"),
+    };
 
     private void actionReturn(RuleNode rule, AlternativeNode alter, List<string> variables, List<bool> wraps)
     {
@@ -225,6 +247,17 @@ internal class CodeGenerator
 
     private void failAlternative() => addLine("Reset(mark);");
 
+    private string callMolecule(MoleculeNode molecule, string varName)
+    {
+        return molecule switch
+        {
+            AtomMoleculeNode hydrogen => callAtom(hydrogen.Atom).WrapNullCheck(varName), // Hydrogen because it has exactly one atom!
+            RepeatOneMoreNode repeat1 => callRepeat(repeat1.Atom, 1).WrapNullCheck(varName),
+            RepeatZeroMoreNode repeat0 => callRepeat(repeat0.Atom, 0).WrapNullCheck(varName),
+            _ => throw new UnreachableException("расширь там короче, ты обосрался слегка"),
+        };
+    }
+
     private string callAtom(AtomNode atom)
     {
         if (atom is NameAtomNode nameAtom)
@@ -244,6 +277,23 @@ internal class CodeGenerator
 
         else
             throw new UnreachableException("Unexpected AtomNode subclass.");
+    }
+
+    private string callRepeat(AtomNode atom, int minimalCount)
+    {
+        if (atom is NameAtomNode name)
+        {
+            if (rules.TryGetValue(name.Value, out _))
+                return $"Repeat(rule_{name.Value}, {minimalCount})";
+
+            else
+                return $"Repeat({tokenTypePrefix}{name.Value}, {minimalCount})";
+        }
+        else if (atom is StringAtomNode str)
+            return $"Repeat({str.Value}, {minimalCount})";
+
+        else
+            throw new UnreachableException("Тут пока не доделано. Наверное должны быть другие атомы");
     }
 
     private void addLine(string value)

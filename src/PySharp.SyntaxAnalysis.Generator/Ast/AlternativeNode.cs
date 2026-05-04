@@ -5,13 +5,13 @@ namespace PySharp.SyntaxAnalysis.Generator.Ast;
 internal record AlternativeNode : GreenNode
 {
     public ActionNode? Action { get; private init; }
-    public NodeArray<AtomNode> Atoms { get; private init; }
+    public NodeArray<MoleculeNode> Molecules { get; private init; }
 
-    public AlternativeNode(NodeArray<AtomNode> atoms, ActionNode? action)
+    public AlternativeNode(NodeArray<MoleculeNode> molecules, ActionNode? action)
     {
         Action = action;
-        Atoms = atoms;
+        Molecules = molecules;
     }
 
-    public override string ToString() => $"AlternativeNode({Atoms}, {Action})";
+    public override string ToString() => $"AlternativeNode({Molecules}, {Action})";
 }

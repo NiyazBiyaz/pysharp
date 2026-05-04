@@ -35,10 +35,67 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
         return null;
     }
 
-    protected bool Lookahead(Func<GreenNode?> func, bool positive)
+    protected NodeArray<T>? Repeat<T>(Func<T?> ruleCall, int minCount)
+        where T : GreenNode
+    {
+        T? node;
+        List<T> nodes = [];
+        while ((node = ruleCall()) is not null)
+            nodes.Add(node);
+
+        if (nodes.Count < minCount)
+            return null;
+
+        return new(nodes);
+    }
+
+    protected NodeArray<TokenNode>? Repeat(TokenType type, int minCount)
+    {
+        TokenNode? tok;
+        List<TokenNode> nodes = [];
+        while ((tok = Expect(type)) is not null)
+            nodes.Add(tok);
+
+        if (nodes.Count < minCount)
+            return null;
+
+        return new(nodes);
+    }
+
+    protected NodeArray<TokenNode>? Repeat(string str, int minCount)
+    {
+        TokenNode? tok;
+        List<TokenNode> nodes = [];
+        while ((tok = Expect(str)) is not null)
+            nodes.Add(tok);
+
+        if (nodes.Count < minCount)
+            return null;
+
+        return new(nodes);
+    }
+
+    protected bool Lookahead<T>(Func<T?> func, bool positive)
+        where T : GreenNode
     {
         int mark = Mark();
         bool isParsed = func() is not null;
+        Reset(mark);
+        return isParsed == positive;
+    }
+
+    protected bool Lookahead(string str, bool positive)
+    {
+        int mark = Mark();
+        bool isParsed = Expect(str) is not null;
+        Reset(mark);
+        return isParsed == positive;
+    }
+
+    protected bool Lookahead(TokenType type, bool positive)
+    {
+        int mark = Mark();
+        bool isParsed = Expect(type) is not null;
         Reset(mark);
         return isParsed == positive;
     }
