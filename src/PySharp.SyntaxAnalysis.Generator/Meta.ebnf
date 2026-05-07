@@ -32,14 +32,14 @@ Alias[AliasNode]:
     | "@" "alias" StringLiteral "->" Name NewLine -> "new AliasNode(StringParser.ParseQuotedString(stringliteral.RawString), name.RawString)"
 
 Rule[RuleNode]:
-    | Name TypeSpec ":" NewLine Indent Alternative+ Dedent -> "new RuleNode(name.RawString, typespec, alternativePlus)"
+    | !"@" Name -TypeSpec ":" NewLine Indent Alternative+ Dedent -> "new RuleNode(name.RawString, typespec, alternativePlus)"
 
 TypeSpec[TypeSpecNode]:
     | "[" Name "]" -> "new TypeSpecNode(name.RawString)"
     | "[" StringLiteral "]" -> "new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))"
 
 Alternative[AlternativeNode]:
-    | "|" Molecule+ Action NewLine -> "new AlternativeNode(moleculePlus, action)"
+    | "|" Molecule+ -Action NewLine -> "new AlternativeNode(moleculePlus, action)"
 
 Molecule[MoleculeNode]:
     | "&" Atom -> "new LookaheadNode(atom, true)"

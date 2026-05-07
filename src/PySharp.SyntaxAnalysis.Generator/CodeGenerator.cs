@@ -86,31 +86,34 @@ internal class CodeGenerator
                             addLine(checkNull($"{r.Name} = rule_{r.Rule.Name}()"));
                             break;
                         case QuantifiedSymbolIr q:
-                            // IsArray means that we need repeat, virtual means we need lookahead.
-                            Debug.Assert(q.IsArray != q.IsVirtual);
+                            Debug.Assert(q.IsVirtual || q.Kind != Quantifier.Lookahead);
 
-                            if (q.IsArray)
+                            string innerInterpolation = q.Inner switch
                             {
-                                string innerInterpolation = q.Inner switch
-                                {
-                                    RuleSymbolIr r => $"rule_{r.Rule.Name}",
-                                    TokenSymbolIr t => t.ExpectInterpolation,
-                                    QuantifiedSymbolIr => throw new UnreachableException("Inner quantifiers is not allowed."),
-                                    _ => throw new UnreachableException($"Unexpected {nameof(ISymbolIr)} instance type."),
-                                };
-                                addLine(checkNull($"{q.Name} = Repeat({innerInterpolation}, {q.RepeatCount})"));
-                            }
-                            else
+                                RuleSymbolIr r => $"rule_{r.Rule.Name}",
+                                TokenSymbolIr t => t.ExpectInterpolation,
+                                QuantifiedSymbolIr => throw new UnreachableException("Inner quantifiers is not allowed."),
+                                _ => throw new UnreachableException($"Unexpected {nameof(ISymbolIr)} instance type."),
+                            };
+                            switch (q.Kind)
                             {
-                                string innerInterpolation = q.Inner switch
-                                {
-                                    RuleSymbolIr r => $"rule_{r.Name}",
-                                    TokenSymbolIr t => $"Expect({t.ExpectInterpolation})",
-                                    QuantifiedSymbolIr => throw new UnreachableException("Inner quantifiers is not allowed."),
-                                    _ => throw new UnreachableException($"Unexpected {nameof(ISymbolIr)} instance type."),
-                                };
-                                string positiveness = q.Positiveness!.Value ? "true" : "false";
-                                addLine($"Lookahead({innerInterpolation}, {positiveness})");
+                                case Quantifier.Repeat:
+                                    Debug.Assert(q.RepeatCount is not null);
+                                    addLine(checkNull($"{q.Name} = Repeat({innerInterpolation}, {q.RepeatCount})"));
+                                    break;
+                                case Quantifier.Lookahead:
+                                    Debug.Assert(q.Positiveness is not null);
+                                    addLine($"&& Lookahead({innerInterpolation}, {(q.Positiveness.Value ? "true" : "false")})");
+                                    break;
+                                case Quantifier.Optional:
+                                    innerInterpolation = q.Inner switch
+                                    {
+                                        RuleSymbolIr => innerInterpolation + "()",
+                                        TokenSymbolIr t => $"Expect({innerInterpolation})",
+                                        _ => throw new UnreachableException($"Unexpected {nameof(ISymbolIr)} instance type."),
+                                    };
+                                    addLine($"&& (({q.Name} = {innerInterpolation}) is not null || true) // Optional");
+                                    break;
                             }
                             break;
 
@@ -126,13 +129,16 @@ internal class CodeGenerator
                 addLine($"return {alt.SuccessExpression}"); // TODO: Allow not to write 'new' in the grammar.
                 openBlock();
 
-                var children = alt.Symbols.Select(sym =>
-                {
-                    if (sym.IsArray)
-                        return $"new {nameof(NodeArrayWrapNode)}({sym.Name})";
-                    else
-                        return sym.Name;
-                });
+                // TODO: Redo it to be able remove optional symbols from children.
+                var children = alt.Symbols
+                    .Where(sym => sym is not QuantifiedSymbolIr q || q.Kind != Quantifier.Lookahead)
+                    .Select(sym =>
+                    {
+                        if (sym is QuantifiedSymbolIr q && q.Kind == Quantifier.Repeat)
+                            return $"new {nameof(NodeArrayWrapNode)}({sym.Name})";
+                        else
+                            return sym.Name;
+                    });
                 addLine($"Children = new NodeArray<GreenNode>([{string.Join(", ", children)}])");
 
                 // Manually decrease for add semicolon.

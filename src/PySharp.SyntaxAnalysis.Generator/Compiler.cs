@@ -81,6 +81,8 @@ class Compiler(GrammarNode grammar)
                     AtomMoleculeNode atom => getSymbolOfAtom(atom.Atom, i),
                     RepeatOneMoreNode rep1 => QuantifiedSymbolIr.CreateRepeat(getSymbolOfAtom(rep1.Atom, i), 1),
                     RepeatZeroMoreNode rep0 => QuantifiedSymbolIr.CreateRepeat(getSymbolOfAtom(rep0.Atom, i), 0),
+                    OptionalNode opt => QuantifiedSymbolIr.CreateOptional(getSymbolOfAtom(opt.Atom, i)),
+                    LookaheadNode look => QuantifiedSymbolIr.CreateLookahead(getSymbolOfAtom(look.Atom, i), look.Positiveness),
                     _ => throw new UnreachableException("Unexpected molecule node type")
                 });
 

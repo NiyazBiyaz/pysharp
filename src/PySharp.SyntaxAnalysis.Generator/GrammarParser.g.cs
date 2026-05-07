@@ -110,7 +110,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     RuleNode? rule_Rule()
     {
         int __mark = Mark();
-        // Name TypeSpec ":" NewLine Indent Alternative+ Dedent
+        // !"@" Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
         {
             TokenNode? name;
             TypeSpecNode? typespec;
@@ -120,8 +120,9 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             NodeArray<AlternativeNode>? alternativePlus;
             TokenNode? dedent;
             if (true
+                && Lookahead(TokenType.At, false)
                 && (name = Expect(TokenType.Name)) is not null
-                && (typespec = rule_TypeSpec()) is not null
+                && ((typespec = rule_TypeSpec()) is not null || true) // Optional
                 && (colon = Expect(TokenType.Colon)) is not null
                 && (newline = Expect(TokenType.NewLine)) is not null
                 && (indent = Expect(TokenType.Indent)) is not null
@@ -184,7 +185,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     AlternativeNode? rule_Alternative()
     {
         int __mark = Mark();
-        // "|" Molecule+ Action NewLine
+        // "|" Molecule+ -Action NewLine
         {
             TokenNode? vertbar;
             NodeArray<MoleculeNode>? moleculePlus;
@@ -193,7 +194,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             if (true
                 && (vertbar = Expect(TokenType.VertBar)) is not null
                 && (moleculePlus = Repeat(rule_Molecule, 1)) is not null
-                && (action = rule_Action()) is not null
+                && ((action = rule_Action()) is not null || true) // Optional
                 && (newline = Expect(TokenType.NewLine)) is not null
             )
             {
