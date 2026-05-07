@@ -44,6 +44,7 @@ Alternative[AlternativeNode]:
 Molecule[MoleculeNode]:
     | "&" Atom -> "new LookaheadNode(atom, true)"
     | "!" Atom -> "new LookaheadNode(atom, false)"
+    | "-" Atom -> "new OptionalNode(atom)"
     | Atom "*" -> "new RepeatZeroMoreNode(atom)"
     | Atom "+" -> "new RepeatOneMoreNode(atom)"
     | Atom -> "new AtomMoleculeNode(atom)"
