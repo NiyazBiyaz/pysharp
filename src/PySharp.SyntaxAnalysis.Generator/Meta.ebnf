@@ -10,29 +10,14 @@ namespace PySharp.SyntaxAnalysis.Generator;
 @class_signature "internal class NewGrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
 @parse_call_return "GrammarNode"
 
-@alias "@" -> At
-@alias "->" -> RightArrow
-@alias ":" -> Colon
-@alias "[" -> LeftSquareBracket
-@alias "]" -> RightSquareBracket
-@alias "|" -> VertBar
-@alias "+" -> Plus
-@alias "*" -> Star
-@alias "&" -> Ampersand
-@alias "!" -> Exclamation
-@alias "-" -> Minus
-
 Start[GrammarNode]:
-    | Meta+ Alias* Rule+ EndOfFile -> "new GrammarNode(metaPlus, aliasStar, rulePlus)"
+    | Meta+ Rule+ EndOfFile -> "new GrammarNode(metaPlus, rulePlus)"
 
 Meta[MetadataNode]:
     | "@" Name StringLiteral NewLine -> "new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))"
 
-Alias[AliasNode]:
-    | "@" "alias" StringLiteral "->" Name NewLine -> "new AliasNode(StringParser.ParseQuotedString(stringliteral.RawString), name.RawString)"
-
 Rule[RuleNode]:
-    | !"@" Name -TypeSpec ":" NewLine Indent Alternative+ Dedent -> "new RuleNode(name.RawString, typespec, alternativePlus)"
+    | Name -TypeSpec ":" NewLine Indent Alternative+ Dedent -> "new RuleNode(name.RawString, typespec, alternativePlus)"
 
 TypeSpec[TypeSpecNode]:
     | "[" Name "]" -> "new TypeSpecNode(name.RawString)"

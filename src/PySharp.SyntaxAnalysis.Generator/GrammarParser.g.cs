@@ -28,22 +28,20 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     GrammarNode? rule_Start()
     {
         int __mark = Mark();
-        // Meta+ Alias* Rule+ EndOfFile
         {
+            // Meta+ Rule+ EndOfFile
             NodeArray<MetadataNode>? metaPlus;
-            NodeArray<AliasNode>? aliasStar;
             NodeArray<RuleNode>? rulePlus;
             TokenNode? endoffile;
             if (true
                 && (metaPlus = Repeat(rule_Meta, 1)) is not null
-                && (aliasStar = Repeat(rule_Alias, 0)) is not null
                 && (rulePlus = Repeat(rule_Rule, 1)) is not null
                 && (endoffile = Expect(TokenType.EndOfFile)) is not null
             )
             {
-                return new GrammarNode(metaPlus, aliasStar, rulePlus)
+                return new GrammarNode(metaPlus, rulePlus)
                 {
-                    Children = new NodeArray<GreenNode>([new NodeArrayWrapNode(metaPlus), new NodeArrayWrapNode(aliasStar), new NodeArrayWrapNode(rulePlus), endoffile])
+                    Children = new NodeArray<GreenNode>([new NodeArrayWrapNode(metaPlus), new NodeArrayWrapNode(rulePlus), endoffile])
                 };
             }
         }
@@ -54,8 +52,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     MetadataNode? rule_Meta()
     {
         int __mark = Mark();
-        // "@" Name StringLiteral NewLine
         {
+            // "@" Name StringLiteral NewLine
             TokenNode? at;
             TokenNode? name;
             TokenNode? stringliteral;
@@ -77,41 +75,11 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         return null;
     }
 
-    AliasNode? rule_Alias()
-    {
-        int __mark = Mark();
-        // "@" "alias" StringLiteral "->" Name NewLine
-        {
-            TokenNode? at;
-            TokenNode? __str_tok1;
-            TokenNode? stringliteral;
-            TokenNode? rightarrow;
-            TokenNode? name;
-            TokenNode? newline;
-            if (true
-                && (at = Expect(TokenType.At)) is not null
-                && (__str_tok1 = Expect("alias")) is not null
-                && (stringliteral = Expect(TokenType.StringLiteral)) is not null
-                && (rightarrow = Expect(TokenType.RightArrow)) is not null
-                && (name = Expect(TokenType.Name)) is not null
-                && (newline = Expect(TokenType.NewLine)) is not null
-            )
-            {
-                return new AliasNode(StringParser.ParseQuotedString(stringliteral.RawString), name.RawString)
-                {
-                    Children = new NodeArray<GreenNode>([at, __str_tok1, stringliteral, rightarrow, name, newline])
-                };
-            }
-        }
-        Reset(__mark);
-        return null;
-    }
-
     RuleNode? rule_Rule()
     {
         int __mark = Mark();
-        // !"@" Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
         {
+            // Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
             TokenNode? name;
             TypeSpecNode? typespec;
             TokenNode? colon;
@@ -120,7 +88,6 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             NodeArray<AlternativeNode>? alternativePlus;
             TokenNode? dedent;
             if (true
-                && Lookahead(TokenType.At, false)
                 && (name = Expect(TokenType.Name)) is not null
                 && ((typespec = rule_TypeSpec()) is not null || true) // Optional
                 && (colon = Expect(TokenType.Colon)) is not null
@@ -130,10 +97,9 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 && (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                return new RuleNode(name.RawString, typespec, alternativePlus)
-                {
-                    Children = new NodeArray<GreenNode>([name, typespec, colon, newline, indent, new NodeArrayWrapNode(alternativePlus), dedent])
-                };
+                List<GreenNode> children = [name!, typespec!, colon!, newline!, indent!, new NodeArrayWrapNode(alternativePlus)!, dedent];
+                children.RemoveAll(static child => child is null);
+                return new RuleNode(name.RawString, typespec, alternativePlus) { Children = new NodeArray<GreenNode>(children) };
             }
         }
         Reset(__mark);
@@ -143,8 +109,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     TypeSpecNode? rule_TypeSpec()
     {
         int __mark = Mark();
-        // "[" Name "]"
         {
+            // "[" Name "]"
             TokenNode? leftsquarebracket;
             TokenNode? name;
             TokenNode? rightsquarebracket;
@@ -161,8 +127,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // "[" StringLiteral "]"
         {
+            // "[" StringLiteral "]"
             TokenNode? leftsquarebracket;
             TokenNode? stringliteral;
             TokenNode? rightsquarebracket;
@@ -185,8 +151,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     AlternativeNode? rule_Alternative()
     {
         int __mark = Mark();
-        // "|" Molecule+ -Action NewLine
         {
+            // "|" Molecule+ -Action NewLine
             TokenNode? vertbar;
             NodeArray<MoleculeNode>? moleculePlus;
             ActionNode? action;
@@ -198,10 +164,9 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 && (newline = Expect(TokenType.NewLine)) is not null
             )
             {
-                return new AlternativeNode(moleculePlus, action)
-                {
-                    Children = new NodeArray<GreenNode>([vertbar, new NodeArrayWrapNode(moleculePlus), action, newline])
-                };
+                List<GreenNode> children = [vertbar!, new NodeArrayWrapNode(moleculePlus)!, action!, newline];
+                children.RemoveAll(static child => child is null);
+                return new AlternativeNode(moleculePlus, action) { Children = new NodeArray<GreenNode>(children) };
             }
         }
         Reset(__mark);
@@ -211,8 +176,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     MoleculeNode? rule_Molecule()
     {
         int __mark = Mark();
-        // "&" Atom
         {
+            // "&" Atom
             TokenNode? ampersand;
             AtomNode? atom;
             if (true
@@ -227,8 +192,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // "!" Atom
         {
+            // "!" Atom
             TokenNode? exclamation;
             AtomNode? atom;
             if (true
@@ -243,8 +208,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // "-" Atom
         {
+            // "-" Atom
             TokenNode? minus;
             AtomNode? atom;
             if (true
@@ -259,8 +224,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // Atom "*"
         {
+            // Atom "*"
             AtomNode? atom;
             TokenNode? star;
             if (true
@@ -275,8 +240,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // Atom "+"
         {
+            // Atom "+"
             AtomNode? atom;
             TokenNode? plus;
             if (true
@@ -291,8 +256,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // Atom
         {
+            // Atom
             AtomNode? atom;
             if (true
                 && (atom = rule_Atom()) is not null
@@ -311,8 +276,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     AtomNode? rule_Atom()
     {
         int __mark = Mark();
-        // Name
         {
+            // Name
             TokenNode? name;
             if (true
                 && (name = Expect(TokenType.Name)) is not null
@@ -325,8 +290,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        // StringLiteral
         {
+            // StringLiteral
             TokenNode? stringliteral;
             if (true
                 && (stringliteral = Expect(TokenType.StringLiteral)) is not null
@@ -345,8 +310,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     ActionNode? rule_Action()
     {
         int __mark = Mark();
-        // "->" StringLiteral
         {
+            // "->" StringLiteral
             TokenNode? rightarrow;
             TokenNode? stringliteral;
             if (true

@@ -63,10 +63,9 @@ internal class CodeGenerator
 
             foreach (var alt in rule.Alternatives)
             {
+                openBlock();
                 foreach (var sourceLine in alt.SourceText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                     addLine($"// {sourceLine}");
-
-                openBlock();
 
                 // Allocate variables;
                 foreach (var sym in alt.Symbols.Where(s => !s.IsVirtual))
@@ -124,14 +123,9 @@ internal class CodeGenerator
                 indentLevel -= 1;
                 addLine(")");
 
-                // Return on success.
-                openBlock();
-                addLine($"return {alt.SuccessExpression}"); // TODO: Allow not to write 'new' in the grammar.
-                openBlock();
-
-                // TODO: Redo it to be able remove optional symbols from children.
+                openBlock(); // Success action.
                 var children = alt.Symbols
-                    .Where(sym => sym is not QuantifiedSymbolIr q || q.Kind != Quantifier.Lookahead)
+                    .Where(sym => !sym.IsVirtual)
                     .Select(sym =>
                     {
                         if (sym is QuantifiedSymbolIr q && q.Kind == Quantifier.Repeat)
@@ -139,11 +133,24 @@ internal class CodeGenerator
                         else
                             return sym.Name;
                     });
-                addLine($"Children = new NodeArray<GreenNode>([{string.Join(", ", children)}])");
-
-                // Manually decrease for add semicolon.
-                indentLevel -= 1;
-                addLine("};");
+                if (alt.Symbols.All(s => s is not QuantifiedSymbolIr q || q.Kind != Quantifier.Optional))
+                {
+                    // TODO: Allow not to write 'new' in the grammar.
+                    addLines($$"""
+                    return {{alt.SuccessExpression}}
+                    {
+                        Children = new NodeArray<GreenNode>([{{string.Join(", ", children)}}])
+                    };
+                    """);
+                }
+                else
+                {
+                    addLines($$"""
+                    List<GreenNode> children = [{{string.Join("!, ", children)}}];
+                    children.RemoveAll(static child => child is null);
+                    return {{alt.SuccessExpression}} { Children = new NodeArray<GreenNode>(children) };
+                    """);
+                }
                 closeBlock();
 
                 closeBlock();
@@ -187,6 +194,24 @@ internal class CodeGenerator
 
         builder.AppendLine(value);
     }
+
+    private void addLines(string value)
+    {
+        foreach (var line in value.EnumerateLines())
+        {
+            beginLine();
+            builder.Append(line);
+            endLine();
+        }
+    }
+
+    private void beginLine()
+    {
+        for (int i = 0; i < indentLevel; i++)
+            add(indent_string);
+    }
+
+    private void endLine() => add("\n");
 
     private void add(string value) => builder.Append(value);
 }
