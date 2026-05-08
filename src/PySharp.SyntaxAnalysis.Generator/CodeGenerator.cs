@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using PySharp.SyntaxAnalysis.Common.Ast;
+using PySharp.SyntaxAnalysis.Generator.Intermediate;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
@@ -85,7 +86,7 @@ internal class CodeGenerator
                             addLine(checkNull($"{r.Name} = rule_{r.Rule.Name}()"));
                             break;
                         case QuantifiedSymbolIr q:
-                            Debug.Assert(q.IsVirtual || q.Kind != Quantifier.Lookahead);
+                            Debug.Assert(q.IsVirtual || q.Kind != QuantifierKind.Lookahead);
 
                             string innerInterpolation = q.Inner switch
                             {
@@ -96,15 +97,15 @@ internal class CodeGenerator
                             };
                             switch (q.Kind)
                             {
-                                case Quantifier.Repeat:
+                                case QuantifierKind.Repeat:
                                     Debug.Assert(q.RepeatCount is not null);
                                     addLine(checkNull($"{q.Name} = Repeat({innerInterpolation}, {q.RepeatCount})"));
                                     break;
-                                case Quantifier.Lookahead:
+                                case QuantifierKind.Lookahead:
                                     Debug.Assert(q.Positiveness is not null);
                                     addLine($"&& Lookahead({innerInterpolation}, {(q.Positiveness.Value ? "true" : "false")})");
                                     break;
-                                case Quantifier.Optional:
+                                case QuantifierKind.Optional:
                                     innerInterpolation = q.Inner switch
                                     {
                                         RuleSymbolIr => innerInterpolation + "()",
@@ -128,12 +129,12 @@ internal class CodeGenerator
                     .Where(sym => !sym.IsVirtual)
                     .Select(sym =>
                     {
-                        if (sym is QuantifiedSymbolIr q && q.Kind == Quantifier.Repeat)
+                        if (sym is QuantifiedSymbolIr q && q.Kind == QuantifierKind.Repeat)
                             return $"new {nameof(NodeArrayWrapNode)}({sym.Name})";
                         else
                             return sym.Name;
                     });
-                if (alt.Symbols.All(s => s is not QuantifiedSymbolIr q || q.Kind != Quantifier.Optional))
+                if (alt.Symbols.All(s => s is not QuantifiedSymbolIr q || q.Kind != QuantifierKind.Optional))
                 {
                     // TODO: Allow not to write 'new' in the grammar.
                     addLines($$"""

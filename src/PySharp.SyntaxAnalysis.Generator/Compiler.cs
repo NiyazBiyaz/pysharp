@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Generator.Ast;
+using PySharp.SyntaxAnalysis.Generator.Intermediate;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Generator;
