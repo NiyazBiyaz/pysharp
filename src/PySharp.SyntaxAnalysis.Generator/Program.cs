@@ -39,10 +39,10 @@ internal class Program
             Environment.Exit(3);
         }
 
-        var grammarCompiler = new Compiler(grammarParsed);
-        var intermediateGrammar = grammarCompiler.Compile();
+        var grammarCompiler = new GrammarCompiler(grammarParsed);
+        var grammarCompiled = grammarCompiler.Compile();
 
-        var generator = new CodeGenerator(intermediateGrammar);
-        File.WriteAllText(outputPath, generator.Generate(grammarPath));
+        var csGenerator = new CsGenerator(grammarCompiled);
+        File.WriteAllText(outputPath, csGenerator.Generate(grammarPath));
     }
 }

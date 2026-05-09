@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug: Parser generator",
+            "type": "coreclr",
+            "preLaunchTask": "dotnet: build",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator",
+            "program": 
+                "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/bin/Debug/net10.0/PySharp.SyntaxAnalysis.Generator.dll",
+            "args": [
+                "--input", 
+                "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/Meta.ebnf", 
+                "--output", 
+                "{workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/parser.g.cs"
+            ],
+        }
+    ]
+}

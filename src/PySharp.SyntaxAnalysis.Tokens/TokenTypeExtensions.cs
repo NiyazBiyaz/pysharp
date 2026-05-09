@@ -14,9 +14,10 @@ public static class TokenTypeExtensions
         };
         public bool IsError => type == TokenType.Error;
 
-        public static bool TryGetDelimiterByString(string value, out TokenType tokenType)
+        public static bool TryGetDelimiterByString(ReadOnlySpan<char> value, out TokenType tokenType)
         {
-            if (delimiters.TryGetValue(value, out var tt))
+            var spanLookup = delimiters.GetAlternateLookup<ReadOnlySpan<char>>();
+            if (spanLookup.TryGetValue(value, out var tt))
             {
                 tokenType = tt;
                 return true;
@@ -25,8 +26,16 @@ public static class TokenTypeExtensions
             tokenType = default;
             return false;
         }
+
+        public static bool IsReserved(ReadOnlySpan<char> value)
+        {
+            var spanLookup = reserved_names.GetAlternateLookup<ReadOnlySpan<char>>();
+            return spanLookup.Contains(value);
+        }
     }
-    private static readonly IReadOnlyDictionary<string, TokenType> delimiters = new Dictionary<string, TokenType>()
+
+    private static readonly HashSet<string> reserved_names = [.. Enum.GetNames<TokenType>()];
+    private static readonly Dictionary<string, TokenType> delimiters = new()
     {
         ["..."] = TokenType.Ellipsis,
         ["("] = TokenType.LeftParen,

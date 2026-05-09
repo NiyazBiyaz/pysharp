@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PySharp.SyntaxAnalysis.Common\PySharp.SyntaxAnalysis.Common.csproj" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <GenerateInternalsVisibleToAttributes Include="../../tests/PySharp.SyntaxAnalysis.Generator.Tests" />
   </ItemGroup>
 
 </Project>

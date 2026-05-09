@@ -1,20 +1,5 @@
-// This file was generated from 'Meta.ebnf'.
-// СВИНОЙ ШАР
-// ⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣴⣾⣿⡿⣟⣯⢿⠾⣙⠒⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀
-// ⠀⠀⠀⠀⢀⣠⣶⣿⣿⣿⣿⡿⣷⣟⡿⣞⣯⣿⣭⠷⣆⡄⡈⠑⠦⡀⠀⠀⠀⠀
-// ⠀⠀⠀⣴⣿⣿⣿⣿⣿⡿⣿⣽⡿⣾⣿⢿⣻⡾⣽⡻⣭⢷⡑⢦⡀⠉⢦⡀⠀⠀
-// ⠀⢀⣾⣿⣿⣿⣿⣿⡏⠉⠁⠉⠉⠛⣿⣿⠟⠉⠉⠁⠀⠉⢻⡆⡕⢣⡀⢳⡀⠀
-// ⠀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣿⣷⣶⣤⣦⣶⣦⣤⣌⡳⡘⢧⡘⡄⢳⠀
-// ⢸⣿⣿⣿⣿⣿⣿⣿⣿⣏⠉⠉⣿⡯⢽⣻⣿⣿⣍⠀⠉⣹⠏⠙⢿⣢⢝⡰⢈⣇
-// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣫⣵⠶⠶⠿⠶⣽⣿⣿⣿⣿⣀⣤⡾⣓⢮⡔⠈⠀
-// ⣿⣿⣿⣿⣿⢻⢿⡻⣟⣿⢫⣷⣿⣿⣿⣿⣿⣶⣽⣿⣿⣿⣿⠆⢻⡹⡖⣍⠂⠀
-// ⣿⣿⣿⣿⣿⢯⣾⣿⣿⡇⣿⣇⣀⣿⣿⣦⣤⣿⡇⣿⡿⠛⣿⠠⢡⢳⡙⠦⠁⠀
-// ⠸⣿⣿⣿⣯⢿⣳⣿⣿⣿⢙⠿⠿⠿⠛⠻⠟⠋⠁⢁⢈⣾⢮⠑⣎⡙⢂⠁⠀
-// ⠀⢿⣿⣳⢯⣟⣯⡷⢯⣿⣯⡴⣤⣤⣤⣤⣴⣶⡿⣡⣾⢌⠢⡙⠤⠑⠀⠀⠀
-// ⠀⠈⢿⣟⡿⣞⣷⣻⣽⢯⣿⣾⣭⣭⣭⣭⣷⣾⣿⢮⢋⢆⠓⡨⠐⠁⡠⠀⠀
-// ⠀⠀⠀⠻⣿⡽⢯⣟⡾⢯⢞⡯⣝⢣⠏⢮⠑⠣⠍⢎⠳⠌⠢⠁⢐⡤⠛⠀⠀⠀
-// ⠀⠀⠀⠀⠀⠛⢿⣘⠹⢎⠳⡜⢤⢃⠎⠤⢉⠐⠠⠀⠀⠀⣠⠖⠋⠀⠀⠀⠀⠀
-// ⠀⠀⠀⠀⠀⠀⠀⠈⠉⠓⠒⠀⠂⠈⠈⠀⠀⠀⠀⠀⠀⠉⠀⠀⠀
+// This file was automatically generated from Meta.ebnf
+// Bau bau!
 #nullable enable
 using PySharp.SyntaxAnalysis.Tokens;
 using PySharp.SyntaxAnalysis.Common;
@@ -25,18 +10,23 @@ namespace PySharp.SyntaxAnalysis.Generator;
 
 internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)
 {
+    public override GrammarNode? Parse() => rule_Start();
+    protected override HashSet<string> Keywords { get; } = [];
+    #region Start
     GrammarNode? rule_Start()
     {
         int __mark = Mark();
         {
-            // Meta+ Rule+ EndOfFile
+            //  Meta+ Rule+ EndOfFile
             NodeArray<MetadataNode>? metaPlus;
             NodeArray<RuleNode>? rulePlus;
             TokenNode? endoffile;
-            if (true
-                && (metaPlus = Repeat(rule_Meta, 1)) is not null
-                && (rulePlus = Repeat(rule_Rule, 1)) is not null
-                && (endoffile = Expect(TokenType.EndOfFile)) is not null
+            if (
+                (metaPlus = Repeat(rule_Meta, 1)) is not null
+                &&
+                (rulePlus = Repeat(rule_Rule, 1)) is not null
+                &&
+                (endoffile = Expect(TokenType.EndOfFile)) is not null
             )
             {
                 return new GrammarNode(metaPlus, rulePlus)
@@ -48,21 +38,25 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region Meta
     MetadataNode? rule_Meta()
     {
         int __mark = Mark();
         {
-            // "@" Name StringLiteral NewLine
+            //  "@" Name StringLiteral NewLine
             TokenNode? at;
             TokenNode? name;
             TokenNode? stringliteral;
             TokenNode? newline;
-            if (true
-                && (at = Expect(TokenType.At)) is not null
-                && (name = Expect(TokenType.Name)) is not null
-                && (stringliteral = Expect(TokenType.StringLiteral)) is not null
-                && (newline = Expect(TokenType.NewLine)) is not null
+            if (
+                (at = Expect(TokenType.At)) is not null
+                &&
+                (name = Expect(TokenType.Name)) is not null
+                &&
+                (stringliteral = Expect(TokenType.StringLiteral)) is not null
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
             )
             {
                 return new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))
@@ -74,12 +68,13 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region Rule
     RuleNode? rule_Rule()
     {
         int __mark = Mark();
         {
-            // Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
+            //  Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
             TokenNode? name;
             TypeSpecNode? typespec;
             TokenNode? colon;
@@ -87,37 +82,49 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             TokenNode? indent;
             NodeArray<AlternativeNode>? alternativePlus;
             TokenNode? dedent;
-            if (true
-                && (name = Expect(TokenType.Name)) is not null
-                && ((typespec = rule_TypeSpec()) is not null || true) // Optional
-                && (colon = Expect(TokenType.Colon)) is not null
-                && (newline = Expect(TokenType.NewLine)) is not null
-                && (indent = Expect(TokenType.Indent)) is not null
-                && (alternativePlus = Repeat(rule_Alternative, 1)) is not null
-                && (dedent = Expect(TokenType.Dedent)) is not null
+            if (
+                (name = Expect(TokenType.Name)) is not null
+                &&
+                ((typespec = rule_TypeSpec()) is not null || true) // Optional
+                &&
+                (colon = Expect(TokenType.Colon)) is not null
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
+                &&
+                (indent = Expect(TokenType.Indent)) is not null
+                &&
+                (alternativePlus = Repeat(rule_Alternative, 1)) is not null
+                &&
+                (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                List<GreenNode> children = [name!, typespec!, colon!, newline!, indent!, new NodeArrayWrapNode(alternativePlus)!, dedent];
-                children.RemoveAll(static child => child is null);
-                return new RuleNode(name.RawString, typespec, alternativePlus) { Children = new NodeArray<GreenNode>(children) };
+                List<GreenNode> __children = [name, typespec!, colon, newline, indent, new NodeArrayWrapNode(alternativePlus), dedent];
+                __children.RemoveAll(static __node => __node is null);
+                return new RuleNode(name.RawString, typespec, alternativePlus)
+                {
+                    Children = new NodeArray<GreenNode>(__children)
+                };
             }
         }
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region TypeSpec
     TypeSpecNode? rule_TypeSpec()
     {
         int __mark = Mark();
         {
-            // "[" Name "]"
+            //  "[" Name "]"
             TokenNode? leftsquarebracket;
             TokenNode? name;
             TokenNode? rightsquarebracket;
-            if (true
-                && (leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
-                && (name = Expect(TokenType.Name)) is not null
-                && (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
+            if (
+                (leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
+                &&
+                (name = Expect(TokenType.Name)) is not null
+                &&
+                (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
                 return new TypeSpecNode(name.RawString)
@@ -128,14 +135,16 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // "[" StringLiteral "]"
+            //  "[" StringLiteral "]"
             TokenNode? leftsquarebracket;
             TokenNode? stringliteral;
             TokenNode? rightsquarebracket;
-            if (true
-                && (leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
-                && (stringliteral = Expect(TokenType.StringLiteral)) is not null
-                && (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
+            if (
+                (leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
+                &&
+                (stringliteral = Expect(TokenType.StringLiteral)) is not null
+                &&
+                (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
                 return new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))
@@ -147,42 +156,51 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region Alternative
     AlternativeNode? rule_Alternative()
     {
         int __mark = Mark();
         {
-            // "|" Molecule+ -Action NewLine
+            //  "|" Molecule+ -Action NewLine
             TokenNode? vertbar;
             NodeArray<MoleculeNode>? moleculePlus;
             ActionNode? action;
             TokenNode? newline;
-            if (true
-                && (vertbar = Expect(TokenType.VertBar)) is not null
-                && (moleculePlus = Repeat(rule_Molecule, 1)) is not null
-                && ((action = rule_Action()) is not null || true) // Optional
-                && (newline = Expect(TokenType.NewLine)) is not null
+            if (
+                (vertbar = Expect(TokenType.VertBar)) is not null
+                &&
+                (moleculePlus = Repeat(rule_Molecule, 1)) is not null
+                &&
+                ((action = rule_Action()) is not null || true) // Optional
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
             )
             {
-                List<GreenNode> children = [vertbar!, new NodeArrayWrapNode(moleculePlus)!, action!, newline];
-                children.RemoveAll(static child => child is null);
-                return new AlternativeNode(moleculePlus, action) { Children = new NodeArray<GreenNode>(children) };
+                List<GreenNode> __children = [vertbar, new NodeArrayWrapNode(moleculePlus), action!, newline];
+                __children.RemoveAll(static __node => __node is null);
+                return new AlternativeNode(moleculePlus, action)
+                {
+                    Children = new NodeArray<GreenNode>(__children)
+                };
             }
         }
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region Molecule
     MoleculeNode? rule_Molecule()
     {
         int __mark = Mark();
         {
-            // "&" Atom
+            //  "&" Atom
             TokenNode? ampersand;
             AtomNode? atom;
-            if (true
-                && (ampersand = Expect(TokenType.Ampersand)) is not null
-                && (atom = rule_Atom()) is not null
+            if (
+                (ampersand = Expect(TokenType.Ampersand)) is not null
+                &&
+                (atom = rule_Atom()) is not null
             )
             {
                 return new LookaheadNode(atom, true)
@@ -193,12 +211,13 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // "!" Atom
+            //  "!" Atom
             TokenNode? exclamation;
             AtomNode? atom;
-            if (true
-                && (exclamation = Expect(TokenType.Exclamation)) is not null
-                && (atom = rule_Atom()) is not null
+            if (
+                (exclamation = Expect(TokenType.Exclamation)) is not null
+                &&
+                (atom = rule_Atom()) is not null
             )
             {
                 return new LookaheadNode(atom, false)
@@ -209,12 +228,13 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // "-" Atom
+            //  "-" Atom
             TokenNode? minus;
             AtomNode? atom;
-            if (true
-                && (minus = Expect(TokenType.Minus)) is not null
-                && (atom = rule_Atom()) is not null
+            if (
+                (minus = Expect(TokenType.Minus)) is not null
+                &&
+                (atom = rule_Atom()) is not null
             )
             {
                 return new OptionalNode(atom)
@@ -225,12 +245,13 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // Atom "*"
+            //  Atom "*"
             AtomNode? atom;
             TokenNode? star;
-            if (true
-                && (atom = rule_Atom()) is not null
-                && (star = Expect(TokenType.Star)) is not null
+            if (
+                (atom = rule_Atom()) is not null
+                &&
+                (star = Expect(TokenType.Star)) is not null
             )
             {
                 return new RepeatZeroMoreNode(atom)
@@ -241,12 +262,13 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // Atom "+"
+            //  Atom "+"
             AtomNode? atom;
             TokenNode? plus;
-            if (true
-                && (atom = rule_Atom()) is not null
-                && (plus = Expect(TokenType.Plus)) is not null
+            if (
+                (atom = rule_Atom()) is not null
+                &&
+                (plus = Expect(TokenType.Plus)) is not null
             )
             {
                 return new RepeatOneMoreNode(atom)
@@ -257,10 +279,10 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // Atom
+            //  Atom
             AtomNode? atom;
-            if (true
-                && (atom = rule_Atom()) is not null
+            if (
+                (atom = rule_Atom()) is not null
             )
             {
                 return new AtomMoleculeNode(atom)
@@ -272,15 +294,16 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region Atom
     AtomNode? rule_Atom()
     {
         int __mark = Mark();
         {
-            // Name
+            //  Name
             TokenNode? name;
-            if (true
-                && (name = Expect(TokenType.Name)) is not null
+            if (
+                (name = Expect(TokenType.Name)) is not null
             )
             {
                 return new NameAtomNode(name.RawString)
@@ -291,10 +314,10 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            // StringLiteral
+            //  StringLiteral
             TokenNode? stringliteral;
-            if (true
-                && (stringliteral = Expect(TokenType.StringLiteral)) is not null
+            if (
+                (stringliteral = Expect(TokenType.StringLiteral)) is not null
             )
             {
                 return new StringAtomNode(stringliteral.RawString)
@@ -306,17 +329,19 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         Reset(__mark);
         return null;
     }
-
+    #endregion
+    #region Action
     ActionNode? rule_Action()
     {
         int __mark = Mark();
         {
-            // "->" StringLiteral
+            //  "->" StringLiteral
             TokenNode? rightarrow;
             TokenNode? stringliteral;
-            if (true
-                && (rightarrow = Expect(TokenType.RightArrow)) is not null
-                && (stringliteral = Expect(TokenType.StringLiteral)) is not null
+            if (
+                (rightarrow = Expect(TokenType.RightArrow)) is not null
+                &&
+                (stringliteral = Expect(TokenType.StringLiteral)) is not null
             )
             {
                 return new ActionNode(StringParser.ParseQuotedString(stringliteral.RawString))
@@ -328,7 +353,5 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         Reset(__mark);
         return null;
     }
-
-    public override GrammarNode? Parse() => rule_Start();
-    protected override HashSet<string> Keywords => [];
+    #endregion
 }
