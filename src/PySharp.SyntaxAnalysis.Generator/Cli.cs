@@ -10,6 +10,6 @@ internal class CliOptions
     [Option('o', "output", Required = true, HelpText = "Output C# file path.")]
     public string OutputPath { get; set; } = null!;
 
-    [Option("force", Required = false, Default = false, HelpText = "Overwrite existing output file, if exists.")]
+    [Option('f', "force", Required = false, Default = false, HelpText = "Overwrite existing output file, if exists.")]
     public bool ForceOverwrite { get; set; }
 }

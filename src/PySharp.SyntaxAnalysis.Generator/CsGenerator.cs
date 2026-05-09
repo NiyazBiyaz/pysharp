@@ -190,7 +190,7 @@ internal class CsGenerator(GrammarData grammar)
                 if (cond.IsString)
                     addLine(wrapOpt($"{cond.AssignedVar} = Expect({cond.CallData})"));
                 else if (cond.IsToken)
-                    addLine(wrapOpt($"{cond.AssignedVar} = Expect({cond.CallData})"));
+                    addLine(wrapOpt($"{cond.AssignedVar} = Expect(TokenType.{cond.CallData})"));
                 else
                     addLine(wrapOpt($"{cond.AssignedVar} = rule_{cond.CallData}()"));
 
