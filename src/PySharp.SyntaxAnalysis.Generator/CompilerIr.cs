@@ -56,14 +56,10 @@ internal class RuleIr(string name, TypeIr type, string text)
     public TypeIr Type { get; } = type;
     public string OriginalText { get; init; } = text;
     public List<AlternativeIr> Alternatives { get; set; } = null!;
+    public bool IsUnion { get; set; } = false;
 }
 
 internal class TypeIr(string name)
 {
-    public string Name { get; set; } = name;
-}
-
-internal class LambdaTypeIr(string name) : TypeIr(name)
-{
-    public bool IsResolved { get; set; } = false;
+    public string Name { get; init; } = name;
 }

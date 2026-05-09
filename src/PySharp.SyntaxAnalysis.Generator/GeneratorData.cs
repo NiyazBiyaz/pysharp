@@ -6,7 +6,6 @@ internal record GrammarData
 {
     public required ReadOnlyDictionary<string, string> MetadataFields { get; init; }
     public required List<RuleData> Rules { get; init; }
-    public required List<TypeData> Types { get; init; }
     public required List<string> Keywords { get; init; }
 }
 
@@ -16,13 +15,8 @@ internal record RuleData
     public required string ReturnName { get; init; }
     public required string OriginalText { get; init; }
     public required List<AlternativeData> Alternatives { get; init; }
+    public required bool IsUnion { get; init; }
     // TODO: public required bool IsLeftRecursive { get; init; }
-}
-
-internal record TypeData
-{
-    public required string Name { get; init; }
-    public required List<VariableData> Fields { get; init; }
 }
 
 internal record AlternativeData
@@ -31,8 +25,7 @@ internal record AlternativeData
     public required List<VariableData> Variables { get; init; }
     public required List<ConditionData> Conditions { get; init; }
     public required bool HasOptionals { get; init; }
-    // TODO: public required IEnumerable<string> CtorVariables { get; init; }
-    public required string ReturnExpression { get; init; } // TODO: remove it.
+    public required string ReturnExpression { get; init; }
 }
 
 internal record VariableData

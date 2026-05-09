@@ -6,9 +6,9 @@ internal record ActionNode : GreenNode
 {
     public string Expression { get; private init; }
 
-    public ActionNode(string expression)
+    public ActionNode(string expr)
     {
-        Expression = expression;
+        Expression = expr;
     }
 
     public override string ToString() => $"ActionNode('{Expression}')";

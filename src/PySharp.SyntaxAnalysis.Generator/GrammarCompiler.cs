@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Generator.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
@@ -8,13 +9,7 @@ internal class GrammarCompiler(GrammarNode ast)
 {
     private readonly GrammarNode ast = ast;
 
-    private readonly Dictionary<string, string> metadataStore = new()
-    {
-        ["main_rule_name"] = "Start" // TODO: add '@main' decorator to the rules.
-    };
-
-    private readonly List<LambdaTypeIr> promisedLambdas = [];
-    private int lambdaTypeCount = 0;
+    private readonly Dictionary<string, string> metadataStore = [];
 
     private readonly Dictionary<string, RuleIr> allRules = [];
 
@@ -30,7 +25,6 @@ internal class GrammarCompiler(GrammarNode ast)
         {
             MetadataFields = metadataStore.AsReadOnly(),
             Rules = rules.ToList(),
-            Types = [],
             Keywords = [], // TODO: add keywords reading.
         };
     }
@@ -45,6 +39,7 @@ internal class GrammarCompiler(GrammarNode ast)
                 ReturnName = rule.Type.Name,
                 Alternatives = dumpAlternatives(rule).ToList(),
                 OriginalText = rule.OriginalText,
+                IsUnion = rule.IsUnion,
             };
         }
     }
@@ -77,9 +72,10 @@ internal class GrammarCompiler(GrammarNode ast)
     {
         foreach (var symbol in alt.Symbols)
         {
+            ConditionKind kind;
             yield return new ConditionData()
             {
-                Kind = symbol.Kind switch
+                Kind = kind = symbol.Kind switch
                 {
                     SymbolKind.Atom when symbol.Atom.IsToken || symbol.Atom.IsString => ConditionKind.Expect,
                     SymbolKind.Atom => ConditionKind.Rule,
@@ -91,7 +87,7 @@ internal class GrammarCompiler(GrammarNode ast)
                 CallData = symbol.Atom.Value,
                 IsString = symbol.Atom.IsString,
                 IsToken = symbol.Atom.IsToken,
-                AssignedVar = symbol.Name,
+                AssignedVar = kind != ConditionKind.Lookahead ? symbol.Name : "",
                 MinCount = symbol.Kind switch
                 {
                     SymbolKind.Repeat0 => 0,
@@ -114,7 +110,8 @@ internal class GrammarCompiler(GrammarNode ast)
         {
             TypeIr type;
             if (astRule.TypeSpec is null)
-                type = createLambdaType();
+                type = new TypeIr(nameof(GreenNode));
+
             else
                 type = new TypeIr(astRule.TypeSpec.TypeName);
 
@@ -122,10 +119,20 @@ internal class GrammarCompiler(GrammarNode ast)
                 throw new InvalidNameException($"Name '{astRule.Name}' reserved in TokenType.");
 
             var rule = new RuleIr(astRule.Name, type, astRule.RecoverText());
+
             allRules.Add(rule.Name, rule);
 
             // Link with alternatives.
             rule.Alternatives = [.. astRule.Alternatives.Select(static astAlt => createAlternative(astAlt))];
+
+            // Process decorators.
+            if (astRule is DecoratedRuleNode decorated)
+            {
+                if (decorated.Decorator == "main")
+                    metadataStore["main_rule_name"] = rule.Name;
+                else if (decorated.Decorator == "union")
+                    rule.IsUnion = true;
+            }
         }
     }
 
@@ -136,7 +143,7 @@ internal class GrammarCompiler(GrammarNode ast)
         {
             Symbols = [.. astAlt.Molecules.Select(molecule => createSymbol(molecule, namesScope))],
             OriginalText = string.Join("", astAlt.Molecules.Select(static m => m.RecoverText())),
-            ReturnExpression = astAlt.Action!.Expression // TODO: remove it.
+            ReturnExpression = astAlt.Action?.Expression ?? "",
         };
     }
 
@@ -212,14 +219,6 @@ internal class GrammarCompiler(GrammarNode ast)
             IsToken = isToken,
             IsString = isStr
         };
-    }
-
-    private LambdaTypeIr createLambdaType()
-    {
-        string name = $"LambdaType{++lambdaTypeCount}";
-        var type = new LambdaTypeIr(name) { IsResolved = false };
-        promisedLambdas.Add(type);
-        return type;
     }
 
     private void readMetadata()

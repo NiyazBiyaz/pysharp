@@ -10,33 +10,52 @@ namespace PySharp.SyntaxAnalysis.Generator;
 @class_signature "internal class NewGrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
 @parse_call_return "GrammarNode"
 
+@main
 Start[GrammarNode]:
-    | Meta+ Rule+ EndOfFile -> "new GrammarNode(metaPlus, rulePlus)"
+    | Meta+ Rule+ EndOfFile -> new GrammarNode(metaPlus, rulePlus)
 
 Meta[MetadataNode]:
-    | "@" Name StringLiteral NewLine -> "new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))"
+    | "@" Name StringLiteral NewLine -> new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))
 
 Rule[RuleNode]:
-    | Name -TypeSpec ":" NewLine Indent Alternative+ Dedent -> "new RuleNode(name.RawString, typespec, alternativePlus)"
+    | "@" Name NewLine Name -TypeSpec ":" NewLine Indent Alternative+ Dedent \
+        -> new DecoratedRuleNode(name.RawString, name1.RawString, typespec, alternativePlus)
+    | Name -TypeSpec ":" NewLine Indent Alternative+ Dedent -> new RuleNode(name.RawString, typespec, alternativePlus)
 
 TypeSpec[TypeSpecNode]:
-    | "[" Name "]" -> "new TypeSpecNode(name.RawString)"
-    | "[" StringLiteral "]" -> "new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))"
+    | "[" Name "]" -> new TypeSpecNode(name.RawString)
+    | "[" StringLiteral "]" -> new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))
 
 Alternative[AlternativeNode]:
-    | "|" Molecule+ -Action NewLine -> "new AlternativeNode(moleculePlus, action)"
+    | "|" Molecule+ -Action NewLine -> new AlternativeNode(moleculePlus, action)
 
 Molecule[MoleculeNode]:
-    | "&" Atom -> "new LookaheadNode(atom, true)"
-    | "!" Atom -> "new LookaheadNode(atom, false)"
-    | "-" Atom -> "new OptionalNode(atom)"
-    | Atom "*" -> "new RepeatZeroMoreNode(atom)"
-    | Atom "+" -> "new RepeatOneMoreNode(atom)"
-    | Atom -> "new AtomMoleculeNode(atom)"
+    | "&" Atom -> new LookaheadNode(atom, true)
+    | "!" Atom -> new LookaheadNode(atom, false)
+    | "-" Atom -> new OptionalNode(atom)
+    | Atom "*" -> new RepeatZeroMoreNode(atom)
+    | Atom "+" -> new RepeatOneMoreNode(atom)
+    | Atom -> new AtomMoleculeNode(atom)
 
 Atom[AtomNode]:
-    | Name -> "new NameAtomNode(name.RawString)"
-    | StringLiteral -> "new StringAtomNode(stringliteral.RawString)"
+    | Name -> new NameAtomNode(name.RawString)
+    | StringLiteral -> new StringAtomNode(stringliteral.RawString)
 
 Action[ActionNode]:
-    | "->" StringLiteral -> "new ActionNode(StringParser.ParseQuotedString(stringliteral.RawString))"
+    | "->" ActionStuff+ -> new ActionNode(string.Join("", actionstuffPlus.Select(static a => a.RecoverText())))
+
+@union
+ActionStuff[TokenNode]:
+    | Name
+    | StringLiteral
+    | "("
+    | ")"
+    | ","
+    | "."
+    | ">"
+    | "<"
+    | "="
+    | "=="
+    | ">="
+    | "<="
+    | "!"

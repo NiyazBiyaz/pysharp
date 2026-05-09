@@ -1,14 +1,24 @@
 using System.Collections;
 using System.Collections.Immutable;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
-[StructLayout(LayoutKind.Auto)]
-public class NodeArray<TNode>(IEnumerable<TNode> value) : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
+[CollectionBuilder(typeof(NodeArrayBuilder), "Create")]
+public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
     where TNode : GreenNode
 {
-    private readonly ImmutableArray<TNode> nodes = [.. value];
+    private readonly ImmutableArray<TNode> nodes;
+
+    public NodeArray(IEnumerable<TNode> values)
+    {
+        nodes = [.. values];
+    }
+
+    internal NodeArray(ReadOnlySpan<TNode> values)
+    {
+        nodes = [.. values];
+    }
 
     private int? hashCache = null;
 
@@ -53,4 +63,10 @@ public class NodeArray<TNode>(IEnumerable<TNode> value) : INodeArray<TNode>, IEq
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public override string ToString() => $"NodeArray [{string.Join(", ", nodes)}]";
+}
+
+public static class NodeArrayBuilder
+{
+    public static NodeArray<TNode> Create<TNode>(ReadOnlySpan<TNode> values)
+        where TNode : GreenNode => new(values);
 }

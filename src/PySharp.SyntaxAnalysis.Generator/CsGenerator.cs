@@ -59,10 +59,6 @@ internal class CsGenerator(GrammarData grammar)
 
         close();
 
-        // Generate auto-inferred types.
-        foreach (var tp in grammar.Types)
-            addType(tp);
-
         Debug.Assert(indent == 0);
         return builder.ToString();
     }
@@ -76,7 +72,7 @@ internal class CsGenerator(GrammarData grammar)
         foreach (var alternative in rule.Alternatives)
         {
             open();
-            addAlternative(alternative, rule.ReturnName);
+            addAlternative(alternative, rule.ReturnName, rule.IsUnion);
             close();
             addLine("Reset(__mark);");
         }
@@ -87,7 +83,7 @@ internal class CsGenerator(GrammarData grammar)
 
     #region Each alternative
 
-    private void addAlternative(AlternativeData alternative, string returnType)
+    private void addAlternative(AlternativeData alternative, string returnType, bool union)
     {
         addLine($"// {alternative.OriginalText.ReplaceLineEndings("\\n")}");
 
@@ -114,9 +110,11 @@ internal class CsGenerator(GrammarData grammar)
         addLine(")");
 
         open();
-        // string ctorArgs = string.Join(", ", alternative.CtorVariables);
-        // return new {{returnType}}({{ctorArgs}})
-        if (!alternative.HasOptionals)
+        if (union)
+        {
+            addLine($"return {alternative.Variables.First().Name};");
+        }
+        else if (!alternative.HasOptionals)
         {
             string children = string.Join(", ",
                 alternative.Variables.Select(static v => v.NeedWrapper
@@ -170,7 +168,7 @@ internal class CsGenerator(GrammarData grammar)
 
             case ConditionKind.Lookahead:
                 string lookArg = cond.IsString ? cond.CallData :
-                                cond.IsToken ? $"TokenType{cond.CallData}" :
+                                cond.IsToken ? $"TokenType.{cond.CallData}" :
                                 $"rule_{cond.CallData}";
                 string truthy = cond.Positive!.Value ? "true" : "false";
                 addLine($"Lookahead({lookArg}, {truthy})");
@@ -200,28 +198,6 @@ internal class CsGenerator(GrammarData grammar)
     }
 
     private static string isNotNull(ReadOnlySpan<char> value) => $"({value}) is not null";
-
-    #endregion
-
-    #region Type generation
-
-    private void addType(TypeData tp)
-    {
-        addLine($"internal record __PegenGenerated_{tp.Name} : GreenNode");
-        open();
-        foreach (var field in tp.Fields)
-            addLine($"internal {createTypeName(field)} {field.Name} {{ get; private init; }}");
-
-        addLine($"internal {tp.Name}({tp.Fields.Select(static v => $"{createTypeName(v)} {v.Name}")})");
-        open();
-        foreach (var field in tp.Fields)
-            addLine($"this.{field.Name} = {field.Name};");
-
-        close();
-        close();
-
-        static string createTypeName(VariableData var) => $"{var.TypeName}{(var.IsOptional ? "?" : "")}";
-    }
 
     #endregion
 
