@@ -122,7 +122,7 @@ internal class CsGenerator(GrammarData grammar)
         {
             string children = string.Join(", ",
                 alternative.Variables.Select(static v => v.NeedWrapper
-                ? $"new NodeArrayWrapNode({v.Name})"
+                ? $"new NodeList({v.Name})"
                 : v.Name));
 
             string ctorExpr = alternative.ReturnExpression;
@@ -146,7 +146,7 @@ internal class CsGenerator(GrammarData grammar)
                     if (v.IsOptional)
                         return v.Name + "!";
                     else if (v.NeedWrapper)
-                        return $"new NodeArrayWrapNode({v.Name})";
+                        return $"new NodeList({v.Name})";
                     else
                         return v.Name;
                 }));

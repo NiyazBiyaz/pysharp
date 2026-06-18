@@ -31,7 +31,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             {
                 return  new GrammarNode(metaPlus, rulePlus)
                 {
-                    Children = new NodeArray<GreenNode>([new NodeArrayWrapNode(metaPlus), new NodeArrayWrapNode(rulePlus), endoffile])
+                    Children = new NodeArray<GreenNode>([new NodeList(metaPlus), new NodeList(rulePlus), endoffile])
                 };
             }
         }
@@ -134,7 +134,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, newline1, indent, new NodeArrayWrapNode(groupPlus), dedent];
+                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, newline1, indent, new NodeList(groupPlus), dedent];
                 __children.RemoveAll(static __node => __node is null);
                 return  new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
                 {
@@ -205,7 +205,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                List<GreenNode> __children = [name, typespec!, colon, newline, indent, new NodeArrayWrapNode(groupPlus), dedent];
+                List<GreenNode> __children = [name, typespec!, colon, newline, indent, new NodeList(groupPlus), dedent];
                 __children.RemoveAll(static __node => __node is null);
                 return  new RuleNode(name.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
                 {
@@ -286,7 +286,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 ((action = rule_Action()) is not null || true) // Optional
             )
             {
-                List<GreenNode> __children = [new NodeArrayWrapNode(moleculePlus), action!];
+                List<GreenNode> __children = [new NodeList(moleculePlus), action!];
                 __children.RemoveAll(static __node => __node is null);
                 return  new AlternativeNode(moleculePlus, action)
                 {
@@ -475,7 +475,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             {
                 return  new ActionNode(actionstuffPlus.RecoverText())
                 {
-                    Children = new NodeArray<GreenNode>([rightarrow, new NodeArrayWrapNode(actionstuffPlus)])
+                    Children = new NodeArray<GreenNode>([rightarrow, new NodeList(actionstuffPlus)])
                 };
             }
         }
