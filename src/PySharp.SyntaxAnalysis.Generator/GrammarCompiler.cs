@@ -122,11 +122,11 @@ internal class GrammarCompiler(GrammarNode ast)
             var rule = registerRule(astRule.Name, typeName, astRule.RecoverText(), astRule.Alternatives);
 
             // Process decorators.
-            if (astRule is DecoratedRuleNode decorated)
+            foreach (var decorator in astRule.Decorators)
             {
-                if (decorated.Decorator == "main")
+                if (decorator == "main")
                     metadataStore["main_rule_name"] = rule.Name;
-                else if (decorated.Decorator == "union")
+                else if (decorator == "union")
                     rule.IsUnion = true;
             }
         }

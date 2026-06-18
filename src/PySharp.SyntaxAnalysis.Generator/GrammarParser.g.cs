@@ -74,6 +74,33 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     {
         int __mark = Mark();
         {
+            // "@" Name NewLine
+            TokenNode? at;
+            TokenNode? name;
+            TokenNode? newline;
+            if (
+                (at = Expect(TokenType.At)) is not null
+                &&
+                (name = Expect(TokenType.Name)) is not null
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
+            )
+            {
+                return new _PegenNetAnonymousType0(at, name, newline)
+                {
+                    Children = new NodeArray<GreenNode>([at, name, newline])
+                };
+            }
+        }
+        Reset(__mark);
+        return null;
+    }
+    #endregion
+    #region _PegenNetAnonymousType1
+    _PegenNetAnonymousType1? rule__PegenNetAnonymousType1()
+    {
+        int __mark = Mark();
+        {
             // "|" Alternative NewLine
             TokenNode? vertbar;
             AlternativeNode? alternative;
@@ -86,7 +113,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 (newline = Expect(TokenType.NewLine)) is not null
             )
             {
-                return new _PegenNetAnonymousType0(vertbar, alternative, newline)
+                return new _PegenNetAnonymousType1(vertbar, alternative, newline)
                 {
                     Children = new NodeArray<GreenNode>([vertbar, alternative, newline])
                 };
@@ -101,95 +128,18 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     {
         int __mark = Mark();
         {
-            //  "@" Name NewLine Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent
-            TokenNode? at;
-            TokenNode? name;
-            TokenNode? newline;
-            TokenNode? name1;
-            TypeSpecNode? typespec;
-            TokenNode? colon;
-            TokenNode? newline1;
-            TokenNode? indent;
-            NodeArray<_PegenNetAnonymousType0>? groupPlus;
-            TokenNode? dedent;
-            if (
-                (at = Expect(TokenType.At)) is not null
-                &&
-                (name = Expect(TokenType.Name)) is not null
-                &&
-                (newline = Expect(TokenType.NewLine)) is not null
-                &&
-                (name1 = Expect(TokenType.Name)) is not null
-                &&
-                ((typespec = rule_TypeSpec()) is not null || true) // Optional
-                &&
-                (colon = Expect(TokenType.Colon)) is not null
-                &&
-                (newline1 = Expect(TokenType.NewLine)) is not null
-                &&
-                (indent = Expect(TokenType.Indent)) is not null
-                &&
-                (groupPlus = Repeat(rule__PegenNetAnonymousType0, 1)) is not null
-                &&
-                (dedent = Expect(TokenType.Dedent)) is not null
-            )
-            {
-                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, newline1, indent, new NodeList(groupPlus), dedent];
-                __children.RemoveAll(static __node => __node is null);
-                return  new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
-                {
-                    Children = new NodeArray<GreenNode>(__children)
-                };
-            }
-        }
-        Reset(__mark);
-        {
-            //  "@" Name NewLine Name -TypeSpec ":" Alternative NewLine
-            TokenNode? at;
-            TokenNode? name;
-            TokenNode? newline;
-            TokenNode? name1;
-            TypeSpecNode? typespec;
-            TokenNode? colon;
-            AlternativeNode? alternative;
-            TokenNode? newline1;
-            if (
-                (at = Expect(TokenType.At)) is not null
-                &&
-                (name = Expect(TokenType.Name)) is not null
-                &&
-                (newline = Expect(TokenType.NewLine)) is not null
-                &&
-                (name1 = Expect(TokenType.Name)) is not null
-                &&
-                ((typespec = rule_TypeSpec()) is not null || true) // Optional
-                &&
-                (colon = Expect(TokenType.Colon)) is not null
-                &&
-                (alternative = rule_Alternative()) is not null
-                &&
-                (newline1 = Expect(TokenType.NewLine)) is not null
-            )
-            {
-                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, alternative, newline1];
-                __children.RemoveAll(static __node => __node is null);
-                return  new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [alternative])
-                {
-                    Children = new NodeArray<GreenNode>(__children)
-                };
-            }
-        }
-        Reset(__mark);
-        {
-            //  Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent
+            //  ("@" Name NewLine)* Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent
+            NodeArray<_PegenNetAnonymousType0>? groupStar;
             TokenNode? name;
             TypeSpecNode? typespec;
             TokenNode? colon;
             TokenNode? newline;
             TokenNode? indent;
-            NodeArray<_PegenNetAnonymousType0>? groupPlus;
+            NodeArray<_PegenNetAnonymousType1>? group1Plus;
             TokenNode? dedent;
             if (
+                (groupStar = Repeat(rule__PegenNetAnonymousType0, 0)) is not null
+                &&
                 (name = Expect(TokenType.Name)) is not null
                 &&
                 ((typespec = rule_TypeSpec()) is not null || true) // Optional
@@ -200,14 +150,15 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 &&
                 (indent = Expect(TokenType.Indent)) is not null
                 &&
-                (groupPlus = Repeat(rule__PegenNetAnonymousType0, 1)) is not null
+                (group1Plus = Repeat(rule__PegenNetAnonymousType1, 1)) is not null
                 &&
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                List<GreenNode> __children = [name, typespec!, colon, newline, indent, new NodeList(groupPlus), dedent];
+                List<GreenNode> __children = [new NodeList(groupStar), name, typespec!, colon, newline, indent, new NodeList(group1Plus), dedent];
                 __children.RemoveAll(static __node => __node is null);
-                return  new RuleNode(name.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
+                return  new RuleNode([.. groupStar.Select(g => g.name.RawString)], name.RawString, typespec,
+                                        [.. group1Plus.Select(g => g.alternative)])
                 {
                     Children = new NodeArray<GreenNode>(__children)
                 };
@@ -215,13 +166,16 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            //  Name -TypeSpec ":" Alternative NewLine
+            //  ("@" Name NewLine)* Name -TypeSpec ":" Alternative NewLine
+            NodeArray<_PegenNetAnonymousType0>? groupStar;
             TokenNode? name;
             TypeSpecNode? typespec;
             TokenNode? colon;
             AlternativeNode? alternative;
             TokenNode? newline;
             if (
+                (groupStar = Repeat(rule__PegenNetAnonymousType0, 0)) is not null
+                &&
                 (name = Expect(TokenType.Name)) is not null
                 &&
                 ((typespec = rule_TypeSpec()) is not null || true) // Optional
@@ -233,9 +187,9 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 (newline = Expect(TokenType.NewLine)) is not null
             )
             {
-                List<GreenNode> __children = [name, typespec!, colon, alternative, newline];
+                List<GreenNode> __children = [new NodeList(groupStar), name, typespec!, colon, alternative, newline];
                 __children.RemoveAll(static __node => __node is null);
-                return  new RuleNode(name.RawString, typespec, [alternative])
+                return  new RuleNode([.. groupStar.Select(g => g.name.RawString)], name.RawString, typespec, [alternative])
                 {
                     Children = new NodeArray<GreenNode>(__children)
                 };
@@ -659,10 +613,24 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
 #region type _PegenNetAnonymousType0
 internal record _PegenNetAnonymousType0 : GreenNode
 {
+    internal TokenNode at { get; private init; }
+    internal TokenNode name { get; private init; }
+    internal TokenNode newline { get; private init; }
+    internal _PegenNetAnonymousType0(TokenNode at, TokenNode name, TokenNode newline)
+    {
+        this.at = at;
+        this.name = name;
+        this.newline = newline;
+    }
+}
+#endregion
+#region type _PegenNetAnonymousType1
+internal record _PegenNetAnonymousType1 : GreenNode
+{
     internal TokenNode vertbar { get; private init; }
     internal AlternativeNode alternative { get; private init; }
     internal TokenNode newline { get; private init; }
-    internal _PegenNetAnonymousType0(TokenNode vertbar, AlternativeNode alternative, TokenNode newline)
+    internal _PegenNetAnonymousType1(TokenNode vertbar, AlternativeNode alternative, TokenNode newline)
     {
         this.vertbar = vertbar;
         this.alternative = alternative;

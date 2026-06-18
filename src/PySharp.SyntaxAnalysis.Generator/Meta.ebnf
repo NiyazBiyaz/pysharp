@@ -18,16 +18,12 @@ Meta[MetadataNode]:
     | "@" Name StringLiteral NewLine -> new MetadataNode(name.RawString, StringParser.ParseQuotedString(stringliteral.RawString))
 
 Rule[RuleNode]:
-    | "@" Name NewLine Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent \
-        -> new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
-
-    | "@" Name NewLine Name -TypeSpec ":" Alternative NewLine \
-        -> new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [alternative])
-
-    | Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent \
-        -> new RuleNode(name.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
-
-    | Name -TypeSpec ":" Alternative NewLine -> new RuleNode(name.RawString, typespec, [alternative])
+    | ("@" Name NewLine)* Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent \
+        -> new RuleNode([.. groupStar.Select(g => g.name.RawString)], name.RawString, typespec, 
+                        [.. group1Plus.Select(g => g.alternative)]) 
+    
+    | ("@" Name NewLine)* Name -TypeSpec ":" Alternative NewLine \
+        -> new RuleNode([.. groupStar.Select(g => g.name.RawString)], name.RawString, typespec, [alternative])
 
 TypeSpec[TypeSpecNode]:
     | "[" Name "]" -> new TypeSpecNode(name.RawString)
