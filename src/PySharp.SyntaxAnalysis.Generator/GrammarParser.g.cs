@@ -69,8 +69,8 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         return null;
     }
     #endregion
-    #region _PolyGenAnonymousType0
-    _PolyGenAnonymousType0? rule__PolyGenAnonymousType0()
+    #region _PegenNetAnonymousType0
+    _PegenNetAnonymousType0? rule__PegenNetAnonymousType0()
     {
         int __mark = Mark();
         {
@@ -86,7 +86,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 (newline = Expect(TokenType.NewLine)) is not null
             )
             {
-                return new _PolyGenAnonymousType0(vertbar, alternative, newline)
+                return new _PegenNetAnonymousType0(vertbar, alternative, newline)
                 {
                     Children = new NodeArray<GreenNode>([vertbar, alternative, newline])
                 };
@@ -110,7 +110,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             TokenNode? colon;
             TokenNode? newline1;
             TokenNode? indent;
-            NodeArray<_PolyGenAnonymousType0>? groupPlus;
+            NodeArray<_PegenNetAnonymousType0>? groupPlus;
             TokenNode? dedent;
             if (
                 (at = Expect(TokenType.At)) is not null
@@ -129,7 +129,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 &&
                 (indent = Expect(TokenType.Indent)) is not null
                 &&
-                (groupPlus = Repeat(rule__PolyGenAnonymousType0, 1)) is not null
+                (groupPlus = Repeat(rule__PegenNetAnonymousType0, 1)) is not null
                 &&
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
@@ -187,7 +187,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             TokenNode? colon;
             TokenNode? newline;
             TokenNode? indent;
-            NodeArray<_PolyGenAnonymousType0>? groupPlus;
+            NodeArray<_PegenNetAnonymousType0>? groupPlus;
             TokenNode? dedent;
             if (
                 (name = Expect(TokenType.Name)) is not null
@@ -200,7 +200,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 &&
                 (indent = Expect(TokenType.Indent)) is not null
                 &&
-                (groupPlus = Repeat(rule__PolyGenAnonymousType0, 1)) is not null
+                (groupPlus = Repeat(rule__PegenNetAnonymousType0, 1)) is not null
                 &&
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
@@ -656,13 +656,13 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     }
     #endregion
 }
-#region type _PolyGenAnonymousType0
-internal record _PolyGenAnonymousType0 : GreenNode
+#region type _PegenNetAnonymousType0
+internal record _PegenNetAnonymousType0 : GreenNode
 {
     internal TokenNode vertbar { get; private init; }
     internal AlternativeNode alternative { get; private init; }
     internal TokenNode newline { get; private init; }
-    internal _PolyGenAnonymousType0(TokenNode vertbar, AlternativeNode alternative, TokenNode newline)
+    internal _PegenNetAnonymousType0(TokenNode vertbar, AlternativeNode alternative, TokenNode newline)
     {
         this.vertbar = vertbar;
         this.alternative = alternative;

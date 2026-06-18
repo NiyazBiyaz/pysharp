@@ -19,5 +19,5 @@ internal class VariablesNamingScope
 
     public string NextString() => $"__token{overallCount++}";
 
-    public string NextTypeName() => $"_PolyGenAnonymousType{overallCount++}";
+    public string NextTypeName() => $"_PegenNetAnonymousType{overallCount++}";
 }
