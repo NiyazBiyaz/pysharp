@@ -1,4 +1,4 @@
-# Source: CPython
+# Copyright (c) 2001 Python Software Foundation; All Rights Reserved
 """Utilities to support packages."""
 
 from collections import namedtuple
