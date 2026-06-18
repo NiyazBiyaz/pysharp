@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
@@ -63,6 +64,15 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public override string ToString() => $"NodeArray [{string.Join(", ", nodes)}]";
+
+    public string RecoverText()
+    {
+        var builder = new StringBuilder();
+        foreach (var node in nodes)
+            builder.Append(node.RecoverText());
+
+        return builder.ToString();
+    }
 }
 
 public static class NodeArrayBuilder

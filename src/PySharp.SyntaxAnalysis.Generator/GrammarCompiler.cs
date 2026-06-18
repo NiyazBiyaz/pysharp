@@ -13,6 +13,11 @@ internal class GrammarCompiler(GrammarNode ast)
 
     private readonly Dictionary<string, RuleIr> allRules = [];
 
+    private readonly List<TypeIr> anonymousTypes = [];
+    private readonly VariablesNamingScope anonymousTypesNames = new();
+
+    private readonly Dictionary<GroupAtomNode, RuleIr> anonRuleCache = [];
+
     public GrammarData Compile()
     {
         readMetadata();
@@ -20,11 +25,13 @@ internal class GrammarCompiler(GrammarNode ast)
         linkRulesToSymbols();
 
         var rules = dumpRules();
+        var types = dumpTypes();
 
         return new()
         {
             MetadataFields = metadataStore.AsReadOnly(),
             Rules = rules.ToList(),
+            Types = types.ToList(),
             Keywords = [], // TODO: add keywords reading.
         };
     }
@@ -40,6 +47,7 @@ internal class GrammarCompiler(GrammarNode ast)
                 Alternatives = dumpAlternatives(rule).ToList(),
                 OriginalText = rule.OriginalText,
                 IsUnion = rule.IsUnion,
+                IsAnonymous = rule.IsAnonymous,
             };
         }
     }
@@ -50,20 +58,18 @@ internal class GrammarCompiler(GrammarNode ast)
         {
             yield return new AlternativeData()
             {
-                ReturnExpression = alt.ReturnExpression,
+                ReturnExpression = alt.ReturnExpression switch
+                {
+                    not null => alt.ReturnExpression,
+                    null when rule.IsUnion =>
+                        alt.Symbols.First(s => s.Kind != SymbolKind.LookPositive && s.Kind != SymbolKind.LookNegative).Name,
+                    null when rule.IsAnonymous => rule.Type.Name,
+                    _ => throw new UnreachableException("Unexpected condition while ReturnExpression processing."),
+                },
                 OriginalText = alt.OriginalText,
                 HasOptionals = alt.Symbols.Any(static s => s.Kind == SymbolKind.Optional),
                 Conditions = dumpConditions(alt).ToList(),
-                Variables = alt.Symbols
-                    .Where(static s => s.Kind != SymbolKind.LookPositive && s.Kind != SymbolKind.LookNegative)
-                    .Select(static s => new VariableData()
-                    {
-                        IsOptional = s.Kind == SymbolKind.Optional,
-                        TypeName = s.Atom.LinkedRule is null ? "TokenNode" : s.Atom.LinkedRule.Type.Name,
-                        NeedWrapper = s.Kind == SymbolKind.Repeat0 || s.Kind == SymbolKind.Repeat1,
-                        Name = s.Name,
-                    })
-                    .ToList(),
+                Variables = dumpVariables(alt),
             };
         }
     }
@@ -108,22 +114,12 @@ internal class GrammarCompiler(GrammarNode ast)
     {
         foreach (var astRule in ast.Rules)
         {
-            TypeIr type;
-            if (astRule.TypeSpec is null)
-                type = new TypeIr(nameof(GreenNode));
-
-            else
-                type = new TypeIr(astRule.TypeSpec.TypeName);
-
             if (TokenType.IsReserved(astRule.Name))
                 throw new InvalidNameException($"Name '{astRule.Name}' reserved in TokenType.");
 
-            var rule = new RuleIr(astRule.Name, type, astRule.RecoverText());
+            var typeName = astRule.TypeSpec is null ? nameof(GreenNode) : astRule.TypeSpec.TypeName;
 
-            allRules.Add(rule.Name, rule);
-
-            // Link with alternatives.
-            rule.Alternatives = [.. astRule.Alternatives.Select(static astAlt => createAlternative(astAlt))];
+            var rule = registerRule(astRule.Name, typeName, astRule.RecoverText(), astRule.Alternatives);
 
             // Process decorators.
             if (astRule is DecoratedRuleNode decorated)
@@ -136,18 +132,29 @@ internal class GrammarCompiler(GrammarNode ast)
         }
     }
 
-    private static AlternativeIr createAlternative(AlternativeNode astAlt)
+    private RuleIr registerRule(string ruleName, string typeName, string sourceText, IEnumerable<AlternativeNode> alts)
+    {
+        var type = new TypeIr(typeName);
+        var rule = new RuleIr(ruleName, type, sourceText)
+        {
+            Alternatives = [.. alts.Select(createAlternative)],
+        };
+        allRules.Add(rule.Name, rule);
+        return rule;
+    }
+
+    private AlternativeIr createAlternative(AlternativeNode astAlt)
     {
         var namesScope = new VariablesNamingScope();
         return new AlternativeIr()
         {
             Symbols = [.. astAlt.Molecules.Select(molecule => createSymbol(molecule, namesScope))],
             OriginalText = string.Join("", astAlt.Molecules.Select(static m => m.RecoverText())),
-            ReturnExpression = astAlt.Action?.Expression ?? "",
+            ReturnExpression = astAlt.Action?.Expression,
         };
     }
 
-    private static SymbolIr createSymbol(MoleculeNode molecule, VariablesNamingScope scope)
+    private SymbolIr createSymbol(MoleculeNode molecule, VariablesNamingScope scope)
     {
         SymbolKind kind;
         AtomIr atom;
@@ -181,7 +188,7 @@ internal class GrammarCompiler(GrammarNode ast)
         };
     }
 
-    private static AtomIr createAtom(AtomNode atom, VariablesNamingScope scope)
+    private AtomIr createAtom(AtomNode atom, VariablesNamingScope scope)
     {
         string name, value;
         bool isToken, isStr;
@@ -194,6 +201,7 @@ internal class GrammarCompiler(GrammarNode ast)
                 isStr = false;
                 break;
             case StringAtomNode s:
+                // Check that string can be replaced with token type.
                 if (TokenType.TryGetDelimiterByString(s.Parsed, out var type))
                 {
                     value = Enum.GetName(type)!;
@@ -206,6 +214,20 @@ internal class GrammarCompiler(GrammarNode ast)
                 value = s.Value;
                 isToken = false;
                 isStr = true;
+                break;
+            case GroupAtomNode g:
+                if (!anonRuleCache.TryGetValue(g, out var rule))
+                {
+                    var newType = registerAnonType();
+                    rule = registerRule(newType.Name, newType.Name, g.RecoverText(), g.Alternatives);
+                    rule.IsAnonymous = true;
+                    anonRuleCache[g] = rule;
+                    newType.Rule = rule;
+                }
+                value = rule.Name;
+                name = scope.NextName("group");
+                isToken = false;
+                isStr = false;
                 break;
 
             default:
@@ -220,6 +242,46 @@ internal class GrammarCompiler(GrammarNode ast)
             IsString = isStr
         };
     }
+
+    private TypeIr registerAnonType()
+    {
+        string name = anonymousTypesNames.NextTypeName();
+        var type = new TypeIr(name);
+        anonymousTypes.Add(type);
+        return type;
+    }
+
+    private IEnumerable<TypeData> dumpTypes()
+    {
+        foreach (var type in anonymousTypes)
+        {
+            if (type.Rule is null)
+                throw new UnreachableException("Anonymous types should always have reference to rule.");
+
+            if (type.Rule.Alternatives.Count > 1)
+                throw new NotImplementedException("Only one alternative supported now.");
+
+            var alt = type.Rule.Alternatives.First();
+
+            yield return new()
+            {
+                Name = type.Name,
+                Fields = dumpVariables(alt),
+                AccessModifier = TypeAccessModifier.Anonymous,
+            };
+        }
+    }
+
+    private List<VariableData> dumpVariables(AlternativeIr alt) => alt.Symbols
+        .Where(static s => s.Kind != SymbolKind.LookPositive && s.Kind != SymbolKind.LookNegative)
+        .Select(static s => new VariableData()
+        {
+            IsOptional = s.Kind == SymbolKind.Optional,
+            TypeName = s.Atom.LinkedRule is null ? "TokenNode" : s.Atom.LinkedRule.Type.Name,
+            NeedWrapper = s.Kind == SymbolKind.Repeat0 || s.Kind == SymbolKind.Repeat1,
+            Name = s.Name,
+        })
+        .ToList();
 
     private void readMetadata()
     {

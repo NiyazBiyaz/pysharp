@@ -59,6 +59,10 @@ internal class CsGenerator(GrammarData grammar)
 
         close();
 
+        // Generate all types.
+        foreach (var type in grammar.Types)
+            addType(type);
+
         Debug.Assert(indent == 0);
         return builder.ToString();
     }
@@ -72,7 +76,7 @@ internal class CsGenerator(GrammarData grammar)
         foreach (var alternative in rule.Alternatives)
         {
             open();
-            addAlternative(alternative, rule.ReturnName, rule.IsUnion);
+            addAlternative(alternative, rule.IsUnion, rule.IsAnonymous);
             close();
             addLine("Reset(__mark);");
         }
@@ -83,7 +87,7 @@ internal class CsGenerator(GrammarData grammar)
 
     #region Each alternative
 
-    private void addAlternative(AlternativeData alternative, string returnType, bool union)
+    private void addAlternative(AlternativeData alternative, bool union, bool anonymous)
     {
         addLine($"// {alternative.OriginalText.ReplaceLineEndings("\\n")}");
 
@@ -112,7 +116,7 @@ internal class CsGenerator(GrammarData grammar)
         open();
         if (union)
         {
-            addLine($"return {alternative.Variables.First().Name};");
+            addLine($"return {alternative.ReturnExpression};");
         }
         else if (!alternative.HasOptionals)
         {
@@ -120,8 +124,15 @@ internal class CsGenerator(GrammarData grammar)
                 alternative.Variables.Select(static v => v.NeedWrapper
                 ? $"new NodeArrayWrapNode({v.Name})"
                 : v.Name));
+
+            string ctorExpr = alternative.ReturnExpression;
+            if (anonymous)
+            {
+                ctorExpr = $"new {ctorExpr}({string.Join(", ", alternative.Variables.Select(v => v.Name))})";
+            }
+
             addLines($$"""
-            return {{alternative.ReturnExpression}}
+            return {{ctorExpr}}
             {
                 Children = new NodeArray<GreenNode>([{{children}}])
             };
@@ -198,6 +209,51 @@ internal class CsGenerator(GrammarData grammar)
     }
 
     private static string isNotNull(ReadOnlySpan<char> value) => $"({value}) is not null";
+
+    #endregion
+
+    #region Types generation
+
+    private void addType(TypeData type)
+    {
+        string modifier = type.AccessModifier switch
+        {
+            TypeAccessModifier.Anonymous => "internal",
+            TypeAccessModifier.Public => "public",
+            _ => throw new UnreachableException("Unexpected TypeAccessModifier value."),
+        };
+        var fieldsWithType = type.Fields.Select(f =>
+        {
+            var fieldType = f.TypeName;
+            if (f.NeedWrapper)
+                fieldType = $"NodeArray<{fieldType}>";
+            if (f.IsOptional)
+                fieldType = $"{fieldType}?";
+
+            return $"{fieldType} {f.Name}";
+        });
+
+        addLine($"#region type {type.Name}");
+        addLine($"{modifier} record {type.Name} : GreenNode");
+        open();
+
+        foreach (var fwt in fieldsWithType)
+        {
+            beginLine();
+            add($"{modifier} ");
+            add($"{fwt} {{ get; private init; }}");
+            endLine();
+        }
+
+        addLine($"{modifier} {type.Name}({string.Join(", ", fieldsWithType)})");
+        open();
+        foreach (var field in type.Fields)
+            addLine($"this.{field.Name} = {field.Name};");
+        close();
+
+        close();
+        addLine("#endregion");
+    }
 
     #endregion
 

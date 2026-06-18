@@ -69,12 +69,39 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         return null;
     }
     #endregion
+    #region _PolyGenAnonymousType0
+    _PolyGenAnonymousType0? rule__PolyGenAnonymousType0()
+    {
+        int __mark = Mark();
+        {
+            // "|" Alternative NewLine
+            TokenNode? vertbar;
+            AlternativeNode? alternative;
+            TokenNode? newline;
+            if (
+                (vertbar = Expect(TokenType.VertBar)) is not null
+                &&
+                (alternative = rule_Alternative()) is not null
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
+            )
+            {
+                return new _PolyGenAnonymousType0(vertbar, alternative, newline)
+                {
+                    Children = new NodeArray<GreenNode>([vertbar, alternative, newline])
+                };
+            }
+        }
+        Reset(__mark);
+        return null;
+    }
+    #endregion
     #region Rule
     RuleNode? rule_Rule()
     {
         int __mark = Mark();
         {
-            //  "@" Name NewLine Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
+            //  "@" Name NewLine Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent
             TokenNode? at;
             TokenNode? name;
             TokenNode? newline;
@@ -83,7 +110,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             TokenNode? colon;
             TokenNode? newline1;
             TokenNode? indent;
-            NodeArray<AlternativeNode>? alternativePlus;
+            NodeArray<_PolyGenAnonymousType0>? groupPlus;
             TokenNode? dedent;
             if (
                 (at = Expect(TokenType.At)) is not null
@@ -102,14 +129,14 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 &&
                 (indent = Expect(TokenType.Indent)) is not null
                 &&
-                (alternativePlus = Repeat(rule_Alternative, 1)) is not null
+                (groupPlus = Repeat(rule__PolyGenAnonymousType0, 1)) is not null
                 &&
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, newline1, indent, new NodeArrayWrapNode(alternativePlus), dedent];
+                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, newline1, indent, new NodeArrayWrapNode(groupPlus), dedent];
                 __children.RemoveAll(static __node => __node is null);
-                return  new DecoratedRuleNode(name.RawString, name1.RawString, typespec, alternativePlus)
+                return  new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
                 {
                     Children = new NodeArray<GreenNode>(__children)
                 };
@@ -117,13 +144,50 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
         }
         Reset(__mark);
         {
-            //  Name -TypeSpec ":" NewLine Indent Alternative+ Dedent
+            //  "@" Name NewLine Name -TypeSpec ":" Alternative NewLine
+            TokenNode? at;
+            TokenNode? name;
+            TokenNode? newline;
+            TokenNode? name1;
+            TypeSpecNode? typespec;
+            TokenNode? colon;
+            AlternativeNode? alternative;
+            TokenNode? newline1;
+            if (
+                (at = Expect(TokenType.At)) is not null
+                &&
+                (name = Expect(TokenType.Name)) is not null
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
+                &&
+                (name1 = Expect(TokenType.Name)) is not null
+                &&
+                ((typespec = rule_TypeSpec()) is not null || true) // Optional
+                &&
+                (colon = Expect(TokenType.Colon)) is not null
+                &&
+                (alternative = rule_Alternative()) is not null
+                &&
+                (newline1 = Expect(TokenType.NewLine)) is not null
+            )
+            {
+                List<GreenNode> __children = [at, name, newline, name1, typespec!, colon, alternative, newline1];
+                __children.RemoveAll(static __node => __node is null);
+                return  new DecoratedRuleNode(name.RawString, name1.RawString, typespec, [alternative])
+                {
+                    Children = new NodeArray<GreenNode>(__children)
+                };
+            }
+        }
+        Reset(__mark);
+        {
+            //  Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent
             TokenNode? name;
             TypeSpecNode? typespec;
             TokenNode? colon;
             TokenNode? newline;
             TokenNode? indent;
-            NodeArray<AlternativeNode>? alternativePlus;
+            NodeArray<_PolyGenAnonymousType0>? groupPlus;
             TokenNode? dedent;
             if (
                 (name = Expect(TokenType.Name)) is not null
@@ -136,14 +200,42 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 &&
                 (indent = Expect(TokenType.Indent)) is not null
                 &&
-                (alternativePlus = Repeat(rule_Alternative, 1)) is not null
+                (groupPlus = Repeat(rule__PolyGenAnonymousType0, 1)) is not null
                 &&
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
-                List<GreenNode> __children = [name, typespec!, colon, newline, indent, new NodeArrayWrapNode(alternativePlus), dedent];
+                List<GreenNode> __children = [name, typespec!, colon, newline, indent, new NodeArrayWrapNode(groupPlus), dedent];
                 __children.RemoveAll(static __node => __node is null);
-                return  new RuleNode(name.RawString, typespec, alternativePlus)
+                return  new RuleNode(name.RawString, typespec, [.. groupPlus.Select(g => g.alternative)])
+                {
+                    Children = new NodeArray<GreenNode>(__children)
+                };
+            }
+        }
+        Reset(__mark);
+        {
+            //  Name -TypeSpec ":" Alternative NewLine
+            TokenNode? name;
+            TypeSpecNode? typespec;
+            TokenNode? colon;
+            AlternativeNode? alternative;
+            TokenNode? newline;
+            if (
+                (name = Expect(TokenType.Name)) is not null
+                &&
+                ((typespec = rule_TypeSpec()) is not null || true) // Optional
+                &&
+                (colon = Expect(TokenType.Colon)) is not null
+                &&
+                (alternative = rule_Alternative()) is not null
+                &&
+                (newline = Expect(TokenType.NewLine)) is not null
+            )
+            {
+                List<GreenNode> __children = [name, typespec!, colon, alternative, newline];
+                __children.RemoveAll(static __node => __node is null);
+                return  new RuleNode(name.RawString, typespec, [alternative])
                 {
                     Children = new NodeArray<GreenNode>(__children)
                 };
@@ -177,26 +269,6 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
-        {
-            //  "[" StringLiteral "]"
-            TokenNode? leftsquarebracket;
-            TokenNode? stringliteral;
-            TokenNode? rightsquarebracket;
-            if (
-                (leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
-                &&
-                (stringliteral = Expect(TokenType.StringLiteral)) is not null
-                &&
-                (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
-            )
-            {
-                return  new TypeSpecNode(StringParser.ParseQuotedString(stringliteral.RawString))
-                {
-                    Children = new NodeArray<GreenNode>([leftsquarebracket, stringliteral, rightsquarebracket])
-                };
-            }
-        }
-        Reset(__mark);
         return null;
     }
     #endregion
@@ -205,22 +277,16 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     {
         int __mark = Mark();
         {
-            //  "|" Molecule+ -Action NewLine
-            TokenNode? vertbar;
+            //  Molecule+ -Action
             NodeArray<MoleculeNode>? moleculePlus;
             ActionNode? action;
-            TokenNode? newline;
             if (
-                (vertbar = Expect(TokenType.VertBar)) is not null
-                &&
                 (moleculePlus = Repeat(rule_Molecule, 1)) is not null
                 &&
                 ((action = rule_Action()) is not null || true) // Optional
-                &&
-                (newline = Expect(TokenType.NewLine)) is not null
             )
             {
-                List<GreenNode> __children = [vertbar, new NodeArrayWrapNode(moleculePlus), action!, newline];
+                List<GreenNode> __children = [new NodeArrayWrapNode(moleculePlus), action!];
                 __children.RemoveAll(static __node => __node is null);
                 return  new AlternativeNode(moleculePlus, action)
                 {
@@ -343,6 +409,26 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     {
         int __mark = Mark();
         {
+            //  "(" Alternative ")"
+            TokenNode? leftparen;
+            AlternativeNode? alternative;
+            TokenNode? rightparen;
+            if (
+                (leftparen = Expect(TokenType.LeftParen)) is not null
+                &&
+                (alternative = rule_Alternative()) is not null
+                &&
+                (rightparen = Expect(TokenType.RightParen)) is not null
+            )
+            {
+                return  new GroupAtomNode([alternative])
+                {
+                    Children = new NodeArray<GreenNode>([leftparen, alternative, rightparen])
+                };
+            }
+        }
+        Reset(__mark);
+        {
             //  Name
             TokenNode? name;
             if (
@@ -387,7 +473,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
                 (actionstuffPlus = Repeat(rule_ActionStuff, 1)) is not null
             )
             {
-                return  new ActionNode(string.Join("", actionstuffPlus.Select(static a => a.RecoverText())))
+                return  new ActionNode(actionstuffPlus.RecoverText())
                 {
                     Children = new NodeArray<GreenNode>([rightarrow, new NodeArrayWrapNode(actionstuffPlus)])
                 };
@@ -544,7 +630,43 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
             }
         }
         Reset(__mark);
+        {
+            //  "["
+            TokenNode? leftsquarebracket;
+            if (
+                (leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
+            )
+            {
+                return leftsquarebracket;
+            }
+        }
+        Reset(__mark);
+        {
+            //  "]"
+            TokenNode? rightsquarebracket;
+            if (
+                (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
+            )
+            {
+                return rightsquarebracket;
+            }
+        }
+        Reset(__mark);
         return null;
     }
     #endregion
 }
+#region type _PolyGenAnonymousType0
+internal record _PolyGenAnonymousType0 : GreenNode
+{
+    internal TokenNode vertbar { get; private init; }
+    internal AlternativeNode alternative { get; private init; }
+    internal TokenNode newline { get; private init; }
+    internal _PolyGenAnonymousType0(TokenNode vertbar, AlternativeNode alternative, TokenNode newline)
+    {
+        this.vertbar = vertbar;
+        this.alternative = alternative;
+        this.newline = newline;
+    }
+}
+#endregion

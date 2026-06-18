@@ -6,6 +6,7 @@ internal record GrammarData
 {
     public required ReadOnlyDictionary<string, string> MetadataFields { get; init; }
     public required List<RuleData> Rules { get; init; }
+    public required List<TypeData> Types { get; init; }
     public required List<string> Keywords { get; init; }
 }
 
@@ -16,7 +17,21 @@ internal record RuleData
     public required string OriginalText { get; init; }
     public required List<AlternativeData> Alternatives { get; init; }
     public required bool IsUnion { get; init; }
+    public required bool IsAnonymous { get; init; }
     // TODO: public required bool IsLeftRecursive { get; init; }
+}
+
+internal record TypeData
+{
+    public required string Name { get; init; }
+    public required TypeAccessModifier AccessModifier { get; init; }
+    public required List<VariableData> Fields { get; init; }
+}
+
+internal enum TypeAccessModifier
+{
+    Anonymous,
+    Public,
 }
 
 internal record AlternativeData

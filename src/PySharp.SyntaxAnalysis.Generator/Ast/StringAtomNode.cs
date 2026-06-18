@@ -5,6 +5,8 @@ namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
 internal record StringAtomNode : AtomNode
 {
+    public string Value { get; private init; }
+
     public StringAtomNode(string value)
     {
         Debug.Assert(!StringParser.HasPrefix(value));

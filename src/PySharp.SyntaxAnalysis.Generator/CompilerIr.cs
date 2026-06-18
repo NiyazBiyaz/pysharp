@@ -46,7 +46,7 @@ internal class AlternativeIr
 {
     public required string OriginalText { get; init; }
     public required List<SymbolIr> Symbols { get; init; }
-    public required string ReturnExpression { get; init; }
+    public string? ReturnExpression { get; init; }
 }
 
 [DebuggerDisplay("rule: {Name}")]
@@ -57,9 +57,11 @@ internal class RuleIr(string name, TypeIr type, string text)
     public string OriginalText { get; init; } = text;
     public List<AlternativeIr> Alternatives { get; set; } = null!;
     public bool IsUnion { get; set; } = false;
+    public bool IsAnonymous { get; set; } = false;
 }
 
 internal class TypeIr(string name)
 {
     public string Name { get; init; } = name;
+    public RuleIr? Rule { get; set; }
 }
