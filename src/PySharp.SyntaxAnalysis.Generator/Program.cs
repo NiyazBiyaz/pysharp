@@ -35,7 +35,7 @@ internal class Program
 
         if (grammarParsed is null)
         {
-            Console.Error.WriteLine("Parsing error.");
+            Console.Error.WriteLine($"Parsing error. Line: {tokenizer.Synchronize().StartLine + 1}");
             Environment.Exit(3);
         }
 

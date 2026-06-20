@@ -40,7 +40,27 @@ internal record AlternativeData
     public required List<VariableData> Variables { get; init; }
     public required List<ConditionData> Conditions { get; init; }
     public required bool HasOptionals { get; init; }
-    public required string ReturnExpression { get; init; }
+    public required string ReturnTypeName { get; init; }
+    public required List<CtorArgumentData> CtorArguments { get; init; }
+}
+
+internal record CtorArgumentData(
+    CtorArgumentType CtorArgumentType,
+    string? VariableName,
+    string? AxisName = null,
+    bool? BoolConstant = null
+);
+
+internal enum CtorArgumentType
+{
+    Raw,
+    String,
+    ParseString,
+    WrapArray,
+    GroupAxis,
+    GroupAxisString,
+    GroupAxisParseString,
+    BoolConstant
 }
 
 internal record VariableData
@@ -57,9 +77,8 @@ internal record ConditionData
     public string? AssignedVar { get; init; }
     public bool? Positive { get; init; }
     public int? MinCount { get; init; }
-    public required string CallData { get; init; }
-    public required bool IsToken { get; init; }
-    public required bool IsString { get; init; }
+    public required AtomData Atom { get; init; }
+    public AtomData? Separator { get; init; }
 }
 
 internal enum ConditionKind
@@ -69,4 +88,19 @@ internal enum ConditionKind
     Lookahead,
     Repeat,
     Optional,
+    Gather,
+}
+
+internal record AtomData
+{
+    internal string CallData { get; init; }
+    internal bool IsString { get; init; }
+    internal bool IsToken { get; init; }
+
+    internal AtomData(AtomIr atomIr)
+    {
+        CallData = atomIr.Value;
+        IsString = atomIr.IsString;
+        IsToken = atomIr.IsToken;
+    }
 }

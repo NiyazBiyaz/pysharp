@@ -100,6 +100,90 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
         return isParsed == positive;
     }
 
+    protected NodeArray<T>? Gather<T>(Func<T?> ruleCall, Func<GreenNode?> sepCall)
+        where T : GreenNode
+    {
+        var node = ruleCall();
+
+        if (node is null)
+            return null;
+
+        List<T> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            if (sepCall() is null)
+                break;
+
+            node = ruleCall();
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<T>? Gather<T>(Func<T?> ruleCall, TokenType sepTokenType)
+        where T : GreenNode
+    {
+        var node = ruleCall();
+
+        if (node is null)
+            return null;
+
+        List<T> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            if (Expect(sepTokenType) is null)
+                break;
+
+            node = ruleCall();
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<T>? Gather<T>(Func<T?> ruleCall, string sepTokenLiteral)
+        where T : GreenNode
+    {
+        var node = ruleCall();
+
+        if (node is null)
+            return null;
+
+        List<T> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            if (Expect(sepTokenLiteral) is null)
+                break;
+
+            node = ruleCall();
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
     protected int Mark() => tokenStream.Index;
 
     protected void Reset(int index) => tokenStream.Index = index;

@@ -13,8 +13,8 @@ internal class AtomIr
 
 internal class SymbolIr
 {
-    public required SymbolKind Kind { get; init; }
-    public required AtomIr Atom { get; set; }
+    public virtual required SymbolKind Kind { get; init; }
+    public required AtomIr Atom { get; init; }
 
     public string Name
     {
@@ -27,9 +27,16 @@ internal class SymbolIr
             SymbolKind.LookPositive or SymbolKind.LookNegative
                 => throw new UnreachableException("Creating name for the lookahead symbol is wrong."),
 
+            SymbolKind.Gather => "Gathered",
+
             _ => throw new UnreachableException($"Invalid SymbolKind value: {Kind}"),
         };
     }
+}
+
+internal class GatherSymbolIr : SymbolIr
+{
+    public required AtomIr Separator { get; init; }
 }
 
 internal enum SymbolKind
@@ -40,13 +47,32 @@ internal enum SymbolKind
     LookPositive,
     LookNegative,
     Optional,
+    Gather,
 }
 
 internal class AlternativeIr
 {
     public required string OriginalText { get; init; }
     public required List<SymbolIr> Symbols { get; init; }
-    public string? ReturnExpression { get; init; }
+    public ActionIr? Action { get; set; }
+}
+
+internal class ActionIr(TypeIr type, List<TargetIr> targets)
+{
+    public TypeIr ConstructibleType { get; set; } = type;
+    public List<TargetIr> Targets { get; set; } = targets;
+}
+
+internal class TargetIr(SymbolIr? targetSymbol)
+{
+    public SymbolIr? Symbol { get; init; } = targetSymbol;
+    public string? AxisName { get; init; }
+    public bool IsString { get; init; } = false;
+    public bool IsParseString { get; init; } = false;
+    public bool IsGroupAxis { get; init; } = false;
+    public bool IsArrayWrapper { get; init; } = false;
+    public bool IsBoolConst { get; init; } = false;
+    public bool BoolConstValue { get; init; }
 }
 
 [DebuggerDisplay("rule: {Name}")]
@@ -55,7 +81,7 @@ internal class RuleIr(string name, TypeIr type, string text)
     public string Name { get; set; } = name;
     public TypeIr Type { get; } = type;
     public string OriginalText { get; init; } = text;
-    public List<AlternativeIr> Alternatives { get; set; } = null!;
+    public required List<AlternativeIr> Alternatives { get; set; }
     public bool IsUnion { get; set; } = false;
     public bool IsAnonymous { get; set; } = false;
 }

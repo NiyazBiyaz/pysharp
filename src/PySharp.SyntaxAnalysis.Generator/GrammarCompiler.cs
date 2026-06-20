@@ -1,3 +1,4 @@
+using System.Data;
 using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Generator.Ast;
@@ -56,51 +57,85 @@ internal class GrammarCompiler(GrammarNode ast)
     {
         foreach (var alt in rule.Alternatives)
         {
+            List<VariableData> captureVariables;
             yield return new AlternativeData()
             {
-                ReturnExpression = alt.ReturnExpression switch
-                {
-                    not null => alt.ReturnExpression,
-                    null when rule.IsUnion =>
-                        alt.Symbols.First(s => s.Kind != SymbolKind.LookPositive && s.Kind != SymbolKind.LookNegative).Name,
-                    null when rule.IsAnonymous => rule.Type.Name,
-                    _ => throw new UnreachableException("Unexpected condition while ReturnExpression processing."),
-                },
                 OriginalText = alt.OriginalText,
                 HasOptionals = alt.Symbols.Any(static s => s.Kind == SymbolKind.Optional),
                 Conditions = dumpConditions(alt).ToList(),
-                Variables = dumpVariables(alt),
+                Variables = captureVariables = dumpVariables(alt),
+                ReturnTypeName = alt.Action?.ConstructibleType.Name ?? rule.Type.Name,
+                CtorArguments = alt.Action is not null // If action is not specified, probably it is a anonymous type.
+                    ? dumpTargets(alt.Action.Targets).ToList()
+                    : convertVariablesToArgs(captureVariables).ToList(),
             };
         }
     }
 
+    private IEnumerable<CtorArgumentData> convertVariablesToArgs(List<VariableData> captureVariables)
+    {
+        foreach (var var in captureVariables)
+        {
+            yield return new CtorArgumentData(CtorArgumentType.Raw, var.Name);
+        }
+    }
+
+    private IEnumerable<CtorArgumentData> dumpTargets(List<TargetIr> targets)
+    {
+        foreach (var tar in targets)
+        {
+            CtorArgumentData data;
+            if (tar.IsBoolConst)
+            {
+                data = new CtorArgumentData(CtorArgumentType.BoolConstant, null, BoolConstant: tar.BoolConstValue);
+            }
+            else if (tar.IsArrayWrapper)
+            {
+                data = new CtorArgumentData(CtorArgumentType.WrapArray, tar.Symbol!.Name);
+            }
+            else
+            {
+                data = new CtorArgumentData((tar.IsGroupAxis, tar.IsString, tar.IsParseString) switch
+                {
+                    (true, false, false) => CtorArgumentType.GroupAxis,
+                    (true, true, false) => CtorArgumentType.GroupAxisString,
+                    (true, true, true) => CtorArgumentType.GroupAxisParseString,
+                    (false, true, false) => CtorArgumentType.String,
+                    (false, true, true) => CtorArgumentType.ParseString,
+                    (false, false, false) => CtorArgumentType.Raw,
+                    _ => throw new UnreachableException($"Unexpected target flags condition."),
+                }, tar.Symbol!.Name, tar.AxisName);
+            }
+            yield return data;
+        }
+    }
     private IEnumerable<ConditionData> dumpConditions(AlternativeIr alt)
     {
-        foreach (var symbol in alt.Symbols)
+        foreach (var sym in alt.Symbols)
         {
             ConditionKind kind;
             yield return new ConditionData()
             {
-                Kind = kind = symbol.Kind switch
+                Kind = kind = sym.Kind switch
                 {
-                    SymbolKind.Atom when symbol.Atom.IsToken || symbol.Atom.IsString => ConditionKind.Expect,
+                    SymbolKind.Atom when sym.Atom.IsToken || sym.Atom.IsString => ConditionKind.Expect,
                     SymbolKind.Atom => ConditionKind.Rule,
                     SymbolKind.Repeat0 or SymbolKind.Repeat1 => ConditionKind.Repeat,
                     SymbolKind.LookPositive or SymbolKind.LookNegative => ConditionKind.Lookahead,
                     SymbolKind.Optional => ConditionKind.Optional,
-                    _ => throw new UnreachableException($"Invalid SymbolKind value: {symbol.Kind}."),
+                    SymbolKind.Gather => ConditionKind.Gather,
+                    _ => throw new UnreachableException($"Invalid SymbolKind value: {sym.Kind}."),
                 },
-                CallData = symbol.Atom.Value,
-                IsString = symbol.Atom.IsString,
-                IsToken = symbol.Atom.IsToken,
-                AssignedVar = kind != ConditionKind.Lookahead ? symbol.Name : "",
-                MinCount = symbol.Kind switch
+                Atom = new(sym.Atom),
+                Separator = sym is GatherSymbolIr gather ? new(gather.Separator) : null,
+                AssignedVar = kind != ConditionKind.Lookahead ? sym.Name : "",
+                MinCount = sym.Kind switch
                 {
                     SymbolKind.Repeat0 => 0,
                     SymbolKind.Repeat1 => 1,
                     _ => null,
                 },
-                Positive = symbol.Kind switch
+                Positive = sym.Kind switch
                 {
                     SymbolKind.LookPositive => true,
                     SymbolKind.LookNegative => false,
@@ -137,20 +172,115 @@ internal class GrammarCompiler(GrammarNode ast)
         var type = new TypeIr(typeName);
         var rule = new RuleIr(ruleName, type, sourceText)
         {
-            Alternatives = [.. alts.Select(createAlternative)],
+            Alternatives = [.. alts.Select(a => createAlternative(a, type))]
         };
         allRules.Add(rule.Name, rule);
         return rule;
     }
 
-    private AlternativeIr createAlternative(AlternativeNode astAlt)
+    private AlternativeIr createAlternative(AlternativeNode astAlt, TypeIr type)
     {
+        ActionIr? action = null;
+
         var namesScope = new VariablesNamingScope();
+
+        Dictionary<string, SymbolIr> symbols = [];
+        foreach (var molecule in astAlt.Molecules)
+        {
+            var symbol = createSymbol(molecule, namesScope);
+            if (symbol.Kind != SymbolKind.LookPositive && symbol.Kind != SymbolKind.LookNegative)
+                symbols[symbol.Name] = symbol;
+        }
+
+        if (astAlt.Action is not null)
+        {
+            if (astAlt.Action is NamedActionNode named)
+                type = new(named.Name);
+
+            List<TargetIr> targets = [];
+            foreach (var arg in astAlt.Action.Arguments)
+            {
+                var _arg = arg;
+                bool isStr = false, isParse = false;
+
+                if (arg is StringTargetNode str)
+                {
+                    _arg = str.TokenTarget;
+                    isStr = true;
+                }
+                else if (arg is ParseStringTargetNode parse)
+                {
+                    _arg = parse.TokenTarget;
+                    isStr = isParse = true;
+                }
+
+                TargetIr tar;
+                switch (_arg)
+                {
+                    case NameTargetNode n:
+                    {
+                        if (!symbols.TryGetValue(n.Name, out var symbol))
+                            throw new UndeclaredUsageUserException("alternative symbols", n.Name);
+
+                        tar = new(symbol)
+                        {
+                            IsString = isStr,
+                            IsParseString = isParse,
+                        };
+                        break;
+                    }
+                    case GroupAxisTargetNode g:
+                    {
+                        if (!symbols.TryGetValue(g.Name, out var symbol))
+                            throw new UndeclaredUsageUserException("alternative symbols", g.Name);
+
+                        tar = new(symbol)
+                        {
+                            AxisName = g.AxisName,
+                            IsGroupAxis = true,
+                            IsString = isStr,
+                            IsParseString = isParse,
+                        };
+                        break;
+                    }
+                    case ToArrayTargetNode ta:
+                    {
+                        if (!symbols.TryGetValue(ta.Name, out var symbol))
+                            throw new UndeclaredUsageUserException("alternative symbols", ta.Name);
+
+                        tar = new(symbol)
+                        {
+                            IsArrayWrapper = true,
+                        };
+                        break;
+                    }
+                    case BoolConstTargetNode b:
+                    {
+                        tar = new(null)
+                        {
+                            IsBoolConst = true,
+                            BoolConstValue = b.Value,
+                        };
+                        break;
+                    }
+                    case StringTargetNode:
+                    case ParseStringTargetNode:
+                        throw new UnreachableException("Such targets should be replaced with inner targets.");
+                    default:
+                        throw new UnreachableException("Unexpected TargetNode instance subclass.");
+                }
+
+                targets.Add(tar);
+            }
+
+            action = new ActionIr(type, targets);
+        }
+
         return new AlternativeIr()
         {
-            Symbols = [.. astAlt.Molecules.Select(molecule => createSymbol(molecule, namesScope))],
+            Symbols = symbols.Values.ToList(),
             OriginalText = string.Join("", astAlt.Molecules.Select(static m => m.RecoverText())),
-            ReturnExpression = astAlt.Action?.Expression,
+            Action = action,
         };
     }
 
@@ -176,6 +306,13 @@ internal class GrammarCompiler(GrammarNode ast)
                 kind = SymbolKind.Optional;
                 atom = createAtom(o.Atom, scope);
                 break;
+            case GatherNode g:
+                return new GatherSymbolIr
+                {
+                    Kind = SymbolKind.Gather,
+                    Atom = createAtom(g.ValueAtom, scope),
+                    Separator = createAtom(g.Separator, scope),
+                };
 
             default:
                 throw new UnreachableException("Unexpected MoleculeNode instance subclass.");
@@ -278,7 +415,7 @@ internal class GrammarCompiler(GrammarNode ast)
         {
             IsOptional = s.Kind == SymbolKind.Optional,
             TypeName = s.Atom.LinkedRule is null ? "TokenNode" : s.Atom.LinkedRule.Type.Name,
-            NeedWrapper = s.Kind == SymbolKind.Repeat0 || s.Kind == SymbolKind.Repeat1,
+            NeedWrapper = s.Kind == SymbolKind.Repeat0 || s.Kind == SymbolKind.Repeat1 || s.Kind == SymbolKind.Gather,
             Name = s.Name,
         })
         .ToList();

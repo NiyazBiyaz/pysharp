@@ -116,7 +116,9 @@ internal class CsGenerator(GrammarData grammar)
         open();
         if (union)
         {
-            addLine($"return {alternative.ReturnExpression};");
+            // Since every union rule should have exactly one physical variable, we can take it to return.
+            var capturedVariable = alternative.Variables.First();
+            addLine($"return {capturedVariable.Name};");
         }
         else if (!alternative.HasOptionals)
         {
@@ -125,14 +127,9 @@ internal class CsGenerator(GrammarData grammar)
                 ? $"new NodeList({v.Name})"
                 : v.Name));
 
-            string ctorExpr = alternative.ReturnExpression;
-            if (anonymous)
-            {
-                ctorExpr = $"new {ctorExpr}({string.Join(", ", alternative.Variables.Select(v => v.Name))})";
-            }
+            addReturnExpression();
 
             addLines($$"""
-            return {{ctorExpr}}
             {
                 Children = new NodeArray<GreenNode>([{{children}}])
             };
@@ -150,16 +147,50 @@ internal class CsGenerator(GrammarData grammar)
                     else
                         return v.Name;
                 }));
-            addLines($$"""
-            List<GreenNode> __children = [{{children}}];
+
+            addLines($"""
+            List<GreenNode> __children = [{children}];
             __children.RemoveAll(static __node => __node is null);
-            return {{alternative.ReturnExpression}}
+            """);
+
+            addReturnExpression();
+
+            addLines($$"""
             {
                 Children = new NodeArray<GreenNode>(__children)
             };
             """);
         }
         close();
+
+        void addReturnExpression()
+        {
+            beginLine();
+            add($"return new {alternative.ReturnTypeName}(");
+            bool comma = false;
+            foreach (var arg in alternative.CtorArguments)
+            {
+                if (comma)
+                    add(", ");
+                comma = true;
+                add(arg.CtorArgumentType switch
+                {
+                    CtorArgumentType.Raw => arg.VariableName,
+                    CtorArgumentType.String => $"{arg.VariableName}.RawString",
+                    CtorArgumentType.ParseString => $"StringParser.ParseQuotedString({arg.VariableName}.RawString)",
+                    CtorArgumentType.WrapArray => $"[{arg.VariableName}]",
+                    CtorArgumentType.GroupAxis => $"[.. {arg.VariableName}.Select(static ___ => ___.{arg.AxisName})]",
+                    CtorArgumentType.GroupAxisString =>
+                        $"[.. {arg.VariableName}.Select(static ___ => ___.{arg.AxisName}.RawString)]",
+                    CtorArgumentType.GroupAxisParseString =>
+                        $"[.. {arg.VariableName}.Select(static ___ => StringParser.ParseQuotedString(___.{arg.AxisName ?? throw new Exception("Ты почему такой нулевый")}.RawString))]",
+                    CtorArgumentType.BoolConstant => arg.BoolConstant!.Value ? "true" : "false",
+                    _ => throw new UnreachableException($"Unexpected value of CtorArgumentType: {arg.CtorArgumentType}")
+                });
+            }
+            add(")");
+            endLine();
+        }
     }
 
     private void addCondition(ConditionData cond)
@@ -167,44 +198,54 @@ internal class CsGenerator(GrammarData grammar)
         switch (cond.Kind)
         {
             case ConditionKind.Expect:
-                if (cond.IsToken)
-                    addLine(isNotNull($"{cond.AssignedVar} = Expect(TokenType.{cond.CallData})"));
+                if (cond.Atom.IsToken)
+                    addLine(isNotNull($"{cond.AssignedVar} = Expect(TokenType.{cond.Atom.CallData})"));
                 else
-                    addLine(isNotNull($"{cond.AssignedVar} = Expect({cond.CallData})"));
+                    addLine(isNotNull($"{cond.AssignedVar} = Expect({cond.Atom.CallData})"));
                 break;
 
             case ConditionKind.Rule:
-                addLine(isNotNull($"{cond.AssignedVar} = rule_{cond.CallData}()"));
+                addLine(isNotNull($"{cond.AssignedVar} = rule_{cond.Atom.CallData}()"));
                 break;
 
             case ConditionKind.Lookahead:
-                string lookArg = cond.IsString ? cond.CallData :
-                                cond.IsToken ? $"TokenType.{cond.CallData}" :
-                                $"rule_{cond.CallData}";
+                string lookArg = constructArg(cond.Atom);
                 string truthy = cond.Positive!.Value ? "true" : "false";
                 addLine($"Lookahead({lookArg}, {truthy})");
                 break;
 
             case ConditionKind.Repeat:
-                string repArg = cond.IsString ? cond.CallData :
-                                cond.IsToken ? $"TokenType{cond.CallData}" :
-                                $"rule_{cond.CallData}";
+                string repArg = constructArg(cond.Atom);
                 addLine(isNotNull($"{cond.AssignedVar} = Repeat({repArg}, {cond.MinCount})"));
                 break;
 
             case ConditionKind.Optional:
-                if (cond.IsString && cond.IsToken)
+                if (cond.Atom.IsString && cond.Atom.IsToken)
                     throw new ArgumentException("cond.IsString and cond.IsToken cannot be enabled both at the same time.", nameof(cond));
 
-                if (cond.IsString)
-                    addLine(wrapOpt($"{cond.AssignedVar} = Expect({cond.CallData})"));
-                else if (cond.IsToken)
-                    addLine(wrapOpt($"{cond.AssignedVar} = Expect(TokenType.{cond.CallData})"));
+                if (cond.Atom.IsString)
+                    addLine(wrapOpt($"{cond.AssignedVar} = Expect({cond.Atom.CallData})"));
+                else if (cond.Atom.IsToken)
+                    addLine(wrapOpt($"{cond.AssignedVar} = Expect(TokenType.{cond.Atom.CallData})"));
                 else
-                    addLine(wrapOpt($"{cond.AssignedVar} = rule_{cond.CallData}()"));
+                    addLine(wrapOpt($"{cond.AssignedVar} = rule_{cond.Atom.CallData}()"));
 
                 break;
                 static string wrapOpt(string orig) => $"(({orig}) is not null || true) // Optional";
+            case ConditionKind.Gather:
+                string valuedArg = constructArg(cond.Atom);
+                string separator = constructArg(cond.Separator!);
+
+                addLine(isNotNull($"{cond.AssignedVar} = Gather({valuedArg}, {separator})"));
+
+                break;
+        }
+
+        static string constructArg(AtomData atom)
+        {
+            return atom.IsString ? atom.CallData :
+                   atom.IsToken ? $"TokenType.{atom.CallData}" :
+                   $"rule_{atom.CallData}";
         }
     }
 
