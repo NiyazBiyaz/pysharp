@@ -7,7 +7,7 @@ using PySharp.SyntaxAnalysis.Generator.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 """
-@class_signature "internal class NewGrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
+@class_signature "internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
 @parse_call_return "GrammarNode"
 
 @main
@@ -19,8 +19,8 @@ Meta[MetadataNode]:
 
 Rule[RuleNode]:
     | ("@" Name NewLine)* Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent \
-        -> new(Str(groupStar.name), Str(name), typespec, group1Plus.alternative) 
-    
+        -> new(Str(groupStar.name), Str(name), typespec, group1Plus.alternative)
+
     | ("@" Name NewLine)* Name -TypeSpec ":" Alternative NewLine \
         -> new(Str(groupStar.name), Str(name), typespec, ToArray(alternative))
 

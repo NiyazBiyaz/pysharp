@@ -39,6 +39,7 @@ internal class GrammarCompiler(GrammarNode ast)
                 rule.Name,
                 rule.Type.Name,
                 dumpAlternatives(rule).ToList(),
+                rule.OriginalText,
                 rule.IsUnion,
                 rule.IsAnonymous
             );

@@ -13,6 +13,7 @@ internal record RuleData(
     string Name,
     string ReturnName,
     List<AlternativeData> Alternatives,
+    string OriginalText,
     bool IsUnion,
     bool IsAnonymous
 // TODO: bool IsLeftRecursive
