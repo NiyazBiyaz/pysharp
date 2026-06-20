@@ -28,28 +28,20 @@ internal class GrammarCompiler(GrammarNode ast)
         var rules = dumpRules();
         var types = dumpTypes();
 
-        return new()
-        {
-            MetadataFields = metadataStore.AsReadOnly(),
-            Rules = rules.ToList(),
-            Types = types.ToList(),
-            Keywords = [], // TODO: add keywords reading.
-        };
+        return new(metadataStore.AsReadOnly(), rules.ToList(), types.ToList(), [/*TODO*/]);
     }
 
     private IEnumerable<RuleData> dumpRules()
     {
         foreach (var rule in allRules.Values)
         {
-            yield return new RuleData()
-            {
-                Name = rule.Name,
-                ReturnName = rule.Type.Name,
-                Alternatives = dumpAlternatives(rule).ToList(),
-                OriginalText = rule.OriginalText,
-                IsUnion = rule.IsUnion,
-                IsAnonymous = rule.IsAnonymous,
-            };
+            yield return new RuleData(
+                rule.Name,
+                rule.Type.Name,
+                dumpAlternatives(rule).ToList(),
+                rule.IsUnion,
+                rule.IsAnonymous
+            );
         }
     }
 
@@ -58,17 +50,16 @@ internal class GrammarCompiler(GrammarNode ast)
         foreach (var alt in rule.Alternatives)
         {
             List<VariableData> captureVariables;
-            yield return new AlternativeData()
-            {
-                OriginalText = alt.OriginalText,
-                HasOptionals = alt.Symbols.Any(static s => s.Kind == SymbolKind.Optional),
-                Conditions = dumpConditions(alt).ToList(),
-                Variables = captureVariables = dumpVariables(alt),
-                ReturnTypeName = alt.Action?.ConstructibleType.Name ?? rule.Type.Name,
-                CtorArguments = alt.Action is not null // If action is not specified, probably it is a anonymous type.
+            yield return new AlternativeData(
+                alt.OriginalText,
+                captureVariables = dumpVariables(alt),
+                dumpConditions(alt).ToList(),
+                alt.Symbols.Any(static s => s.Kind == SymbolKind.Optional),
+                alt.Action?.ConstructibleType.Name ?? rule.Type.Name,
+                alt.Action is not null // If action is not specified, probably it is a anonymous type.
                     ? dumpTargets(alt.Action.Targets).ToList()
-                    : convertVariablesToArgs(captureVariables).ToList(),
-            };
+                    : convertVariablesToArgs(captureVariables).ToList()
+            );
         }
     }
 
@@ -276,12 +267,11 @@ internal class GrammarCompiler(GrammarNode ast)
             action = new ActionIr(type, targets);
         }
 
-        return new AlternativeIr()
-        {
-            Symbols = symbols.Values.ToList(),
-            OriginalText = string.Join("", astAlt.Molecules.Select(static m => m.RecoverText())),
-            Action = action,
-        };
+        return new AlternativeIr(
+            string.Join("", astAlt.Molecules.Select(static m => m.RecoverText())),
+            symbols.Values.ToList(),
+            action
+        );
     }
 
     private SymbolIr createSymbol(MoleculeNode molecule, VariablesNamingScope scope)
@@ -371,13 +361,7 @@ internal class GrammarCompiler(GrammarNode ast)
                 throw new UnreachableException("Unexpected AtomNode instance subclass.");
         }
 
-        return new AtomIr()
-        {
-            Name = name,
-            Value = value,
-            IsToken = isToken,
-            IsString = isStr
-        };
+        return new AtomIr(name, value, isToken, isStr);
     }
 
     private TypeIr registerAnonType()
@@ -400,24 +384,18 @@ internal class GrammarCompiler(GrammarNode ast)
 
             var alt = type.Rule.Alternatives.First();
 
-            yield return new()
-            {
-                Name = type.Name,
-                Fields = dumpVariables(alt),
-                AccessModifier = TypeAccessModifier.Anonymous,
-            };
+            yield return new(type.Name, TypeAccessModifier.Anonymous, dumpVariables(alt));
         }
     }
 
     private List<VariableData> dumpVariables(AlternativeIr alt) => alt.Symbols
         .Where(static s => s.Kind != SymbolKind.LookPositive && s.Kind != SymbolKind.LookNegative)
-        .Select(static s => new VariableData()
-        {
-            IsOptional = s.Kind == SymbolKind.Optional,
-            TypeName = s.Atom.LinkedRule is null ? "TokenNode" : s.Atom.LinkedRule.Type.Name,
-            NeedWrapper = s.Kind == SymbolKind.Repeat0 || s.Kind == SymbolKind.Repeat1 || s.Kind == SymbolKind.Gather,
-            Name = s.Name,
-        })
+        .Select(static s => new VariableData(
+            s.Name,
+            s.Atom.LinkedRule is null ? "TokenNode" : s.Atom.LinkedRule.Type.Name,
+            s.Kind == SymbolKind.Repeat0 || s.Kind == SymbolKind.Repeat1 || s.Kind == SymbolKind.Gather,
+            s.Kind == SymbolKind.Optional
+        ))
         .ToList();
 
     private void readMetadata()

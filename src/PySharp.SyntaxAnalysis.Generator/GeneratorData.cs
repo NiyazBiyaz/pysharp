@@ -2,31 +2,24 @@ using System.Collections.ObjectModel;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
-internal record GrammarData
-{
-    public required ReadOnlyDictionary<string, string> MetadataFields { get; init; }
-    public required List<RuleData> Rules { get; init; }
-    public required List<TypeData> Types { get; init; }
-    public required List<string> Keywords { get; init; }
-}
+internal record GrammarData(
+    ReadOnlyDictionary<string, string> MetadataFields,
+    List<RuleData> Rules,
+    List<TypeData> Types,
+    List<string> Keywords
+);
 
-internal record RuleData
-{
-    public required string Name { get; init; }
-    public required string ReturnName { get; init; }
-    public required string OriginalText { get; init; }
-    public required List<AlternativeData> Alternatives { get; init; }
-    public required bool IsUnion { get; init; }
-    public required bool IsAnonymous { get; init; }
-    // TODO: public required bool IsLeftRecursive { get; init; }
-}
+internal record RuleData(
+    string Name,
+    string ReturnName,
+    List<AlternativeData> Alternatives,
+    bool IsUnion,
+    bool IsAnonymous
+// TODO: bool IsLeftRecursive
+// TODO: bool EnableMemo
+);
 
-internal record TypeData
-{
-    public required string Name { get; init; }
-    public required TypeAccessModifier AccessModifier { get; init; }
-    public required List<VariableData> Fields { get; init; }
-}
+internal record TypeData(string Name, TypeAccessModifier AccessModifier, List<VariableData> Fields);
 
 internal enum TypeAccessModifier
 {
@@ -34,15 +27,14 @@ internal enum TypeAccessModifier
     Public,
 }
 
-internal record AlternativeData
-{
-    public required string OriginalText { get; init; }
-    public required List<VariableData> Variables { get; init; }
-    public required List<ConditionData> Conditions { get; init; }
-    public required bool HasOptionals { get; init; }
-    public required string ReturnTypeName { get; init; }
-    public required List<CtorArgumentData> CtorArguments { get; init; }
-}
+internal record AlternativeData(
+    string OriginalText,
+    List<VariableData> Variables,
+    List<ConditionData> Conditions,
+    bool HasOptionals,
+    string ReturnTypeName,
+    List<CtorArgumentData> CtorArguments
+);
 
 internal record CtorArgumentData(
     CtorArgumentType CtorArgumentType,
@@ -63,13 +55,7 @@ internal enum CtorArgumentType
     BoolConstant
 }
 
-internal record VariableData
-{
-    public required string Name { get; init; }
-    public required string TypeName { get; init; }
-    public required bool NeedWrapper { get; init; }
-    public required bool IsOptional { get; init; }
-}
+internal record VariableData(string Name, string TypeName, bool NeedWrapper, bool IsOptional);
 
 internal record ConditionData
 {

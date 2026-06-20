@@ -2,12 +2,12 @@ using System.Diagnostics;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
-internal class AtomIr
+internal class AtomIr(string name, string value, bool isToken, bool isString)
 {
-    public required string Name { get; init; }
-    public required string Value { get; init; }
-    public required bool IsToken { get; init; }
-    public required bool IsString { get; init; }
+    public string Name { get; init; } = name;
+    public string Value { get; init; } = value;
+    public bool IsToken { get; init; } = isToken;
+    public bool IsString { get; init; } = isString;
     public RuleIr? LinkedRule { get; set; }
 }
 
@@ -50,11 +50,11 @@ internal enum SymbolKind
     Gather,
 }
 
-internal class AlternativeIr
+internal class AlternativeIr(string originalText, List<SymbolIr> symbols, ActionIr? action)
 {
-    public required string OriginalText { get; init; }
-    public required List<SymbolIr> Symbols { get; init; }
-    public ActionIr? Action { get; set; }
+    public string OriginalText { get; init; } = originalText;
+    public List<SymbolIr> Symbols { get; init; } = symbols;
+    public ActionIr? Action { get; set; } = action;
 }
 
 internal class ActionIr(TypeIr type, List<TargetIr> targets)
