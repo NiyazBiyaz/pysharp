@@ -4,26 +4,32 @@ namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
 internal abstract record MoleculeNode : GreenNode;
 
-// I've consider to name it as "Hydrogen", but it's as nice as confusing.
-internal sealed record AtomMoleculeNode(AtomNode Atom) : MoleculeNode;
-
-internal record LookaheadNode(AtomNode Atom, bool Positiveness) : MoleculeNode;
-
-internal record OptionalNode(AtomNode Atom) : MoleculeNode;
-
-internal abstract record RepeatMoleculeNode(AtomNode Atom) : MoleculeNode
+internal record AtomMoleculeNode : MoleculeNode
 {
-    public abstract int MinCount { get; }
+    internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal record RepeatOneMoreNode(AtomNode Atom) : RepeatMoleculeNode(Atom)
+internal abstract record LookaheadNode : MoleculeNode
 {
-    public override int MinCount => 1;
+    internal AtomNode Atom => (AtomNode)Children![1];
+}
+internal record PositiveLookaheadNode : LookaheadNode;
+internal record NegativeLookaheadNode : LookaheadNode;
+
+internal record OptionalNode : MoleculeNode
+{
+    internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal record RepeatZeroMoreNode(AtomNode Atom) : RepeatMoleculeNode(Atom)
+internal abstract record RepeatMoleculeNode : MoleculeNode
 {
-    public override int MinCount => 0;
+    internal AtomNode Atom => (AtomNode)Children![0];
 }
+internal record RepeatOneMoreNode : RepeatMoleculeNode;
+internal record RepeatZeroMoreNode : RepeatMoleculeNode;
 
-internal record GatherNode(AtomNode ValueAtom, AtomNode Separator) : MoleculeNode;
+internal record GatherNode : MoleculeNode
+{
+    internal AtomNode ValueAtom => (AtomNode)Children![0];
+    internal AtomNode Separator => (AtomNode)Children![3];
+}

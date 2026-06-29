@@ -10,34 +10,35 @@ namespace PySharp.SyntaxAnalysis.Generator;
 @parser_name "GrammarParser"
 
 @main
-Grammar: Meta* Rule* EndOfFile -> new(metaStar, ruleStar)
+Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadataStar, Rules=ruleStar)
 
-Meta: "@" Name StringLiteral NewLine -> new(name, stringliteral)
+Metadata: "@" Name StringLiteral NewLine -> new(Key=name, Value=stringliteral)
 
 Rule:
-    | Decorator* Name ":" NewLine Indent ("|" Alternative NewLine -> Arm(alternative))+ Dedent -> new(decoratorStar, name,  groupPlus)
-    | Decorator* Name ":" Alternative NewLine -> new(decoratorStar, name, alternative)
+    | Decorator* Name ":" NewLine Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
+        -> ArmedRule(Decorators=decoratorStar, Name=name, Arms=groupPlus)
+    | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar, Name=name, Alternative=alternative)
 
-Decorator: "@" Name NewLine -> new(name)
+Decorator: "@" Name NewLine -> new(Value=name)
 
-Alternative: Molecule+ -Action -> new(moleculePlus, action)
+Alternative: Molecule+ -Action -> new(Molecules=moleculePlus, Action=action)
 
 Molecule:
-    | "&" Atom -> PositiveLookahead(atom)
-    | "!" Atom -> NegativeLookahead(atom)
-    | "-" Atom -> Optional(atom)
-    | Atom "+" "." Atom -> Gather(atom, atom1)
-    | Atom "+" -> RepeatOneMore(atom)
-    | Atom "*" -> RepeatZeroMore(atom)
-    | Atom -> AtomMolecule(atom)
+    | "&" Atom -> PositiveLookahead(Atom=atom)
+    | "!" Atom -> NegativeLookahead(Atom=atom)
+    | "-" Atom -> Optional(Atom=atom)
+    | Atom "+" "." Atom -> Gather(ValueAtom=atom, Separator=atom1)
+    | Atom "+" -> RepeatOneMore(Atom=atom)
+    | Atom "*" -> RepeatZeroMore(Atom=atom)
+    | Atom -> AtomMolecule(Atom=atom)
 
 Atom:
-    | "(" Alternative ")" -> GroupAtom(alternative)
-    | Name -> NameAtom(name)
-    | StringLiteral -> StringAtom(stringliteral)
+    | "(" Alternative ")" -> GroupAtom(Alternative=alternative)
+    | Name -> NameAtom(Value=name)
+    | StringLiteral -> StringAtom(Value=stringliteral)
 
 Action:
-    | "->" "new" "(" Target+."," ")" -> InferredAction(targetGather)
-    | "->" Name "(" Target+."," ")" -> NamedAction(name, targetGather)
+    | "->" "new" "(" Target+."," ")" -> InferredAction(Arguments=targetGather)
+    | "->" Name "(" Target+."," ")" -> NamedAction(Name=name, Arguments=targetGather)
 
-Target: Name "=" Name -> new(name, name1)
+Target: Name "=" Name -> new(Field=name, Variable=name1)

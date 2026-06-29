@@ -13,14 +13,12 @@ public class TestBinder
         const string src = """
         @header "Bau-bauder"
         @parser_name "BauParser"
-        @top_level_node "BauNode"
         """;
         var gram = getNode(src);
         var binder = new Binder();
         binder.ReadMetadata(gram.Metadata);
         Assert.Equal("Bau-bauder", binder.Grammar!.UserHeader);
         Assert.Equal("BauParser", binder.Grammar!.ParserName);
-        Assert.Equal("BauNode", binder.Grammar!.TopLevelNodeName);
     }
 
     [Fact]
@@ -59,7 +57,6 @@ public class TestBinder
     {
         string src = """
         @parser_name "BauParser"
-        @top_level_node "BauNode"
         """;
         var gram = getNode(src);
         var binder = new Binder();
@@ -67,15 +64,6 @@ public class TestBinder
 
         src = """
         @header "Bau-bauder"
-        @top_level_node "BauNode"
-        """;
-        gram = getNode(src);
-        binder = new Binder();
-        Assert.Throws<IncompleteMetadataException>(() => { binder.ReadMetadata(gram.Metadata); });
-
-        src = """
-        @header "Bau-bauder"
-        @parser_name "BauParser"
         """;
         gram = getNode(src);
         binder = new Binder();

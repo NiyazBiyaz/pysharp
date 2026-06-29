@@ -1,4 +1,3 @@
-using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Generator.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
@@ -16,7 +15,7 @@ internal class BoundGrammar
 internal class BoundRule
 {
     internal required string Name { get; init; }
-    internal required NodeArray<AlternativeNode> AstAlternatives { get; init; }
+    internal required IList<AlternativeNode> AstAlternatives { get; init; }
     internal required string SourceText { get; init; }
     internal List<BoundAlternative> Alternatives { get; } = [];
 
@@ -39,7 +38,8 @@ internal class BoundAction
 
 internal class BoundCapturedVariable
 {
-    internal required string Name { get; init; }
+    internal required string VariableName { get; init; }
+    internal required string FieldName { get; init; }
     internal required BoundAlternativeEntry Entry { get; init; }
 }
 

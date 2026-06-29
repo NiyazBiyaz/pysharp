@@ -2,7 +2,8 @@ using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-internal record AlternativeNode(NodeArray<MoleculeNode> Molecules, ActionNode? Action) : GreenNode
+internal record AlternativeNode : GreenNode
 {
-    public override string ToString() => $"AlternativeNode({Molecules}, {Action})";
+    internal NodeArray<MoleculeNode> Molecules => ((NodeList)Children![0]).GetArray<MoleculeNode>();
+    internal ActionNode? Action => Children![1] as ActionNode;
 }

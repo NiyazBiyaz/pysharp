@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
-using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Generator.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
@@ -12,23 +11,23 @@ internal class Binder
     internal readonly BoundGrammar Grammar = new();
 
     private readonly VariablesNamingScope groupTypeNameStore = new();
-    private readonly Dictionary<NodeArray<AlternativeNode>, BoundRule> groupRules = [];
+    private readonly Dictionary<AlternativeNode, BoundRule> groupRules = [];
 
     internal void ReadMetadata(IEnumerable<MetadataNode> metadata)
     {
         string? userHeader = null, parserName = null;
         foreach (var meta in metadata)
         {
-            switch (meta.Name)
+            switch (meta.Key.RawString)
             {
                 case "header":
-                    userHeader = meta.StringValue;
+                    userHeader = StringParser.ParseQuoted(meta.Value.RawString);
                     break;
                 case "parser_name":
-                    parserName = meta.StringValue;
+                    parserName = StringParser.ParseQuoted(meta.Value.RawString);
                     break;
                 default:
-                    throw new InvalidNameException($"Unexpected metadata name: {meta.Name}.");
+                    throw new InvalidNameException($"Unexpected metadata name: {meta.Key}.");
             }
         }
 
@@ -45,9 +44,33 @@ internal class Binder
     {
         foreach (var astRule in rules)
         {
-            var rule = searchGroupsAndCreateTypes(astRule.Alternatives, astRule.RecoverText(), astRule.Name);
+            var alternatives = astRule is ArmedRuleNode armed
+                ? armed.Arms.Select(a => a.Alternative)
+                : astRule is SingleAlternativeRuleNode single
+                    ? [single.Alternative]
+                    : throw new UnreachableException($"Unexpected subclass of the RuleNode: {astRule.GetType()}");
 
-            if (astRule.Decorators.Contains("main"))
+            string name = astRule.Name.RawString;
+
+            if (Enum.TryParse<TokenType>(name, out _))
+                throw new InvalidNameException($"Cannot create such rule: name '{name}' is reserved for token types.");
+
+            var rule = new BoundRule
+            {
+                Name = name,
+                SourceText = astRule.RecoverText(),
+                AstAlternatives = alternatives.ToList(),
+            };
+            Rules[rule.Name] = rule;
+            Grammar.Rules.Add(rule);
+
+            foreach (var alt in alternatives)
+            {
+                foreach (var group in getGroups(alt))
+                    createGroupRule(group.Alternative);
+            }
+
+            if (astRule.Decorators.Select(d => d.Value.RawString).Contains("main"))
             {
                 if (Grammar.MainRule is not null)
                     throw new CompilationException($"Cannot have two rules marked as main at one time: {Grammar.MainRule.Name}, {rule.Name}");
@@ -58,41 +81,38 @@ internal class Binder
         }
     }
 
-    private BoundRule searchGroupsAndCreateTypes(NodeArray<AlternativeNode> alternatives, string sourceText, string? name = null)
+    private void createGroupRule(AlternativeNode alternative)
     {
-        var groups = alternatives
-            .SelectMany(a => a.Molecules)
-            .SelectMany<MoleculeNode, AtomNode>(m => m switch
-            {
-                AtomMoleculeNode hydrogen => [hydrogen.Atom],
-                LookaheadNode look => [look.Atom],
-                OptionalNode opt => [opt.Atom],
-                RepeatMoleculeNode rep => [rep.Atom],
-                GatherNode gath => [gath.ValueAtom, gath.Separator],
-                _ => throw new UnreachableException($"Unexpected MoleculeNode subclass: {m.GetType()}")
-            })
-            .OfType<GroupAtomNode>();
+        string name = alternative.Action is NamedActionNode typeHint
+            ? typeHint.Name.RawString
+            : groupTypeNameStore.NextTypeName();
 
-        foreach (var group in groups)
+        var groupRule = new BoundRule
         {
-            searchGroupsAndCreateTypes(group.Alternatives, group.RecoverText());
-        }
+            Name = name,
+            SourceText = alternative.RecoverText(),
+            AstAlternatives = [alternative],
+        };
 
-        bool anonymous = name is null;
-        name ??= alternatives[0].Action is NamedActionNode named ? named.Name : null;
-        name ??= groupTypeNameStore.NextTypeName();
+        Rules[groupRule.Name] = groupRule;
+        Grammar.Rules.Add(groupRule);
+        groupRules[alternative] = groupRule;
 
-        if (TokenType.IsReserved(name))
-            throw new InvalidNameException($"Cannot create such rule: name '{name}' is reserved for token name.");
-
-        var rule = Rules[name] = new() { Name = name, AstAlternatives = alternatives, SourceText = sourceText };
-
-        if (anonymous)
-            groupRules[alternatives] = rule;
-
-        Grammar.Rules.Add(rule);
-        return rule;
+        foreach (var group in getGroups(alternative))
+            createGroupRule(group.Alternative);
     }
+
+    private static IEnumerable<GroupAtomNode> getGroups(AlternativeNode alternative) => alternative.Molecules
+        .SelectMany<MoleculeNode, AtomNode>(m => m switch
+        {
+            AtomMoleculeNode hydrogen => [hydrogen.Atom],
+            LookaheadNode look => [look.Atom],
+            OptionalNode opt => [opt.Atom],
+            RepeatMoleculeNode rep => [rep.Atom],
+            GatherNode gath => [gath.ValueAtom, gath.Separator],
+            _ => throw new UnreachableException($"Unexpected MoleculeNode subclass: {m.GetType()}")
+        })
+        .OfType<GroupAtomNode>();
 
     internal void PopulateRules()
     {
@@ -132,11 +152,11 @@ internal class Binder
                 case RepeatMoleculeNode repeat:
                     quant = QuantifierKind.Repeat;
                     atom = repeat.Atom;
-                    count = repeat.MinCount;
+                    count = repeat is RepeatOneMoreNode ? 1 : 0;
                     break;
                 case LookaheadNode look:
                     quant = QuantifierKind.Lookahead;
-                    positive = look.Positiveness;
+                    positive = look is PositiveLookaheadNode;
                     atom = look.Atom;
                     break;
                 case OptionalNode opt:
@@ -169,7 +189,7 @@ internal class Binder
     private BoundAlternativeEntry createEntry(AtomNode atom, VariablesNamingScope nameScope, QuantifierKind quant, int? count, bool? positive)
     => atom switch
     {
-        StringAtomNode aliasedToken when TokenType.TryGetDelimiterByString(StringParser.ParseQuotedString(aliasedToken.Value), out var tok) => new BoundTokenAlternativeEntry
+        StringAtomNode aliasedToken when TokenType.TryGetDelimiterByString(StringParser.ParseQuoted(aliasedToken.Value.RawString), out var tok) => new BoundTokenAlternativeEntry
         {
             Name = nameScope.NextName(tok.ToString()) + quant.GetSuffix(count),
             Value = tok,
@@ -180,12 +200,12 @@ internal class Binder
         StringAtomNode str => new BoundStringAlternativeEntry()
         {
             Name = nameScope.NextString() + quant.GetSuffix(count),
-            Value = str.Parsed,
+            Value = StringParser.ParseQuoted(str.Value.RawString),
             Quantifier = quant,
             MinRepeatCount = count,
             Positiveness = positive,
         },
-        NameAtomNode name => name.Value switch
+        NameAtomNode name => name.Value.RawString switch
         {
             string tokenName when Enum.TryParse<TokenType>(tokenName, out _) => new BoundTokenAlternativeEntry
             {
@@ -204,7 +224,7 @@ internal class Binder
                 Positiveness = positive,
             }
         },
-        GroupAtomNode groupAtom when groupRules.TryGetValue(groupAtom.Alternatives, out var group) => new BoundRuleAlternativeEntry
+        GroupAtomNode groupAtom when groupRules.TryGetValue(groupAtom.Alternative, out var group) => new BoundRuleAlternativeEntry
         {
             Quantifier = quant,
             Name = nameScope.NextName("group") + quant.GetSuffix(count),
@@ -212,7 +232,7 @@ internal class Binder
             MinRepeatCount = count,
             Positiveness = positive,
         },
-        GroupAtomNode nonExistentGroup when !groupRules.ContainsKey(nonExistentGroup.Alternatives)
+        GroupAtomNode nonExistentGroup when !groupRules.ContainsKey(nonExistentGroup.Alternative)
             => throw new ArgumentOutOfRangeException($"Registered group rules does not contain such group: {nonExistentGroup}"),
         _ => throw new ArgumentOutOfRangeException($"Unexpected AtomNode subclass: '{atom.GetType()}'"),
     };
@@ -233,27 +253,22 @@ internal class Binder
 
                 foreach (var argument in astAlt.Action.Arguments)
                 {
-                    if (argument is NameTargetNode name)
+                    if (boundAlt.Variables.TryGetValue(argument.Variable.RawString, out var entry))
                     {
-                        if (boundAlt.Variables.TryGetValue(name.Name, out var entry))
+                        capturedVariables.Add(new BoundCapturedVariable
                         {
-                            var capturedVar = new BoundCapturedVariable
-                            {
-                                Name = name.Name,
-                                Entry = entry,
-                            };
-                            capturedVariables.Add(capturedVar);
-                        }
-                        else
-                            throw new InvalidNameException($"Name `{name.Name}` does not exists in this context.");
+                            VariableName = argument.Variable.RawString,
+                            FieldName = argument.Field.RawString,
+                            Entry = entry,
+                        });
                     }
                     else
-                        throw new CompilationException($"Target `{argument.RecoverText()}` is not valid.");
+                        throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.");
                 }
 
                 string? typeHint = null;
                 if (astAlt.Action is NamedActionNode namedAction)
-                    typeHint = namedAction.Name + "Node";
+                    typeHint = namedAction.Name.RawString + "Node";
 
                 typeHint ??= rule.TypeName;
 

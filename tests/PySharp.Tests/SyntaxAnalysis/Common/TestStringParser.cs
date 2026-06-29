@@ -11,7 +11,7 @@ public class TestStringParser
     [InlineData("\"\"\"bau\nbau\"\"\"", "bau\nbau")]
     public void TestUnescaped(string input, string expected)
     {
-        string actual = StringParser.ParseQuotedString(input);
+        string actual = StringParser.ParseQuoted(input);
         Assert.Equal(expected, actual);
     }
 
@@ -35,7 +35,7 @@ public class TestStringParser
     [InlineData("r'''bau\rbau'''", "bau\nbau")]
     public void TestLineFeedNormalization(string input, string expected)
     {
-        string actual = StringParser.ParseQuotedString(input);
+        string actual = StringParser.ParseQuoted(input);
         Assert.Equal(expected, actual);
     }
 
@@ -53,7 +53,7 @@ public class TestStringParser
     [InlineData(@"'bau\\bau'", "bau\\bau")]
     public void TestEscapeSequences(string input, string expected)
     {
-        string actual = StringParser.ParseQuotedString(input);
+        string actual = StringParser.ParseQuoted(input);
         Assert.Equal(expected, actual);
     }
 
@@ -65,7 +65,7 @@ public class TestStringParser
     [InlineData(@"'bau\U0001F680bau'", "bau\U0001F680bau", Skip = "Not implemented yet.")]
     public void TestNumericEscapeSequences(string input, string expected)
     {
-        string actual = StringParser.ParseQuotedString(input);
+        string actual = StringParser.ParseQuoted(input);
         Assert.Equal(expected, actual);
     }
 
@@ -88,7 +88,7 @@ public class TestStringParser
     [InlineData(@"r'bau\U0001F680bau'", @"bau\U0001F680bau")]
     public void TestRawIsNotEscaped(string input, string expected)
     {
-        string actual = StringParser.ParseQuotedString(input);
+        string actual = StringParser.ParseQuoted(input);
         Assert.Equal(expected, actual);
     }
 
@@ -101,7 +101,7 @@ public class TestStringParser
     [InlineData("r'bau\\\r\nbau'", "baubau")]
     public void TestEscapedLineFeed(string input, string expected)
     {
-        string actual = StringParser.ParseQuotedString(input);
+        string actual = StringParser.ParseQuoted(input);
         Assert.Equal(expected, actual);
     }
 

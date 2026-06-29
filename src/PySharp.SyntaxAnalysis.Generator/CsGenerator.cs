@@ -35,6 +35,8 @@ internal class CsGenerator
             string varName = variable.Name;
             if (variable.IsArray)
                 varName = $"new NodeList({varName})";
+            else if (variable.IsOptional)
+                varName = $"{varName} ?? VoidNode.Instance";
 
             addLine($"{varName},");
         }
@@ -116,17 +118,21 @@ internal class CsGenerator
                 throw new UnreachableException($"Unexpected ConditionKind: {conditionIr.Kind}");
         }
 
-        static string wrapOpt(ReadOnlySpan<char> value) => $"(({value}) ?? VoidNode.Instance) is not null // Optional";
+        static string wrapOpt(ReadOnlySpan<char> value) => $"(({value}) is not null || true) // Optional";
         static string wrapNull(ReadOnlySpan<char> value) => $"({value}) is not null";
     }
 
     internal void AddAlternative(string originalText, IEnumerable<VariableIr> variables, IEnumerable<string> conditionEmits, string actionEmit)
     {
-        addLine($"// {originalText.Trim()}");
+        foreach (var line in originalText.Trim().EnumerateLines())
+        {
+            addLine($"// {line}");
+        }
+
         foreach (var varEmit in variables)
         {
             if (varEmit.IsArray)
-                addLine($"NodeArray<GreenNode>? {varEmit.Name};");
+                addLine($"INodeArray<GreenNode>? {varEmit.Name};");
             else
                 addLine($"GreenNode? {varEmit.Name};");
         }
@@ -169,7 +175,8 @@ internal class CsGenerator
         open();
 
         addLine("int _mark = base.Mark();");
-        addLine("bool _cut = false;");
+        if (alternativeEmits.Any(ae => ae.hasCut))
+            addLine("bool _cut = false;");
 
         foreach (var (altText, hasCut) in alternativeEmits)
         {

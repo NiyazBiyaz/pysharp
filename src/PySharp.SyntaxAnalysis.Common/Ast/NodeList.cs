@@ -10,4 +10,7 @@ public sealed record NodeList : GreenNode
     {
         this.nodes = nodes;
     }
+
+    public NodeArray<TNode> GetArray<TNode>() where TNode : GreenNode
+        => (NodeArray<TNode>)nodes;
 }

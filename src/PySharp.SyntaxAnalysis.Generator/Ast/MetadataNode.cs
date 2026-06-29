@@ -2,7 +2,8 @@ using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator.Ast;
 
-internal record MetadataNode(string Name, string StringValue) : GreenNode
+internal record MetadataNode : GreenNode
 {
-    public override string ToString() => $"MetadataNode({Name})";
+    internal TokenNode Key => (TokenNode)Children![1];
+    internal TokenNode Value => (TokenNode)Children![2];
 }

@@ -13,7 +13,7 @@ namespace PySharp.SyntaxAnalysis.Common;
 /// </remarks>
 public static class StringParser
 {
-    public static string ParseQuotedString(ReadOnlySpan<char> literal)
+    public static string ParseQuoted(ReadOnlySpan<char> literal)
     {
         Debug.Assert(!HasByte(literal));
 
