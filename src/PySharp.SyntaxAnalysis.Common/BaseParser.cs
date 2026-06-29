@@ -100,20 +100,22 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
         return isParsed == positive;
     }
 
-    protected NodeArray<T>? Gather<T>(Func<T?> ruleCall, Func<GreenNode?> sepCall)
+    protected NodeArray<GreenNode>? Gather<T>(Func<T?> ruleCall, Func<GreenNode?> sepCall)
         where T : GreenNode
     {
         var node = ruleCall();
+        GreenNode? separator;
 
         if (node is null)
             return null;
 
-        List<T> gathered = [node];
+        List<GreenNode> gathered = [node];
 
         while (true)
         {
             int mark = Mark();
-            if (sepCall() is null)
+            separator = sepCall();
+            if (separator is null)
                 break;
 
             node = ruleCall();
@@ -128,23 +130,87 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
         return [.. gathered];
     }
 
-    protected NodeArray<T>? Gather<T>(Func<T?> ruleCall, TokenType sepTokenType)
+    protected NodeArray<GreenNode>? Gather<T>(Func<T?> ruleCall, TokenType sepTokenType)
         where T : GreenNode
     {
         var node = ruleCall();
+        TokenNode? separator;
 
         if (node is null)
             return null;
 
-        List<T> gathered = [node];
+        List<GreenNode> gathered = [node];
 
         while (true)
         {
             int mark = Mark();
-            if (Expect(sepTokenType) is null)
+            separator = Expect(sepTokenType);
+            if (separator is null)
                 break;
 
             node = ruleCall();
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(separator);
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<GreenNode>? Gather<T>(Func<T?> ruleCall, string sepTokenLiteral)
+        where T : GreenNode
+    {
+        var node = ruleCall();
+        TokenNode? separator;
+
+        if (node is null)
+            return null;
+
+        List<GreenNode> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            separator = Expect(sepTokenLiteral);
+            if (separator is null)
+                break;
+
+            node = ruleCall();
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(separator);
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<GreenNode>? Gather<T>(string ruleTokenLiteral, Func<GreenNode?> sepCall)
+        where T : GreenNode
+    {
+        var node = Expect(ruleTokenLiteral);
+        GreenNode? separator;
+
+        if (node is null)
+            return null;
+
+        List<GreenNode> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            separator = sepCall();
+            if (separator is null)
+                break;
+
+            node = Expect(ruleTokenLiteral);
             if (node is null)
             {
                 Reset(mark);
@@ -156,28 +222,154 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
         return [.. gathered];
     }
 
-    protected NodeArray<T>? Gather<T>(Func<T?> ruleCall, string sepTokenLiteral)
+    protected NodeArray<GreenNode>? Gather<T>(string ruleTokenLiteral, TokenType sepTokenType)
         where T : GreenNode
     {
-        var node = ruleCall();
+        var node = Expect(ruleTokenLiteral);
+        TokenNode? separator;
 
         if (node is null)
             return null;
 
-        List<T> gathered = [node];
+        List<GreenNode> gathered = [node];
 
         while (true)
         {
             int mark = Mark();
-            if (Expect(sepTokenLiteral) is null)
+            separator = Expect(sepTokenType);
+            if (separator is null)
                 break;
 
-            node = ruleCall();
+            node = Expect(ruleTokenLiteral);
             if (node is null)
             {
                 Reset(mark);
                 break;
             }
+            gathered.Add(separator);
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<GreenNode>? Gather<T>(string ruleTokenLiteral, string sepTokenLiteral)
+        where T : GreenNode
+    {
+        var node = Expect(ruleTokenLiteral);
+        TokenNode? separator;
+
+        if (node is null)
+            return null;
+
+        List<GreenNode> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            separator = Expect(sepTokenLiteral);
+            if (separator is null)
+                break;
+
+            node = Expect(ruleTokenLiteral);
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(separator);
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<GreenNode>? Gather<T>(TokenType ruleTokenType, Func<GreenNode?> sepCall)
+        where T : GreenNode
+    {
+        var node = Expect(ruleTokenType);
+        GreenNode? separator;
+
+        if (node is null)
+            return null;
+
+        List<GreenNode> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            separator = sepCall();
+            if (separator is null)
+                break;
+
+            node = Expect(ruleTokenType);
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<GreenNode>? Gather<T>(TokenType ruleTokenType, TokenType sepTokenType)
+        where T : GreenNode
+    {
+        var node = Expect(ruleTokenType);
+        TokenNode? separator;
+
+        if (node is null)
+            return null;
+
+        List<GreenNode> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            separator = Expect(sepTokenType);
+            if (separator is null)
+                break;
+
+            node = Expect(ruleTokenType);
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(separator);
+            gathered.Add(node);
+        }
+
+        return [.. gathered];
+    }
+
+    protected NodeArray<GreenNode>? Gather<T>(TokenType ruleTokenType, string sepTokenLiteral)
+        where T : GreenNode
+    {
+        var node = Expect(ruleTokenType);
+        TokenNode? separator;
+
+        if (node is null)
+            return null;
+
+        List<GreenNode> gathered = [node];
+
+        while (true)
+        {
+            int mark = Mark();
+            separator = Expect(sepTokenLiteral);
+            if (separator is null)
+                break;
+
+            node = Expect(ruleTokenType);
+            if (node is null)
+            {
+                Reset(mark);
+                break;
+            }
+            gathered.Add(separator);
             gathered.Add(node);
         }
 

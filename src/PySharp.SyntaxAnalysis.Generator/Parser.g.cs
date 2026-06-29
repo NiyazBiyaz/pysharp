@@ -15,12 +15,12 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     public override GrammarNode? Parse() => rule_Grammar();
     #region Grammar
     // @main
-    // Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadataStar Rules=ruleStar)
+    // Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadataStar, Rules=ruleStar)
     GrammarNode? rule_Grammar()
     {
         int _mark = base.Mark();
         {
-            // Metadata* Rule* EndOfFile -> new(Metadata=metadataStar Rules=ruleStar)
+            // Metadata* Rule* EndOfFile -> new(Metadata=metadataStar, Rules=ruleStar)
             INodeArray<GreenNode>? metadataStar;
             INodeArray<GreenNode>? ruleStar;
             GreenNode? endoffile;
@@ -46,12 +46,12 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     }
     #endregion // Grammar
     #region Metadata
-    // Metadata: "@" Name StringLiteral NewLine -> new(Key=name Value=stringliteral)
+    // Metadata: "@" Name StringLiteral NewLine -> new(Key=name, Value=stringliteral)
     MetadataNode? rule_Metadata()
     {
         int _mark = base.Mark();
         {
-            // "@" Name StringLiteral NewLine -> new(Key=name Value=stringliteral)
+            // "@" Name StringLiteral NewLine -> new(Key=name, Value=stringliteral)
             GreenNode? at;
             GreenNode? name;
             GreenNode? stringliteral;
@@ -83,14 +83,14 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     #region Rule
     // Rule:
     //     | Decorator* Name ":" NewLine Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
-    //         -> ArmedRule(Decorators=decoratorStar Name=name Arms=groupPlus)
-    //     | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar Name=name Alternative=alternative)
+    //         -> ArmedRule(Decorators=decoratorStar, Name=name, Arms=groupPlus)
+    //     | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar, Name=name, Alternative=alternative)
     RuleNode? rule_Rule()
     {
         int _mark = base.Mark();
         {
             // Decorator* Name ":" NewLine Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
-            //         -> ArmedRule(Decorators=decoratorStar Name=name Arms=groupPlus)
+            //         -> ArmedRule(Decorators=decoratorStar, Name=name, Arms=groupPlus)
             INodeArray<GreenNode>? decoratorStar;
             GreenNode? name;
             GreenNode? colon;
@@ -129,7 +129,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         }
         base.Reset(_mark);
         {
-            // Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar Name=name Alternative=alternative)
+            // Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar, Name=name, Alternative=alternative)
             INodeArray<GreenNode>? decoratorStar;
             GreenNode? name;
             GreenNode? colon;
@@ -225,12 +225,12 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     }
     #endregion // Decorator
     #region Alternative
-    // Alternative: Molecule+ -Action -> new(Molecules=moleculePlus Action=action)
+    // Alternative: Molecule+ -Action -> new(Molecules=moleculePlus, Action=action)
     AlternativeNode? rule_Alternative()
     {
         int _mark = base.Mark();
         {
-            // Molecule+ -Action -> new(Molecules=moleculePlus Action=action)
+            // Molecule+ -Action -> new(Molecules=moleculePlus, Action=action)
             INodeArray<GreenNode>? moleculePlus;
             GreenNode? action;
             if ((moleculePlus = base.Repeat(rule_Molecule, 1)) is not null
@@ -256,7 +256,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     //     | "&" Atom -> PositiveLookahead(Atom=atom)
     //     | "!" Atom -> NegativeLookahead(Atom=atom)
     //     | "-" Atom -> Optional(Atom=atom)
-    //     | Atom "+" "." Atom -> Gather(ValueAtom=atom Separator=atom1)
+    //     | Atom "+" "." Atom -> Gather(ValueAtom=atom, Separator=atom1)
     //     | Atom "+" -> RepeatOneMore(Atom=atom)
     //     | Atom "*" -> RepeatZeroMore(Atom=atom)
     //     | Atom -> AtomMolecule(Atom=atom)
@@ -321,7 +321,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         }
         base.Reset(_mark);
         {
-            // Atom "+" "." Atom -> Gather(ValueAtom=atom Separator=atom1)
+            // Atom "+" "." Atom -> Gather(ValueAtom=atom, Separator=atom1)
             GreenNode? atom;
             GreenNode? plus;
             GreenNode? dot;
@@ -467,7 +467,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     #region Action
     // Action:
     //     | "->" "new" "(" Target+."," ")" -> InferredAction(Arguments=targetGather)
-    //     | "->" Name "(" Target+."," ")" -> NamedAction(Name=name Arguments=targetGather)
+    //     | "->" Name "(" Target+."," ")" -> NamedAction(Name=name, Arguments=targetGather)
     ActionNode? rule_Action()
     {
         int _mark = base.Mark();
@@ -503,7 +503,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         }
         base.Reset(_mark);
         {
-            // "->" Name "(" Target+."," ")" -> NamedAction(Name=name Arguments=targetGather)
+            // "->" Name "(" Target+."," ")" -> NamedAction(Name=name, Arguments=targetGather)
             GreenNode? rightarrow;
             GreenNode? name;
             GreenNode? leftparen;
@@ -537,12 +537,12 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     }
     #endregion // Action
     #region Target
-    // Target: Name "=" Name -> new(Field=name Variable=name1)
+    // Target: Name "=" Name -> new(Field=name, Variable=name1)
     TargetNode? rule_Target()
     {
         int _mark = base.Mark();
         {
-            // Name "=" Name -> new(Field=name Variable=name1)
+            // Name "=" Name -> new(Field=name, Variable=name1)
             GreenNode? name;
             GreenNode? equal;
             GreenNode? name1;

@@ -251,7 +251,7 @@ internal class Binder
                 var boundAlt = rule.Alternatives[i];
                 List<BoundCapturedVariable> capturedVariables = [];
 
-                foreach (var argument in astAlt.Action.Arguments)
+                foreach (var argument in astAlt.Action.ValueArguments)
                 {
                     if (boundAlt.Variables.TryGetValue(argument.Variable.RawString, out var entry))
                     {
