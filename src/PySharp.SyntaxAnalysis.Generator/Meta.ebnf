@@ -7,60 +7,37 @@ using PySharp.SyntaxAnalysis.Generator.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 """
-@class_signature "internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarNode>(tokenStream)"
-@parse_call_return "GrammarNode"
+@parser_name "GrammarParser"
 
 @main
-Start[GrammarNode]:
-    | Meta+ Rule+ EndOfFile -> new(metaPlus, rulePlus)
+Grammar: Meta* Rule* EndOfFile -> new(metaStar, ruleStar)
 
-Meta[MetadataNode]:
-    | "@" Name StringLiteral NewLine -> new(Str(name), StrParse(stringliteral))
+Meta: "@" Name StringLiteral NewLine -> new(name, stringliteral)
 
-Rule[RuleNode]:
-    | ("@" Name NewLine)* Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent \
-        -> new(Str(groupStar.name), Str(name), typespec, group1Plus.alternative)
+Rule:
+    | Decorator* Name ":" NewLine Indent ("|" Alternative NewLine -> Arm(alternative))+ Dedent -> new(decoratorStar, name,  groupPlus)
+    | Decorator* Name ":" Alternative NewLine -> new(decoratorStar, name, alternative)
 
-    | ("@" Name NewLine)* Name -TypeSpec ":" Alternative NewLine \
-        -> new(Str(groupStar.name), Str(name), typespec, ToArray(alternative))
+Decorator: "@" Name NewLine -> new(name)
 
-TypeSpec[TypeSpecNode]:
-    | "[" Name "]" -> new(Str(name))
+Alternative: Molecule+ -Action -> new(moleculePlus, action)
 
-Alternative[AlternativeNode]:
-    | Molecule+ -Action -> new(moleculePlus, action)
+Molecule:
+    | "&" Atom -> PositiveLookahead(atom)
+    | "!" Atom -> NegativeLookahead(atom)
+    | "-" Atom -> Optional(atom)
+    | Atom "+" "." Atom -> Gather(atom, atom1)
+    | Atom "+" -> RepeatOneMore(atom)
+    | Atom "*" -> RepeatZeroMore(atom)
+    | Atom -> AtomMolecule(atom)
 
-Molecule[MoleculeNode]:
-    | "&" Atom -> LookaheadNode(atom, True)
-    | "!" Atom -> LookaheadNode(atom, False)
-    | "-" Atom -> OptionalNode(atom)
-    | Atom "*" -> RepeatZeroMoreNode(atom)
-    | Atom "+" "." Atom -> GatherNode(atom, atom1)
-    | Atom "+" -> RepeatOneMoreNode(atom)
-    | Atom -> AtomMoleculeNode(atom)
+Atom:
+    | "(" Alternative ")" -> GroupAtom(alternative)
+    | Name -> NameAtom(name)
+    | StringLiteral -> StringAtom(stringliteral)
 
-Atom[AtomNode]:
-    | "(" Alternative ")" -> GroupAtomNode(ToArray(alternative))
-    | Name -> NameAtomNode(Str(name))
-    | StringLiteral -> StringAtomNode(Str(stringliteral))
+Action:
+    | "->" "new" "(" Target+."," ")" -> InferredAction(targetGather)
+    | "->" Name "(" Target+."," ")" -> NamedAction(name, targetGather)
 
-Action[ActionNode]:
-    | "->" "new" "(" Target+."," ")" -> InferredActionNode(targetGathered)
-    | "->" Name "(" Target+."," ")" -> NamedActionNode(Str(name), targetGathered)
-
-Target[TargetNode]:
-    | "Str" "(" !InStrConstraint Target ")" -> StringTargetNode(target)
-    | "StrParse" "(" !InStrConstraint Target ")" -> ParseStringTargetNode(target)
-    | "ToArray" "(" Name ")" -> ToArrayTargetNode(Str(name))
-    | "True" -> BoolConstTargetNode(True)
-    | "False" -> BoolConstTargetNode(False)
-    | Name "." Name -> GroupAxisTargetNode(Str(name), Str(name1))
-    | Name -> NameTargetNode(Str(name))
-
-@union
-InStrConstraint[TokenNode]:
-    | "Str"
-    | "StrParse"
-    | "ToArray"
-    | "True"
-    | "False"
+Target: Name "=" Name -> new(name, name1)

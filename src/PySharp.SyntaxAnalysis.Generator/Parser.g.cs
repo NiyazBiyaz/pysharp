@@ -16,26 +16,26 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     #region Start
     // @main
     // Start[GrammarNode]:
-    //     | Meta+ Rule+ EndOfFile -> new(metaPlus rulePlus)
+    //     | Meta* Rule* EndOfFile -> new(metaStar ruleStar)
     GrammarNode? rule_Start()
     {
         int __mark = Mark();
         {
-            //  Meta+ Rule+ EndOfFile
-            NodeArray<MetadataNode>? metaPlus;
-            NodeArray<RuleNode>? rulePlus;
+            //  Meta* Rule* EndOfFile
+            NodeArray<MetadataNode>? metaStar;
+            NodeArray<RuleNode>? ruleStar;
             TokenNode? endoffile;
             if (
-                (metaPlus = Repeat(rule_Meta, 1)) is not null
+                (metaStar = Repeat(rule_Meta, 0)) is not null
                 &&
-                (rulePlus = Repeat(rule_Rule, 1)) is not null
+                (ruleStar = Repeat(rule_Rule, 0)) is not null
                 &&
                 (endoffile = Expect(TokenType.EndOfFile)) is not null
             )
             {
-                return new GrammarNode(metaPlus, rulePlus)
+                return new GrammarNode(metaStar, ruleStar)
                 {
-                    Children = new NodeArray<GreenNode>([new NodeList(metaPlus), new NodeList(rulePlus), endoffile])
+                    Children = new NodeArray<GreenNode>([new NodeList(metaStar), new NodeList(ruleStar), endoffile])
                 };
             }
         }
@@ -135,7 +135,7 @@ internal class GrammarParser(ITokenNodeStream tokenStream) : BaseParser<GrammarN
     // Rule[RuleNode]:
     //     | ("@" Name NewLine)* Name -TypeSpec ":" NewLine Indent ("|" Alternative NewLine)+ Dedent \
     //         -> new(Str(groupStar.name) Str(name) typespec group1Plus.alternative)
-    // 
+    //
     //     | ("@" Name NewLine)* Name -TypeSpec ":" Alternative NewLine \
     //         -> new(Str(groupStar.name) Str(name) typespec ToArray(alternative))
     RuleNode? rule_Rule()
