@@ -351,9 +351,6 @@ internal class Binder
             baseRuleFields.Clear();
             fieldsOfAlternatives.Clear();
 
-            if (rule.Name == "Molecule")
-                Debugger.Break();
-
             foreach (var alt in rule.Alternatives)
             {
                 var fields = alt.Action.CapturedVariables.Select(createField);
