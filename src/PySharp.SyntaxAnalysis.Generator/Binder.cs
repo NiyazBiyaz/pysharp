@@ -83,6 +83,9 @@ internal class Binder
                 Grammar.TopLevelNodeName = rule.Type.Name;
             }
         }
+
+        if (Grammar.MainRule is null)
+            throw new CompilationException("Grammar should contain one rule declared with `@main` decorator.");
     }
 
     private void createGroupRule(AlternativeNode alternative)
