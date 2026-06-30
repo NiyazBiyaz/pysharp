@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
-using PySharp.SyntaxAnalysis.Generator.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Generator;
@@ -60,6 +59,11 @@ internal class Binder
                 Name = name,
                 SourceText = astRule.RecoverText(),
                 AstAlternatives = alternatives.ToList(),
+                Type = new BoundType
+                {
+                    Name = name + "Node",
+                    Base = null
+                }
             };
             Rules[rule.Name] = rule;
             Grammar.Rules.Add(rule);
@@ -76,7 +80,7 @@ internal class Binder
                     throw new CompilationException($"Cannot have two rules marked as main at one time: {Grammar.MainRule.Name}, {rule.Name}");
 
                 Grammar.MainRule = rule;
-                Grammar.TopLevelNodeName = rule.TypeName;
+                Grammar.TopLevelNodeName = rule.Type.Name;
             }
         }
     }
@@ -92,6 +96,11 @@ internal class Binder
             Name = name,
             SourceText = alternative.RecoverText(),
             AstAlternatives = [alternative],
+            Type = new BoundType
+            {
+                Name = name + "Node",
+                Base = null,
+            }
         };
 
         Rules[groupRule.Name] = groupRule;
@@ -106,9 +115,11 @@ internal class Binder
         .SelectMany<MoleculeNode, AtomNode>(m => m switch
         {
             AtomMoleculeNode hydrogen => [hydrogen.Atom],
-            LookaheadNode look => [look.Atom],
+            PositiveLookaheadNode pos => [pos.Atom],
+            NegativeLookaheadNode neg => [neg.Atom],
             OptionalNode opt => [opt.Atom],
-            RepeatMoleculeNode rep => [rep.Atom],
+            RepeatOneMoreNode one => [one.Atom],
+            RepeatZeroMoreNode zero => [zero.Atom],
             GatherNode gath => [gath.ValueAtom, gath.Separator],
             _ => throw new UnreachableException($"Unexpected MoleculeNode subclass: {m.GetType()}")
         })
@@ -136,7 +147,7 @@ internal class Binder
     private IEnumerable<BoundAlternativeEntry> createEntries(AlternativeNode alternative)
     {
         var nameScope = new VariablesNamingScope();
-        foreach (var molecule in alternative.Molecules)
+        foreach (var (index, molecule) in alternative.Molecules.Index())
         {
             QuantifierKind quant;
             AtomNode atom;
@@ -149,15 +160,25 @@ internal class Binder
                     quant = QuantifierKind.Expect;
                     atom = hydrogen.Atom;
                     break;
-                case RepeatMoleculeNode repeat:
+                case RepeatOneMoreNode one:
                     quant = QuantifierKind.Repeat;
-                    atom = repeat.Atom;
-                    count = repeat is RepeatOneMoreNode ? 1 : 0;
+                    atom = one.Atom;
+                    count = 1;
                     break;
-                case LookaheadNode look:
+                case RepeatZeroMoreNode zero:
+                    quant = QuantifierKind.Repeat;
+                    atom = zero.Atom;
+                    count = 0;
+                    break;
+                case PositiveLookaheadNode pos:
                     quant = QuantifierKind.Lookahead;
-                    positive = look is PositiveLookaheadNode;
-                    atom = look.Atom;
+                    positive = true;
+                    atom = pos.Atom;
+                    break;
+                case NegativeLookaheadNode neg:
+                    quant = QuantifierKind.Lookahead;
+                    positive = false;
+                    atom = neg.Atom;
                     break;
                 case OptionalNode opt:
                     quant = QuantifierKind.Optional;
@@ -173,6 +194,7 @@ internal class Binder
                         Value = value,
                         Separator = sep,
                         Quantifier = QuantifierKind.Gather,
+                        Index = index,
                         MinRepeatCount = null,
                         Positiveness = null,
                     };
@@ -182,7 +204,9 @@ internal class Binder
                     throw new UnreachableException($"Unexpected MoleculeNode subclass: '{molecule.GetType()}'");
             }
 
-            yield return createEntry(atom, nameScope, quant, count, positive);
+            var entry = createEntry(atom, nameScope, quant, count, positive);
+            entry.Index = index;
+            yield return entry;
         }
     }
 
@@ -245,39 +269,150 @@ internal class Binder
             for (int i = 0; i < rule.Alternatives.Count; i++)
             {
                 var astAlt = rule.AstAlternatives[i];
-                if (astAlt.Action is null)
-                    continue;
 
                 var boundAlt = rule.Alternatives[i];
                 List<BoundCapturedVariable> capturedVariables = [];
 
-                foreach (var argument in astAlt.Action.ValueArguments)
+                if (astAlt.Action is not null) // Fill captured variables with arguments in action if it non-null.
                 {
-                    if (boundAlt.Variables.TryGetValue(argument.Variable.RawString, out var entry))
+                    foreach (var argument in astAlt.Action.Arguments)
                     {
-                        capturedVariables.Add(new BoundCapturedVariable
+                        if (boundAlt.Variables.TryGetValue(argument.Variable.RawString, out var entry))
                         {
-                            VariableName = argument.Variable.RawString,
-                            FieldName = argument.Field.RawString,
-                            Entry = entry,
-                        });
+                            capturedVariables.Add(new BoundCapturedVariable
+                            {
+                                VariableName = argument.Variable.RawString,
+                                FieldName = argument.Field.RawString,
+                                Entry = entry,
+                            });
+                        }
+                        else
+                            throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.");
                     }
-                    else
-                        throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.");
+                }
+                else // If action is null, use all entries as captured variables.
+                {
+                    capturedVariables = boundAlt.Entries
+                        .Select(e => new BoundCapturedVariable
+                        {
+                            VariableName = e.Name,
+                            FieldName = getEntryType(e).Name,
+                            Entry = e,
+                        })
+                        .ToList();
                 }
 
-                string? typeHint = null;
-                if (astAlt.Action is NamedActionNode namedAction)
-                    typeHint = namedAction.Name.RawString + "Node";
+                if (astAlt.Action is InferredActionNode && rule.Alternatives.Count > 1)
+                {
+                    throw new CompilationException("Cannot use `new` keyword for rule that have more than 1 arm.");
+                }
 
-                typeHint ??= rule.TypeName;
+                BoundType? type = null;
+                if (astAlt.Action is NamedActionNode namedAction)
+                {
+                    type = new BoundType
+                    {
+                        Base = rule.Type,
+                        Name = namedAction.Name.RawString + "Node",
+                    };
+                }
+
+                type ??= rule.Type;
 
                 boundAlt.Action = new BoundAction
                 {
-                    TypeHint = typeHint,
+                    Type = type,
                     CapturedVariables = capturedVariables,
                 };
             }
         }
     }
+
+    internal void CreateTypes()
+    {
+        HashSet<BoundField> baseRuleFields = [];
+        List<HashSet<BoundField>> fieldsOfAlternatives = [];
+
+        foreach (var rule in Rules.Values)
+        {
+            if (rule.Alternatives.Count == 1)
+            {
+                var fields = rule.Alternatives[0].Action.CapturedVariables.Select(createField);
+
+                rule.Type.Fields = fields.ToList();
+                Grammar.Types.Add(rule.Type);
+                continue;
+            }
+
+            bool isEmpty = true;
+            baseRuleFields.Clear();
+            fieldsOfAlternatives.Clear();
+
+            if (rule.Name == "Molecule")
+                Debugger.Break();
+
+            foreach (var alt in rule.Alternatives)
+            {
+                var fields = alt.Action.CapturedVariables.Select(createField);
+
+                var setFields = fields.ToHashSet();
+
+                if (isEmpty)
+                    baseRuleFields.UnionWith(setFields);
+                else
+                    baseRuleFields.IntersectWith(setFields);
+
+                isEmpty = false;
+                fieldsOfAlternatives.Add(setFields);
+            }
+
+            foreach (var fieldsOfAlt in fieldsOfAlternatives)
+            {
+                fieldsOfAlt.ExceptWith(baseRuleFields);
+            }
+
+            Debug.Assert(rule.Alternatives.Count == fieldsOfAlternatives.Count);
+
+            rule.Type.Fields = baseRuleFields.ToList();
+            Grammar.Types.Add(rule.Type);
+
+            for (int i = 0; i < rule.Alternatives.Count; i++)
+            {
+                var alt = rule.Alternatives[i];
+                var altFields = fieldsOfAlternatives[i];
+                alt.Action.Type.Fields = altFields.ToList();
+                Grammar.Types.Add(alt.Action.Type);
+            }
+        }
+    }
+
+    private static BoundField createField(BoundCapturedVariable variable) => new()
+    {
+        Index = variable.Entry.Index,
+        Kind = variable.Entry.Quantifier switch
+        {
+            QuantifierKind.Expect or QuantifierKind.Optional => FieldKind.Plain,
+            QuantifierKind.Repeat => FieldKind.Array,
+            QuantifierKind.Gather => FieldKind.Gather,
+            _ => throw new ArgumentOutOfRangeException(),
+        },
+        Type = getEntryType(variable.Entry),
+        AccessModifier = AccessModifier.Internal,
+        Name = variable.FieldName,
+        IsOptional = variable.Entry.Quantifier == QuantifierKind.Optional,
+    };
+
+    private static BoundType getEntryType(BoundAlternativeEntry entry)
+        => entry is BoundRuleAlternativeEntry ruleEntry
+            ? ruleEntry.Value.Type
+            : entry is BoundGatherAlternativeEntry gatherEntry
+                ? getEntryType(gatherEntry.Value)
+                : BoundType.TokenNodeType;
+
+    private static string createFieldNameFromEntry(BoundAlternativeEntry entry, int index)
+        => entry is BoundRuleAlternativeEntry ruleEntry
+            ? ruleEntry.Value.Type.Name
+            : entry is BoundGatherAlternativeEntry gatherEntry
+                ? $"Gather{index}{createFieldNameFromEntry(gatherEntry.Value, index)}"
+                : $"Token{index}";
 }

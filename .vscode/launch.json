@@ -13,7 +13,8 @@
                 "--input", 
                 "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/Meta.ebnf", 
                 "--output", 
-                "{workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/parser.g.cs"
+                "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/parser",
+                "--force"
             ],
         }
     ]

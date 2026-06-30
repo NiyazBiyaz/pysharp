@@ -49,6 +49,7 @@ internal class Program
         binder.RegisterRules(grammarParsed.Rules);
         binder.PopulateRules();
         binder.CreateCaptures();
+        binder.CreateTypes();
 
         var boundGrammar = binder.Grammar;
 
@@ -72,18 +73,36 @@ internal class Program
             ruleEmits.Add(createRule(rule));
         }
 
-        parserGenerator.AddParserBody(boundGrammar.MainRule?.Name ?? throw new NullReferenceException(), boundGrammar.MainRule.TypeName,
+        Debug.Assert(boundGrammar.MainRule is not null);
+
+        parserGenerator.AddParserBody(boundGrammar.MainRule.Name, boundGrammar.MainRule.Type.Name,
                                       ruleEmits, []);
 
         fileGenerator.AddParser(parserGenerator.Dump());
 
+        fileGenerator.AddTypes(createTypes(boundGrammar.Types));
+
         return fileGenerator.Dump();
+    }
+
+    private static IEnumerable<string> createTypes(IEnumerable<BoundType> types)
+    {
+        foreach (var type in types)
+        {
+            var typeGenerator = new CsGenerator();
+
+            typeGenerator.AddTypeSignature(AccessModifier.Internal, type.Name, type.Base?.Name);
+
+            typeGenerator.AddTypeBody(type.Fields.Select(f => new FieldIr(f, AccessModifier.Internal)));
+
+            yield return typeGenerator.Dump();
+        }
     }
 
     private static string createRule(BoundRule rule)
     {
         var ruleGenerator = new CsGenerator();
-        var ir = new RuleIr(rule.SourceText, rule.Name, rule.TypeName);
+        var ir = new RuleIr(rule.SourceText, rule.Name, rule.Type.Name);
         ruleGenerator.AddRuleHeader(ir);
 
         var altEmits = rule.Alternatives.Select(alt =>
@@ -94,7 +113,7 @@ internal class Program
 
             var actionGenerator = new CsGenerator();
 
-            actionGenerator.AddAction(alt.Action!.TypeHint, variables);
+            actionGenerator.AddAction(alt.Action.Type.Name, variables);
 
             List<string> conditions = alt.Entries.Select(createCondition).ToList();
 

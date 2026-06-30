@@ -3,7 +3,6 @@
 using PySharp.SyntaxAnalysis.Tokens;
 using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Common.Ast;
-using PySharp.SyntaxAnalysis.Generator.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 """

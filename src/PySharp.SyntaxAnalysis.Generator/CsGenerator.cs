@@ -287,31 +287,60 @@ internal class CsGenerator
         }
     }
 
-    internal void AddTypeBody(IEnumerable<(int childIndex, AccessModifier accessModifier, VariableIr field)> fields)
+    internal void AddTypeBody(IEnumerable<FieldIr> fields)
     {
         open();
 
-        foreach (var (childIndex, accessModifier, field) in fields)
+        foreach (var field in fields)
         {
-            string modifierName = accessModifier switch
+            var modifier = field.AccessModifier switch
             {
                 AccessModifier.Internal => "internal",
                 AccessModifier.Public => "public",
-                _ => throw new ArgumentOutOfRangeException(nameof(accessModifier)),
+                _ => throw new ArgumentOutOfRangeException(),
             };
 
-            string typeName = field.TypeName ?? throw new UnreachableException("TypeName field should not be null here.");
-            if (field.IsArray)
-                typeName = $"NodeArray<{typeName}>";
-
-            beginLine();
-            add($"{modifierName} {typeName} {field.Name} => Children[{childIndex}] as {typeName}");
-            if (field.IsOptional)
+            switch (field.Kind)
             {
-                add($" ?? {field.Name} as VoidNode");
+                case FieldKind.Plain:
+                    if (field.IsOptional)
+                    {
+                        addLine($"{modifier} {field.TypeName}? {field.Name} => Children![{field.ChildIndex}] as {field.TypeName};");
+                    }
+                    else
+                    {
+                        addLine($"{modifier} {field.TypeName} {field.Name} => ({field.TypeName})Children![{field.ChildIndex}];");
+                    }
+                    break;
+
+                case FieldKind.Array:
+                    addLine($"""
+                    {modifier} NodeArray<{field.TypeName}> {field.Name} => ((NodeList)Children![{field.ChildIndex}]).GetArray<{field.TypeName}>();
+                    """);
+                    break;
+
+                case FieldKind.Gather:
+                    addLines($$"""
+                    private global::System.Collections.Immutable.ImmutableArray<{{field.TypeName}}>? _field_{{field.Name}} = null;
+                    {{modifier}} global::System.Collections.Immutable.ImmutableArray<{{field.TypeName}}> {{field.Name}}
+                    {
+                        get
+                        {
+                            if (_field_{{field.Name}} is null)
+                            {
+                                var _tmp = Ast{{field.Name}}.Where(static (_, i) => i % 2 == 0).Cast<{{field.TypeName}}>();
+                                _field_{{field.Name}} = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+                            }
+                            return _field_{{field.Name}}.Value;
+                        }
+                    }
+                    {{modifier}} NodeArray<GreenNode> Ast{{field.Name}} => (NodeArray<GreenNode>)((NodeList)Children![{{field.ChildIndex}}]).Children!;
+                    """);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-            add($@" ?? throw new global::System.Diagnostics.UnreachableException(""Child type does not match to the expected type. May be generation error."");");
-            endLine();
         }
 
         close();
@@ -328,7 +357,7 @@ internal class CsGenerator
 
         baseName ??= nameof(GreenNode);
 
-        addLine($"{accessModifier} record {typeName} : {baseName}");
+        addLine($"{modifierName} record {typeName} : {baseName}");
     }
 
     private const string indent_string = "    ";
@@ -358,10 +387,9 @@ internal class CsGenerator
 
     private void addLines(ReadOnlySpan<char> value)
     {
-        foreach (var line in value.EnumerateLines())
+        foreach (var line in value.Trim().EnumerateLines())
         {
-            if (line.Length > 0)
-                addLine(line);
+            addLine(line);
         }
     }
 
