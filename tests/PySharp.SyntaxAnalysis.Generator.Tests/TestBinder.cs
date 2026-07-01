@@ -73,6 +73,7 @@ public class TestBinder
     public void TestRegisterRules_SimpleRules()
     {
         const string src = """
+        @main
         BauBau: Bau Bau
         PonDeRing: Pon De Ring
         FuwaMoco: Fuwa Moco
@@ -89,6 +90,7 @@ public class TestBinder
     public void TestRegisterRules_Groups()
     {
         const string src = """
+        @main
         BauBau: Bau Bau
         PonDeRing: Pon (De Ring)+
         FuwaMoco_ch: Fuwa (Moco Chan)*
@@ -105,6 +107,7 @@ public class TestBinder
     public void TestRegisterRules_NestedGroups()
     {
         const string src = """
+        @main
         BauBauBauBauBau:
             | Bau (!(Bau Bau) Bau)+ Bau
         Bau: BauBau
@@ -133,6 +136,7 @@ public class TestBinder
     public void TestPopulateRules_TwoRule_OneLink()
     {
         const string src = """
+        @main
         Bau1: "." NewLine
         Bau2: Bau1
         """;
@@ -177,6 +181,7 @@ public class TestBinder
     public void TestPopulateRules_AliasesForDelimiters(string delim, TokenType tokenType)
     {
         string src = $"""
+        @main
         Bau: "{delim}"
         """;
         var gram = getNode(src);
