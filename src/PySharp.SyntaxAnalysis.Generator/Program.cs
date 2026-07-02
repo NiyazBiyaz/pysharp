@@ -48,7 +48,6 @@ internal class Program
         binder.ReadMetadata(grammarParsed.Metadata);
         binder.RegisterRules(grammarParsed.Rules);
         binder.PopulateRules();
-        binder.CreateCaptures();
         binder.CreateTypes();
 
         var boundGrammar = binder.Grammar;

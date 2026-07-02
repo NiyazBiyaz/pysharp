@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Tokens;
 using static PySharp.SyntaxAnalysis.Tokens.TokenType;
@@ -87,6 +88,34 @@ public class TestBinder
     }
 
     [Fact]
+    public void TestRegisterRules_MissingMain()
+    {
+        const string src = """
+        BauBau: Bau Bau
+        Bau: "bau"
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+
+        Assert.Throws<CompilationException>(() => binder.RegisterRules(gram.Rules));
+    }
+
+    [Fact]
+    public void TestRegisterRules_TwoMains()
+    {
+        const string src = """
+        @main
+        BauBau: Bau Bau
+        @main
+        Bau: "bau"
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+
+        Assert.Throws<CompilationException>(() => binder.RegisterRules(gram.Rules));
+    }
+
+    [Fact]
     public void TestRegisterRules_Groups()
     {
         const string src = """
@@ -133,11 +162,11 @@ public class TestBinder
     }
 
     [Fact]
-    public void TestPopulateRules_TwoRule_OneLink()
+    public void TestPopulateRules_ReferenceToRule()
     {
         const string src = """
         @main
-        Bau1: "." NewLine
+        Bau1: NewLine
         Bau2: Bau1
         """;
         var gram = getNode(src);
@@ -145,31 +174,9 @@ public class TestBinder
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
 
-        foreach (var rule in binder.Grammar.Rules)
-        {
-            switch (rule.Name)
-            {
-                case "Bau1":
-                {
-                    Assert.Equal("dot", rule.Alternatives.First().Entries[0].Name);
-                    Assert.True(
-                        rule.Alternatives.First().Entries[0] is BoundTokenAlternativeEntry t0 && t0.Value == TokenType.Dot,
-                        "Binder should replace string that can be replaced with TokenType.");
-                    Assert.Equal("newline", rule.Alternatives.First().Entries[1].Name);
-                    Assert.True(rule.Alternatives.First().Entries[1] is BoundTokenAlternativeEntry t1 && t1.Value == TokenType.NewLine);
-                    break;
-                }
-                case "Bau2":
-                {
-                    Assert.Equal("bau1", rule.Alternatives.First().Entries[0].Name);
-                    Assert.True(
-                        rule.Alternatives.First().Entries[0] is BoundRuleAlternativeEntry r0 && r0.Value == binder.Grammar.Rules[0],
-                        "Entry Bau1 should reference to the rule Bau1 defined in the grammar."
-                    );
-                    break;
-                }
-            }
-        }
+        var rules = binder.Grammar.Rules;
+
+        Assert.Equal(rules[0], ((BoundRuleAlternativeEntry)rules[1].Alternatives[0].Entries[0]).Value);
     }
 
     [Theory]
@@ -194,10 +201,238 @@ public class TestBinder
                     "Binder should replace string representation with the TokenType analogue.");
     }
 
+    [Fact]
+    public void TestPopulateRules_Quantifiers()
+    {
+        const string src = """
+        @main
+        Bau: BauBau+
+        BauBau: -"bau" baubau*
+        baubau: PonDeRing+."Whaet"
+        PonDeRing: &"Pon" !"De" "Ring"
+        """;
+        const int zero = 0, one = 1;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+
+        var rules = binder.Grammar.Rules;
+
+        Assert.Equal(QuantifierKind.Repeat, rules[0].Alternatives[0].Entries[0].Quantifier); // BauBau+
+        Assert.Equal(one, rules[0].Alternatives[0].Entries[0].MinRepeatCount);
+
+        Assert.Equal(QuantifierKind.Optional, rules[1].Alternatives[0].Entries[0].Quantifier); // -"bau"
+        Assert.Equal(zero, rules[1].Alternatives[0].Entries[0].Index);
+
+        Assert.Equal(QuantifierKind.Repeat, rules[1].Alternatives[0].Entries[1].Quantifier); // baubau*
+        Assert.Equal(zero, rules[1].Alternatives[0].Entries[1].MinRepeatCount);
+        Assert.Equal(one, rules[1].Alternatives[0].Entries[1].Index);
+
+        Assert.Equal(QuantifierKind.Gather, rules[2].Alternatives[0].Entries[0].Quantifier); // PonGeRing*."Whaet"
+        if (rules[2].Alternatives[0].Entries[0] is BoundGatherAlternativeEntry g)
+        {
+            Assert.True(g.Value is BoundRuleAlternativeEntry r && r.Value == rules[3],
+                        "Should reference to the 'PonDeRing' rule defined below.");
+            Assert.Equal(QuantifierKind.Expect, g.Separator.Quantifier);
+        }
+        else
+            Assert.Fail("Should be gather.");
+
+        Assert.Equal(QuantifierKind.Lookahead, rules[3].Alternatives[0].Entries[0].Quantifier); // &"Pon"
+        Assert.Equal(true, rules[3].Alternatives[0].Entries[0].Positiveness);
+
+        Assert.Equal(QuantifierKind.Lookahead, rules[3].Alternatives[0].Entries[1].Quantifier); // !"De"
+        Assert.Equal(false, rules[3].Alternatives[0].Entries[1].Positiveness);
+
+        Assert.Equal(QuantifierKind.Expect, rules[3].Alternatives[0].Entries[2].Quantifier); // "Ring"
+        Assert.Equal(zero, rules[3].Alternatives[0].Entries[2].Index); // Lookaheads shouldn't affect on index counter.
+    }
+
+    [Fact]
+    public void TestPopulateRules_NamesOfTheEntries()
+    {
+        const string src = """
+        @main
+        Bau: BauBau+
+        BauBau: -Bau baubau*
+        baubau: PonDeRing+."Whaet"
+        PonDeRing: &"Pon" !"De" Ring
+        Ring: "ring"
+        """;
+        string[][] names = [
+            ["baubauPlus"],
+            ["bau", "baubauStar"],
+            ["ponderingGather"],
+            [null!, null!, "ring"], // For lookahead names are undefined.
+            // For strings names are not guaranteed to be stable.
+        ];
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+
+        var rules = binder.Grammar.Rules;
+
+        for (int r = 0; r < names.Length; r++)
+        {
+            var alt = rules[r].Alternatives[0];
+            for (int e = 0; e < alt.Entries.Count; e++)
+            {
+                while (names[r][e] == null)
+                    e++;
+                Assert.Equal(names[r][e], alt.Entries[e].Name);
+            }
+        }
+    }
+
+    [Fact]
+    public void TestCreateTypes_Simple()
+    {
+        const string src = """
+        @main
+        BauBau: "bau" Bau -> new(Bau=bau)
+        Bau: "BAU" "(" Name "," Number ")" -> new(Tail=name, Ears=number)
+        """,
+        first_type_name = "BauBauNode",
+        second_type_name = "BauNode",
+        first_type_field_name = "Bau",
+        second_type_field_name1 = "Tail",
+        second_type_field_name2 = "Ears";
+        const int first_type_field_count = 1, second_type_field_count = 2;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        var types = binder.Grammar.Types;
+
+        Assert.Equal(first_type_name, types[0].Name);
+        Assert.Equal(second_type_name, types[1].Name);
+
+        // If you force to use .Single() where is .Double() or .Triple()?
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
+        Assert.Equal(first_type_field_count, types[0].Fields.Count);
+        Assert.Equal(second_type_field_count, types[1].Fields.Count);
+
+        Assert.Equal(first_type_field_name, types[0].Fields[0].Name);
+        Assert.Equal(second_type_field_name1, types[1].Fields[0].Name);
+        Assert.Equal(second_type_field_name2, types[1].Fields[1].Name);
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
+    }
+
+    [Fact]
+    public void TestCreateTypes_WithBaseType()
+    {
+        const string src = """
+        @main
+        BauBau:
+            | Number -> BauBauBau(Bau=number)
+            | Name -> Third(BauBau=name)
+            | Comma -> Fourth(Another=comma)
+        """,
+        base_type_name = "BauBauNode";
+        const int types_count = 4;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        Assert.Equal(types_count, binder.Grammar.Types.Count);
+
+        var baseType = binder.Grammar.Types.First(t => t.Name == base_type_name);
+        var derivedTypes = binder.Grammar.Types.Where(t => t.Name != base_type_name);
+
+        foreach (var dt in derivedTypes)
+            Assert.Equal(baseType, dt.Base);
+    }
+
+    [Fact]
+    public void TestCreateTypes_InferredWhenMultiple()
+    {
+        const string src = """
+        @main
+        BauBau:
+            | Number -> BauBauBau(Bau=number)
+            | Name -> new(BauBau=name)
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+
+        Assert.Throws<CompilationException>(binder.CreateTypes);
+    }
+
+    [Fact]
+    public void TestCreateTypes_NotSpecified()
+    {
+        const string src = """
+        @main
+        BauBau: Number Bau Name
+        Bau: "Bau" "bau" "_bau"
+        """,
+        first_type_second_field_name = "BauNode",
+        token_node_type_base_name = "TokenNode";
+        const int both_type_fields_count = 3;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        var types = binder.Grammar.Types;
+
+        Assert.Equal(both_type_fields_count, types[0].Fields.Count);
+        Assert.Equal(both_type_fields_count, types[1].Fields.Count);
+
+        Assert.Equal(token_node_type_base_name, types[0].Fields[0].Name);
+        Assert.Equal(first_type_second_field_name, types[0].Fields[1].Name);
+        Assert.Equal(token_node_type_base_name + 1, types[0].Fields[2].Name);
+
+        Assert.Equal(token_node_type_base_name, types[1].Fields[0].Name);
+        Assert.Equal(token_node_type_base_name + 1, types[1].Fields[1].Name);
+        Assert.Equal(token_node_type_base_name + 2, types[1].Fields[2].Name);
+    }
+
+    [Fact]
+    public void TestCreateTypes_FieldNameIsDuplicated()
+    {
+        const string src = """
+        @main
+        BauBau: "bau" Number Name -> new(Bau=number, Bau=name)
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+
+        Assert.Throws<InvalidNameException>(binder.CreateTypes);
+    }
+
+    [Fact]
+    public void TestCreateTypes_UndefinedVariableUsage()
+    {
+        const string src = """
+        @main
+        BauBau: "bau" Number Name -> new(Bau=pondering, Another=name)
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+
+        Assert.Throws<InvalidNameException>(binder.CreateTypes);
+    }
+
     private static GrammarNode getNode(string src)
     {
         var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), false);
         var parser = new GrammarParser(new TokenNodeStream(tokenizer));
-        return parser.Parse() ?? throw new Exception("Given syntax is not valid.");
+        var node = parser.Parse();
+        Debug.Assert(node is not null, "Given syntax is not valid.");
+        return node;
     }
 }

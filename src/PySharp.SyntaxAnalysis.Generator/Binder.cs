@@ -9,7 +9,7 @@ internal class Binder
     internal readonly Dictionary<string, BoundRule> Rules = [];
     internal readonly BoundGrammar Grammar = new();
 
-    private readonly VariablesNamingScope groupTypeNameStore = new();
+    private readonly VariableNamingScope groupTypeNameStore = new();
     private readonly Dictionary<AlternativeNode, BoundRule> groupRules = [];
 
     internal void ReadMetadata(IEnumerable<MetadataNode> metadata)
@@ -149,8 +149,9 @@ internal class Binder
 
     private IEnumerable<BoundAlternativeEntry> createEntries(AlternativeNode alternative)
     {
-        var nameScope = new VariablesNamingScope();
-        foreach (var (index, molecule) in alternative.Molecules.Index())
+        var nameScope = new VariableNamingScope();
+        int index = 0;
+        foreach (var molecule in alternative.Molecules)
         {
             QuantifierKind quant;
             AtomNode atom;
@@ -188,7 +189,7 @@ internal class Binder
                     atom = opt.Atom;
                     break;
                 case GatherNode gather:
-                    var localNameScope = new VariablesNamingScope();
+                    var localNameScope = new VariableNamingScope();
                     var value = createEntry(gather.ValueAtom, localNameScope, QuantifierKind.Expect, null, null);
                     var sep = createEntry(gather.Separator, localNameScope, QuantifierKind.Expect, null, null);
                     yield return new BoundGatherAlternativeEntry()
@@ -208,12 +209,15 @@ internal class Binder
             }
 
             var entry = createEntry(atom, nameScope, quant, count, positive);
-            entry.Index = index;
+            entry.Index = entry.Quantifier != QuantifierKind.Lookahead ? index : -1;
             yield return entry;
+
+            if (entry.Quantifier != QuantifierKind.Lookahead)
+                index++;
         }
     }
 
-    private BoundAlternativeEntry createEntry(AtomNode atom, VariablesNamingScope nameScope, QuantifierKind quant, int? count, bool? positive)
+    private BoundAlternativeEntry createEntry(AtomNode atom, VariableNamingScope nameScope, QuantifierKind quant, int? count, bool? positive)
     => atom switch
     {
         StringAtomNode aliasedToken when TokenType.TryGetDelimiterByString(StringParser.ParseQuoted(aliasedToken.Value.RawString), out var tok) => new BoundTokenAlternativeEntry
@@ -264,11 +268,15 @@ internal class Binder
         _ => throw new ArgumentOutOfRangeException($"Unexpected AtomNode subclass: '{atom.GetType()}'"),
     };
 
-    internal void CreateCaptures()
+    private void createCaptures()
     {
         foreach (var rule in Rules.Values)
         {
+            // To count already added fields and prevent using multiple fields with same name.
+            var fieldNames = new HashSet<string>();
+
             Debug.Assert(rule.Alternatives.Count == rule.AstAlternatives.Count, $"{rule.Name}: {rule.Alternatives.Count}, {rule.AstAlternatives.Count}");
+
             for (int i = 0; i < rule.Alternatives.Count; i++)
             {
                 var astAlt = rule.AstAlternatives[i];
@@ -278,16 +286,22 @@ internal class Binder
 
                 if (astAlt.Action is not null) // Fill captured variables with arguments in action if it non-null.
                 {
+                    fieldNames.Clear();
                     foreach (var argument in astAlt.Action.Arguments)
                     {
                         if (boundAlt.Variables.TryGetValue(argument.Variable.RawString, out var entry))
                         {
+                            string fieldName;
                             capturedVariables.Add(new BoundCapturedVariable
                             {
-                                VariableName = argument.Variable.RawString,
-                                FieldName = argument.Field.RawString,
+                                FieldName = fieldName = argument.Field.RawString,
                                 Entry = entry,
                             });
+
+                            if (fieldNames.Contains(fieldName))
+                                throw new InvalidNameException($"Field name '{fieldName}' used twice.");
+
+                            fieldNames.Add(fieldName);
                         }
                         else
                             throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.");
@@ -295,14 +309,14 @@ internal class Binder
                 }
                 else // If action is null, use all entries as captured variables.
                 {
+                    var fieldNameScope = new VariableNamingScope();
                     capturedVariables = boundAlt.Entries
-                        .Select(e => new BoundCapturedVariable
-                        {
-                            VariableName = e.Name,
-                            FieldName = getEntryType(e).Name,
-                            Entry = e,
-                        })
-                        .ToList();
+                    .Select(e => new BoundCapturedVariable
+                    {
+                        FieldName = fieldNameScope.NextNamePreserveCase(getEntryType(e).Name),
+                        Entry = e,
+                    })
+                    .ToList();
                 }
 
                 if (astAlt.Action is InferredActionNode && rule.Alternatives.Count > 1)
@@ -333,6 +347,8 @@ internal class Binder
 
     internal void CreateTypes()
     {
+        createCaptures();
+
         HashSet<BoundField> baseRuleFields = [];
         List<HashSet<BoundField>> fieldsOfAlternatives = [];
 

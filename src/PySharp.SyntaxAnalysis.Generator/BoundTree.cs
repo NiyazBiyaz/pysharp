@@ -1,3 +1,4 @@
+using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Generator;
@@ -31,23 +32,54 @@ internal class BoundAlternative
 
 internal class BoundAction
 {
+    /// <summary>
+    /// Type that this action would return if alternative is matched.
+    /// </summary>
     internal required BoundType Type { get; init; }
+    /// <summary>
+    /// Variables that was captured in the <see cref="ActionNode"/> and would be used to generate
+    /// type fields.
+    /// </summary>
     internal required List<BoundCapturedVariable> CapturedVariables { get; init; }
 }
 
 internal class BoundCapturedVariable
 {
-    internal required string VariableName { get; init; }
+    /// <summary>
+    /// Name of the field specified in the <see cref="ActionNode"/> to be generated in Ast.
+    /// </summary>
     internal required string FieldName { get; init; }
+    /// <summary>
+    /// Entry in the <see cref="BoundAlternative"/> that this captured variable references on.
+    /// </summary>
     internal required BoundAlternativeEntry Entry { get; init; }
 }
 
 internal abstract class BoundAlternativeEntry
 {
+    /// <summary>
+    /// Name of the variable that saved to <see cref="GreenNode.Children"/> if match.
+    /// Used to identify when in grammar used to create named property.
+    /// </summary>
     internal required string Name { get; init; }
+    /// <summary>
+    /// Index of the entry saved to <see cref="GreenNode.Children"/> to be able retrieve it.
+    /// </summary>
     internal int Index { get; set; }
+    /// <summary>
+    /// Kind of the quantifier that was used to this entry. Depends on the value another fields can be set to
+    /// <see langword="null"/> or not.
+    /// </summary>
     internal required QuantifierKind Quantifier { get; init; }
+    /// <summary>
+    /// Represents minimum repeat count of the entry if <see cref="QuantifierKind.Repeat"/> is set
+    /// in <see cref="Quantifier"/>. <see langword="null"/> if <see cref="Quantifier"/> is another.
+    /// </summary>
     internal required int? MinRepeatCount { get; init; }
+    /// <summary>
+    /// Represents positive or negative kind of lookahead of the entry if <see cref="QuantifierKind.Lookahead"/>
+    /// is set in <see cref="Quantifier"/>. <see langword="null"/> if <see cref="Quantifier"/> is another.
+    /// </summary>
     internal required bool? Positiveness { get; init; }
 }
 

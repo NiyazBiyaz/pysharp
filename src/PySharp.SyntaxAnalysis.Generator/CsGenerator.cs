@@ -205,12 +205,7 @@ internal class CsGenerator
 
     internal void AddParserSignature(AccessModifier accessModifier, string parserName, string topLevelNodeName)
     {
-        string modifierName = accessModifier switch
-        {
-            AccessModifier.Internal => "internal",
-            AccessModifier.Public => "public",
-            _ => throw new ArgumentOutOfRangeException(nameof(accessModifier)),
-        };
+        string modifierName = accessModifier.CodeRepresentation();
 
         addLine($"{modifierName} class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
     }
@@ -293,12 +288,7 @@ internal class CsGenerator
 
         foreach (var field in fields)
         {
-            var modifier = field.AccessModifier switch
-            {
-                AccessModifier.Internal => "internal",
-                AccessModifier.Public => "public",
-                _ => throw new ArgumentOutOfRangeException(),
-            };
+            string modifier = field.AccessModifier.CodeRepresentation();
 
             switch (field.Kind)
             {
@@ -348,12 +338,7 @@ internal class CsGenerator
 
     internal void AddTypeSignature(AccessModifier accessModifier, string typeName, string? baseName)
     {
-        string modifierName = accessModifier switch
-        {
-            AccessModifier.Internal => "internal",
-            AccessModifier.Public => "public",
-            _ => throw new ArgumentOutOfRangeException(nameof(accessModifier)),
-        };
+        string modifierName = accessModifier.CodeRepresentation();
 
         baseName ??= nameof(GreenNode);
 
