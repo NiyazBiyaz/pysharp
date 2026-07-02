@@ -106,7 +106,7 @@ internal class Program
 
         var altEmits = rule.Alternatives.Select(alt =>
         {
-            List<VariableIr> variables = alt.Entries
+            List<VariableIr> variables = alt.Variables
                 .Select(v => new VariableIr(v.Name, v.Quantifier.IsArray, v.Quantifier is QuantifierKind.Optional))
                 .ToList();
 
@@ -130,12 +130,13 @@ internal class Program
 
     private static string createCondition(BoundAlternativeEntry alternativeEntry)
     {
-        static AtomIr getAtom(BoundAlternativeEntry alternativeEntry) => alternativeEntry switch
+        static AtomIr? getAtom(BoundAlternativeEntry alternativeEntry) => alternativeEntry switch
         {
             BoundTokenAlternativeEntry token => new AtomIr(token.Value.ToString(), false, true),
             BoundStringAlternativeEntry str => new AtomIr(str.Value, true, false),
             BoundRuleAlternativeEntry rule => new AtomIr(rule.Value.Name, false, false),
             BoundGatherAlternativeEntry gath => getAtom(gath.Value),
+            BoundCutAlternativeEntry => null,
             _ => throw new UnreachableException("Unexpected bound alternative entry class."),
         };
 
@@ -145,7 +146,7 @@ internal class Program
             MinCount = alternativeEntry.MinRepeatCount,
             Positive = alternativeEntry.Positiveness,
             AssignedVar = alternativeEntry.Name,
-            Atom = getAtom(alternativeEntry),
+            Atom = getAtom(alternativeEntry) ?? null!, // Null can be returned only when quantifier is Cut.
             Separator = alternativeEntry is BoundGatherAlternativeEntry gath ? getAtom(gath.Separator) : null,
         };
 

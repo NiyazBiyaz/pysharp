@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
@@ -25,8 +26,9 @@ internal class BoundRule
 internal class BoundAlternative
 {
     internal required string SourceText { get; init; }
-    internal IList<BoundAlternativeEntry> Entries => Variables.Values.ToList();
-    internal Dictionary<string, BoundAlternativeEntry> Variables { get; } = [];
+    internal List<BoundAlternativeEntry> Entries { get; } = [];
+    internal IEnumerable<BoundAlternativeEntry> Variables => Entries
+        .Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut);
     internal BoundAction Action { get; set; } = null!; // It can be used after Binder.CreateCaptures().
 }
 
@@ -62,25 +64,39 @@ internal abstract class BoundAlternativeEntry
     /// Used to identify when in grammar used to create named property.
     /// </summary>
     internal required string Name { get; init; }
+
     /// <summary>
     /// Index of the entry saved to <see cref="GreenNode.Children"/> to be able retrieve it.
     /// </summary>
     internal int Index { get; set; }
+
     /// <summary>
     /// Kind of the quantifier that was used to this entry. Depends on the value another fields can be set to
     /// <see langword="null"/> or not.
     /// </summary>
     internal required QuantifierKind Quantifier { get; init; }
+
     /// <summary>
     /// Represents minimum repeat count of the entry if <see cref="QuantifierKind.Repeat"/> is set
     /// in <see cref="Quantifier"/>. <see langword="null"/> if <see cref="Quantifier"/> is another.
     /// </summary>
     internal required int? MinRepeatCount { get; init; }
+
     /// <summary>
     /// Represents positive or negative kind of lookahead of the entry if <see cref="QuantifierKind.Lookahead"/>
     /// is set in <see cref="Quantifier"/>. <see langword="null"/> if <see cref="Quantifier"/> is another.
     /// </summary>
     internal required bool? Positiveness { get; init; }
+}
+
+internal class BoundCutAlternativeEntry : BoundAlternativeEntry
+{
+    [SetsRequiredMembers]
+    internal BoundCutAlternativeEntry()
+    {
+        Name = "_cut";
+        Quantifier = QuantifierKind.Cut;
+    }
 }
 
 internal class BoundRuleAlternativeEntry : BoundAlternativeEntry

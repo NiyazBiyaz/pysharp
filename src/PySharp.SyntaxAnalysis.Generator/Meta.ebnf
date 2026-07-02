@@ -14,8 +14,8 @@ Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadataStar, Rules=ruleStar)
 Metadata: "@" Name StringLiteral NewLine -> new(Key=name, Value=stringliteral)
 
 Rule:
-    | Decorator* Name ":" NewLine Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
-        -> ArmedRule(Decorators=decoratorStar, Name=name, Arms=groupPlus)
+    | Decorator* Name ":" NewLine ~ Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
+        -> ArmedRule(Decorators=decoratorStar, Name=name, Arms=armPlus)
     | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar, Name=name, Alternative=alternative)
 
 Decorator: "@" Name NewLine -> new(Value=name)
@@ -23,21 +23,23 @@ Decorator: "@" Name NewLine -> new(Value=name)
 Alternative: Molecule+ -Action -> new(Molecules=moleculePlus, Action=action)
 
 Molecule:
-    | "&" Atom -> PositiveLookahead(Atom=atom)
-    | "!" Atom -> NegativeLookahead(Atom=atom)
-    | "-" Atom -> Optional(Atom=atom)
-    | Atom "+" "." Atom -> Gather(ValueAtom=atom, Separator=atom1)
+    | "[" ~ Alternative "]" -> OptionalGroup(Alternative=alternative)
+    | "&" ~ Atom -> PositiveLookahead(Atom=atom)
+    | "!" ~ Atom -> NegativeLookahead(Atom=atom)
+    | "-" ~ Atom -> Optional(Atom=atom)
+    | Atom "+" "." ~ Atom -> Gather(ValueAtom=atom, Separator=atom1)
     | Atom "+" -> RepeatOneMore(Atom=atom)
     | Atom "*" -> RepeatZeroMore(Atom=atom)
     | Atom -> AtomMolecule(Atom=atom)
+    | "~" -> Cut()
 
 Atom:
-    | "(" Alternative ")" -> GroupAtom(Alternative=alternative)
+    | "(" ~ Alternative ")" -> GroupAtom(Alternative=alternative)
     | Name -> NameAtom(Value=name)
     | StringLiteral -> StringAtom(Value=stringliteral)
 
 Action:
-    | "->" "new" "(" Target+."," ")" -> InferredAction(Arguments=targetGather)
-    | "->" Name "(" Target+."," ")" -> NamedAction(Name=name, Arguments=targetGather)
+    | "->" "new" ~ "(" [Target+."," -> Arguments(Value=targetGather)] ")" -> InferredAction(Arguments=arguments)
+    | "->" Name "(" [Target+."," -> Arguments(Value=targetGather)] ")" -> NamedAction(Name=name, Arguments=arguments)
 
 Target: Name "=" Name -> new(Field=name, Variable=name1)

@@ -72,6 +72,9 @@ internal class Binder
             {
                 foreach (var group in getGroups(alt))
                     createGroupRule(group.Alternative);
+
+                foreach (var group in getOptGroups(alt))
+                    createGroupRule(group.Alternative);
             }
 
             if (astRule.Decorators.Select(d => d.Value.RawString).Contains("main"))
@@ -106,15 +109,24 @@ internal class Binder
             }
         };
 
-        Rules[groupRule.Name] = groupRule;
-        Grammar.Rules.Add(groupRule);
-        groupRules[alternative] = groupRule;
+        if (!groupRules.ContainsKey(alternative))
+        {
+            Rules[groupRule.Name] = groupRule;
+            Grammar.Rules.Add(groupRule);
+            groupRules[alternative] = groupRule;
+        }
 
         foreach (var group in getGroups(alternative))
             createGroupRule(group.Alternative);
+        foreach (var group in getOptGroups(alternative))
+            createGroupRule(group.Alternative);
     }
 
+    private static IEnumerable<OptionalGroupNode> getOptGroups(AlternativeNode alternative)
+        => alternative.Molecules.Where(m => m is OptionalGroupNode).Select(m => (OptionalGroupNode)m);
+
     private static IEnumerable<GroupAtomNode> getGroups(AlternativeNode alternative) => alternative.Molecules
+        .Where(m => m is not OptionalGroupNode) // Optional groups should be processed separately.
         .SelectMany<MoleculeNode, AtomNode>(m => m switch
         {
             AtomMoleculeNode hydrogen => [hydrogen.Atom],
@@ -124,6 +136,7 @@ internal class Binder
             RepeatOneMoreNode one => [one.Atom],
             RepeatZeroMoreNode zero => [zero.Atom],
             GatherNode gath => [gath.ValueAtom, gath.Separator],
+            CutNode => [],
             _ => throw new UnreachableException($"Unexpected MoleculeNode subclass: {m.GetType()}")
         })
         .OfType<GroupAtomNode>();
@@ -140,7 +153,7 @@ internal class Binder
                 var alt = new BoundAlternative { SourceText = astAlt.RecoverText() };
                 foreach (var entry in createEntries(astAlt))
                 {
-                    alt.Variables[entry.Name] = entry;
+                    alt.Entries.Add(entry);
                 }
                 rule.Alternatives.Add(alt);
             }
@@ -164,30 +177,49 @@ internal class Binder
                     quant = QuantifierKind.Expect;
                     atom = hydrogen.Atom;
                     break;
+
                 case RepeatOneMoreNode one:
                     quant = QuantifierKind.Repeat;
                     atom = one.Atom;
                     count = 1;
                     break;
+
                 case RepeatZeroMoreNode zero:
                     quant = QuantifierKind.Repeat;
                     atom = zero.Atom;
                     count = 0;
                     break;
+
                 case PositiveLookaheadNode pos:
                     quant = QuantifierKind.Lookahead;
                     positive = true;
                     atom = pos.Atom;
                     break;
+
                 case NegativeLookaheadNode neg:
                     quant = QuantifierKind.Lookahead;
                     positive = false;
                     atom = neg.Atom;
                     break;
+
                 case OptionalNode opt:
                     quant = QuantifierKind.Optional;
                     atom = opt.Atom;
                     break;
+
+                case OptionalGroupNode optGroup:
+                    var rule = groupRules[optGroup.Alternative];
+                    yield return new BoundRuleAlternativeEntry
+                    {
+                        Name = nameScope.NextName(rule.Name),
+                        Value = rule,
+                        Quantifier = QuantifierKind.Optional,
+                        Index = index++,
+                        MinRepeatCount = null,
+                        Positiveness = null,
+                    };
+                    continue;
+
                 case GatherNode gather:
                     var localNameScope = new VariableNamingScope();
                     var value = createEntry(gather.ValueAtom, localNameScope, QuantifierKind.Expect, null, null);
@@ -198,10 +230,14 @@ internal class Binder
                         Value = value,
                         Separator = sep,
                         Quantifier = QuantifierKind.Gather,
-                        Index = index,
+                        Index = index++,
                         MinRepeatCount = null,
                         Positiveness = null,
                     };
+                    continue;
+
+                case CutNode:
+                    yield return new BoundCutAlternativeEntry();
                     continue;
 
                 default:
@@ -255,16 +291,14 @@ internal class Binder
                 Positiveness = positive,
             }
         },
-        GroupAtomNode groupAtom when groupRules.TryGetValue(groupAtom.Alternative, out var group) => new BoundRuleAlternativeEntry
+        GroupAtomNode groupAtom => new BoundRuleAlternativeEntry
         {
             Quantifier = quant,
-            Name = nameScope.NextName("group") + quant.GetSuffix(count),
-            Value = group,
+            Name = nameScope.NextName(groupRules[groupAtom.Alternative].Name) + quant.GetSuffix(count),
+            Value = groupRules[groupAtom.Alternative],
             MinRepeatCount = count,
             Positiveness = positive,
         },
-        GroupAtomNode nonExistentGroup when !groupRules.ContainsKey(nonExistentGroup.Alternative)
-            => throw new ArgumentOutOfRangeException($"Registered group rules does not contain such group: {nonExistentGroup}"),
         _ => throw new ArgumentOutOfRangeException($"Unexpected AtomNode subclass: '{atom.GetType()}'"),
     };
 
@@ -287,9 +321,10 @@ internal class Binder
                 if (astAlt.Action is not null) // Fill captured variables with arguments in action if it non-null.
                 {
                     fieldNames.Clear();
-                    foreach (var argument in astAlt.Action.Arguments)
+                    foreach (var argument in astAlt.Action.Arguments?.Value ?? [])
                     {
-                        if (boundAlt.Variables.TryGetValue(argument.Variable.RawString, out var entry))
+                        var entry = boundAlt.Variables.FirstOrDefault(v => v.Name == argument.Variable.RawString);
+                        if (entry is not null)
                         {
                             string fieldName;
                             capturedVariables.Add(new BoundCapturedVariable
