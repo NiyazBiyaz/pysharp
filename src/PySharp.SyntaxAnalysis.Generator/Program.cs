@@ -79,12 +79,12 @@ internal class Program
 
         fileGenerator.AddParser(parserGenerator.Dump());
 
-        fileGenerator.AddTypes(createTypes(boundGrammar.Types));
+        fileGenerator.AddTypes(createTypes(boundGrammar.Types.OfType<BoundRuleType>()));
 
         return fileGenerator.Dump();
     }
 
-    private static IEnumerable<string> createTypes(IEnumerable<BoundType> types)
+    private static IEnumerable<string> createTypes(IEnumerable<BoundRuleType> types)
     {
         foreach (var type in types)
         {
@@ -112,7 +112,7 @@ internal class Program
 
             var actionGenerator = new CsGenerator();
 
-            actionGenerator.AddAction(alt.Action.Type.Name, variables);
+            actionGenerator.AddAction(alt.Action!.Type.Name, variables);
 
             List<string> conditions = alt.Entries.Select(createCondition).ToList();
 

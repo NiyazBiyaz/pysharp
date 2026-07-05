@@ -11,6 +11,15 @@ internal class Binder
     internal readonly Dictionary<string, BoundRule> Rules = [];
     internal readonly BoundGrammar Grammar = new();
 
+    private BinderStage stage = BinderStage.Empty;
+
+    private const string
+        meta_header = "header",
+        meta_parser_name = "parser_name",
+        decor_main = "main",
+        decor_union = "union",
+        decor_token_union = "inline";
+
     private readonly VariableNamingScope groupTypeNameStore = new();
     // TODO: now it's too messy to create identity by the ast. Would be better to replace it with the some more deterministic.
     private readonly Dictionary<NodeArray<GreenNode>, BoundRule> groupRules = [];
@@ -22,10 +31,10 @@ internal class Binder
         {
             switch (meta.Key.RawString)
             {
-                case "header":
+                case meta_header:
                     userHeader = StringParser.ParseQuoted(meta.Value.RawString);
                     break;
-                case "parser_name":
+                case meta_parser_name:
                     parserName = StringParser.ParseQuoted(meta.Value.RawString);
                     break;
                 default:
@@ -34,9 +43,9 @@ internal class Binder
         }
 
         if (userHeader is null)
-            throw new IncompleteMetadataException("header");
+            throw new IncompleteMetadataException(meta_header);
         if (parserName is null)
-            throw new IncompleteMetadataException("parser_name");
+            throw new IncompleteMetadataException(meta_parser_name);
 
         Grammar.UserHeader = userHeader;
         Grammar.ParserName = parserName;
@@ -44,6 +53,8 @@ internal class Binder
 
     internal void RegisterRules(IEnumerable<RuleNode> rules)
     {
+        Debug.Assert(stage == BinderStage.Empty);
+
         foreach (var astRule in rules)
         {
             var alternatives = astRule is ArmedRuleNode armed
@@ -57,16 +68,37 @@ internal class Binder
             if (Enum.TryParse<TokenType>(name, out _))
                 throw new InvalidNameException($"Cannot create such rule: name '{name}' is reserved for token types.");
 
+            var decorators = astRule.Decorators.Select(d => d.Value.RawString);
+
+            if (decorators.Contains(decor_union) && decorators.Contains(decor_token_union))
+                throw new CompilationException($"Rule cannot be marked as '{decor_union}' and '{decor_token_union}' both in one time.");
+
+            var kind = decorators.Contains(decor_union) ? BoundRuleKind.Union
+                    : decorators.Contains(decor_token_union) ? BoundRuleKind.TokenUnion
+                    : BoundRuleKind.Type;
+
+            BoundType type = kind switch
+            {
+                BoundRuleKind.Type => new BoundRuleType
+                {
+                    Name = name + "Node",
+                    Base = null,
+                },
+                BoundRuleKind.Union => new BoundUnionType
+                {
+                    Name = "I" + name + "Node",
+                },
+                BoundRuleKind.TokenUnion => BoundType.TokenNodeType,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+
             var rule = new BoundRule
             {
                 Name = name,
                 SourceText = astRule.RecoverText(),
                 AstAlternatives = alternatives.ToList(),
-                Type = new BoundType
-                {
-                    Name = name + "Node",
-                    Base = null
-                }
+                Kind = kind,
+                Type = type,
             };
             Rules[rule.Name] = rule;
             Grammar.Rules.Add(rule);
@@ -77,7 +109,7 @@ internal class Binder
                     createGroupRule(group);
             }
 
-            if (astRule.Decorators.Select(d => d.Value.RawString).Contains("main"))
+            if (decorators.Contains(decor_main))
             {
                 if (Grammar.MainRule is not null)
                     throw new CompilationException($"Cannot have two rules marked as main at one time: {Grammar.MainRule.Name}, {rule.Name}");
@@ -89,6 +121,8 @@ internal class Binder
 
         if (Grammar.MainRule is null)
             throw new CompilationException("Grammar should contain one rule declared with `@main` decorator.");
+
+        stage = BinderStage.CreatedRules;
     }
 
     private void createGroupRule(IGroup astGroup)
@@ -111,11 +145,12 @@ internal class Binder
             Name = name,
             SourceText = astGroup.AstAlternatives.RecoverText(),
             AstAlternatives = astGroup.Alternatives,
-            Type = new BoundType
+            Type = new BoundRuleType
             {
                 Name = name + "Node",
                 Base = null,
-            }
+            },
+            Kind = BoundRuleKind.Type, // TODO: Maybe add some decorators to groups syntax too?
         };
 
         if (!groupRules.ContainsKey(astGroup.AstAlternatives))
@@ -148,6 +183,8 @@ internal class Binder
 
     internal void PopulateRules()
     {
+        Debug.Assert(stage == BinderStage.CreatedRules);
+
         if (Rules.Count < 1)
             throw new InvalidOperationException("No registered rules found.");
 
@@ -156,13 +193,30 @@ internal class Binder
             foreach (var astAlt in rule.AstAlternatives)
             {
                 var alt = new BoundAlternative { SourceText = astAlt.RecoverText() };
+
                 foreach (var entry in createEntries(astAlt))
                 {
                     alt.Entries.Add(entry);
+
                 }
+
+                if (rule.Kind != BoundRuleKind.Type)
+                {
+                    if (alt.Variables.Count() != 1)
+                        throw new InvalidUnionException($"should have exactly one variable entry: '{astAlt.Molecules.RecoverText()}'. Consider using lookahead because they do not produce variables.");
+
+                    if (rule.Kind == BoundRuleKind.TokenUnion && alt.Variables.First() is not BoundTokenAlternativeEntry)
+                        throw new CompilationException($"Token union rules cannot have non-token entry as variable: '{astAlt.Molecules.RecoverText()}'");
+
+                    if (rule.Kind == BoundRuleKind.Union && alt.Variables.First() is not BoundRuleAlternativeEntry)
+                        throw new CompilationException($"Union rules cannot have non-rule entry as variable: '{astAlt.Molecules.RecoverText()}'");
+                }
+
                 rule.Alternatives.Add(alt);
             }
         }
+
+        stage = BinderStage.CreatedEntries;
     }
 
     private IEnumerable<BoundAlternativeEntry> createEntries(AlternativeNode alternative)
@@ -311,6 +365,14 @@ internal class Binder
     {
         foreach (var rule in Rules.Values)
         {
+            if (rule.Kind != BoundRuleKind.Type)
+            {
+                if (rule.Alternatives.Any(a => a.Action is not null))
+                    throw new InvalidUnionException($"cannot have actions: '{rule.Name}'");
+
+                continue;
+            }
+
             // To count already added fields and prevent using multiple fields with same name.
             var fieldNames = new HashSet<string>();
 
@@ -364,17 +426,17 @@ internal class Binder
                     throw new CompilationException("Cannot use `new` keyword for rule that have more than 1 arm.");
                 }
 
-                BoundType? type = null;
+                BoundRuleType? type = null;
                 if (astAlt.Action is NamedActionNode namedAction)
                 {
-                    type = new BoundType
+                    type = new BoundRuleType
                     {
-                        Base = rule.Type,
+                        Base = (BoundRuleType)rule.Type,
                         Name = namedAction.Name.RawString + "Node",
                     };
                 }
 
-                type ??= rule.Type;
+                type ??= (BoundRuleType)rule.Type;
 
                 boundAlt.Action = new BoundAction
                 {
@@ -387,6 +449,8 @@ internal class Binder
 
     internal void CreateTypes()
     {
+        Debug.Assert(stage == BinderStage.CreatedEntries);
+
         createCaptures();
 
         HashSet<BoundField> baseRuleFields = [];
@@ -394,52 +458,73 @@ internal class Binder
 
         foreach (var rule in Rules.Values)
         {
-            if (rule.Alternatives.Count == 1)
+            switch (rule.Kind)
             {
-                var fields = rule.Alternatives[0].Action.CapturedVariables.Select(createField);
+                case BoundRuleKind.Type:
+                    if (rule.Alternatives.Count == 1)
+                    {
+                        var fields = rule.Alternatives[0].Action!.CapturedVariables.Select(createField);
 
-                rule.Type.Fields = fields.ToList();
-                Grammar.Types.Add(rule.Type);
-                continue;
-            }
+                        ((BoundRuleType)rule.Type).Fields = fields.ToList();
+                        Grammar.Types.Add(rule.Type);
+                        continue;
+                    }
 
-            bool isEmpty = true;
-            baseRuleFields.Clear();
-            fieldsOfAlternatives.Clear();
+                    bool isEmpty = true;
+                    baseRuleFields.Clear();
+                    fieldsOfAlternatives.Clear();
 
-            foreach (var alt in rule.Alternatives)
-            {
-                var fields = alt.Action.CapturedVariables.Select(createField);
+                    foreach (var alt in rule.Alternatives)
+                    {
+                        var fields = alt.Action!.CapturedVariables.Select(createField);
 
-                var setFields = fields.ToHashSet();
+                        var setFields = fields.ToHashSet();
 
-                if (isEmpty)
-                    baseRuleFields.UnionWith(setFields);
-                else
-                    baseRuleFields.IntersectWith(setFields);
+                        if (isEmpty)
+                            baseRuleFields.UnionWith(setFields);
+                        else
+                            baseRuleFields.IntersectWith(setFields);
 
-                isEmpty = false;
-                fieldsOfAlternatives.Add(setFields);
-            }
+                        isEmpty = false;
+                        fieldsOfAlternatives.Add(setFields);
+                    }
 
-            foreach (var fieldsOfAlt in fieldsOfAlternatives)
-            {
-                fieldsOfAlt.ExceptWith(baseRuleFields);
-            }
+                    foreach (var fieldsOfAlt in fieldsOfAlternatives)
+                    {
+                        fieldsOfAlt.ExceptWith(baseRuleFields);
+                    }
 
-            Debug.Assert(rule.Alternatives.Count == fieldsOfAlternatives.Count);
+                    Debug.Assert(rule.Alternatives.Count == fieldsOfAlternatives.Count);
 
-            rule.Type.Fields = baseRuleFields.ToList();
-            Grammar.Types.Add(rule.Type);
+                    ((BoundRuleType)rule.Type).Fields = baseRuleFields.ToList();
+                    Grammar.Types.Add(rule.Type);
 
-            for (int i = 0; i < rule.Alternatives.Count; i++)
-            {
-                var alt = rule.Alternatives[i];
-                var altFields = fieldsOfAlternatives[i];
-                alt.Action.Type.Fields = altFields.ToList();
-                Grammar.Types.Add(alt.Action.Type);
+                    for (int i = 0; i < rule.Alternatives.Count; i++)
+                    {
+                        var alt = rule.Alternatives[i];
+                        var altFields = fieldsOfAlternatives[i];
+                        alt.Action!.Type.Fields = altFields.ToList();
+                        Grammar.Types.Add(alt.Action.Type);
+                    }
+                    break;
+
+                case BoundRuleKind.Union:
+                    foreach (var alt in rule.Alternatives)
+                    {
+                        var unionMember = ((BoundRuleAlternativeEntry)alt.Variables.First()).Value.Type;
+                        var unionType = (BoundUnionType)rule.Type;
+                        unionMember.UnionMembership.Add(unionType);
+                        unionType.Members.Add(unionMember);
+                    }
+
+                    break;
+
+                case BoundRuleKind.TokenUnion:
+                    break;
             }
         }
+
+        stage = BinderStage.CreatedTypes;
     }
 
     private static BoundField createField(BoundCapturedVariable variable) => new()

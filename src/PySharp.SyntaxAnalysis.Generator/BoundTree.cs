@@ -17,10 +17,18 @@ internal class BoundGrammar
 internal class BoundRule
 {
     internal required string Name { get; init; }
+    internal required BoundRuleKind Kind { get; init; }
     internal required IReadOnlyList<AlternativeNode> AstAlternatives { get; init; }
     internal required string SourceText { get; init; }
-    internal required BoundType Type { get; init; }
+    internal virtual required BoundType Type { get; init; }
     internal List<BoundAlternative> Alternatives { get; } = [];
+}
+
+internal enum BoundRuleKind
+{
+    Type,
+    Union,
+    TokenUnion,
 }
 
 internal class BoundAlternative
@@ -29,7 +37,7 @@ internal class BoundAlternative
     internal List<BoundAlternativeEntry> Entries { get; } = [];
     internal IEnumerable<BoundAlternativeEntry> Variables => Entries
         .Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut);
-    internal BoundAction Action { get; set; } = null!; // It can be used after Binder.CreateCaptures().
+    internal BoundAction? Action { get; set; }
 }
 
 internal class BoundAction
@@ -37,7 +45,7 @@ internal class BoundAction
     /// <summary>
     /// Type that this action would return if alternative is matched.
     /// </summary>
-    internal required BoundType Type { get; init; }
+    internal required BoundRuleType Type { get; init; }
     /// <summary>
     /// Variables that was captured in the <see cref="ActionNode"/> and would be used to generate
     /// type fields.
@@ -120,17 +128,27 @@ internal class BoundGatherAlternativeEntry : BoundAlternativeEntry
     internal required BoundAlternativeEntry Separator { get; init; }
 }
 
-internal class BoundType
+internal abstract class BoundType
 {
-    internal required BoundType? Base { get; init; }
+    internal List<BoundUnionType> UnionMembership { get; } = [];
     internal required string Name { get; init; }
-    internal List<BoundField> Fields { get; set; } = null!;
 
-    internal static readonly BoundType TokenNodeType = new()
+    internal static readonly BoundRuleType TokenNodeType = new()
     {
         Base = null,
         Name = "TokenNode",
     };
+}
+
+internal sealed class BoundRuleType : BoundType
+{
+    internal required BoundRuleType? Base { get; init; }
+    internal List<BoundField> Fields { get; set; } = null!;
+}
+
+internal sealed class BoundUnionType : BoundType
+{
+    internal List<BoundType> Members { get; } = [];
 }
 
 internal record BoundField

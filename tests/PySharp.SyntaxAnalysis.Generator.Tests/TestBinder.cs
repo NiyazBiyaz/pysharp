@@ -85,6 +85,7 @@ public class TestBinder
         binder.RegisterRules(gram.Rules);
 
         Assert.Equal(rules_count, binder.Rules.Count);
+        Assert.All(binder.Grammar.Rules, r => Assert.Equal(BoundRuleKind.Type, r.Kind));
     }
 
     [Fact]
@@ -306,7 +307,7 @@ public class TestBinder
         binder.PopulateRules();
         binder.CreateTypes();
 
-        var types = binder.Grammar.Types;
+        var types = binder.Grammar.Types.Cast<BoundRuleType>().ToList(); // There's no decorated rules.
 
         Assert.Equal(first_type_name, types[0].Name);
         Assert.Equal(second_type_name, types[1].Name);
@@ -340,10 +341,12 @@ public class TestBinder
         binder.PopulateRules();
         binder.CreateTypes();
 
-        Assert.Equal(types_count, binder.Grammar.Types.Count);
+        var types = binder.Grammar.Types.Cast<BoundRuleType>().ToList();
 
-        var baseType = binder.Grammar.Types.First(t => t.Name == base_type_name);
-        var derivedTypes = binder.Grammar.Types.Where(t => t.Name != base_type_name);
+        Assert.Equal(types_count, types.Count);
+
+        var baseType = types.First(t => t.Name == base_type_name);
+        var derivedTypes = types.Where(t => t.Name != base_type_name);
 
         foreach (var dt in derivedTypes)
             Assert.Equal(baseType, dt.Base);
@@ -383,7 +386,7 @@ public class TestBinder
         binder.PopulateRules();
         binder.CreateTypes();
 
-        var types = binder.Grammar.Types;
+        var types = binder.Grammar.Types.Cast<BoundRuleType>().ToList();
 
         Assert.Equal(both_type_fields_count, types[0].Fields.Count);
         Assert.Equal(both_type_fields_count, types[1].Fields.Count);
