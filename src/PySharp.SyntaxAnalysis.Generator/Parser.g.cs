@@ -269,7 +269,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
 
     #region Molecule
     // Molecule:
-    //     | "[" ~ Alternative "]" -> OptionalGroup(Alternative=alternative)
+    //     | "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternativeGather)
     //     | "&" ~ Atom -> PositiveLookahead(Atom=atom)
     //     | "!" ~ Atom -> NegativeLookahead(Atom=atom)
     //     | "-" ~ Atom -> Optional(Atom=atom)
@@ -283,15 +283,15 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         int _mark = base.Mark();
         bool _cut = false;
         {
-            // "[" ~ Alternative "]" -> OptionalGroup(Alternative=alternative)
+            // "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternativeGather)
             GreenNode? leftsquarebracket;
-            GreenNode? alternative;
+            INodeArray<GreenNode>? alternativeGather;
             GreenNode? rightsquarebracket;
             if ((leftsquarebracket = Expect(TokenType.LeftSquareBracket)) is not null
                 &&
                 (_cut = true)
                 &&
-                (alternative = rule_Alternative()) is not null
+                (alternativeGather = base.Gather(rule_Alternative, TokenType.VertBar)) is not null
                 &&
                 (rightsquarebracket = Expect(TokenType.RightSquareBracket)) is not null
             )
@@ -300,7 +300,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
                 {
                     Children = new NodeArray<GreenNode>([
                         leftsquarebracket,
-                        alternative,
+                        new NodeList(alternativeGather),
                         rightsquarebracket,
                     ]),
                 };
@@ -491,7 +491,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
 
     #region Atom
     // Atom:
-    //     | "(" ~ Alternative ")" -> GroupAtom(Alternative=alternative)
+    //     | "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternativeGather)
     //     | Name -> NameAtom(Value=name)
     //     | StringLiteral -> StringAtom(Value=stringliteral)
     AtomNode? rule_Atom()
@@ -499,15 +499,15 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         int _mark = base.Mark();
         bool _cut = false;
         {
-            // "(" ~ Alternative ")" -> GroupAtom(Alternative=alternative)
+            // "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternativeGather)
             GreenNode? leftparen;
-            GreenNode? alternative;
+            INodeArray<GreenNode>? alternativeGather;
             GreenNode? rightparen;
             if ((leftparen = Expect(TokenType.LeftParen)) is not null
                 &&
                 (_cut = true)
                 &&
-                (alternative = rule_Alternative()) is not null
+                (alternativeGather = base.Gather(rule_Alternative, TokenType.VertBar)) is not null
                 &&
                 (rightparen = Expect(TokenType.RightParen)) is not null
             )
@@ -516,7 +516,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
                 {
                     Children = new NodeArray<GreenNode>([
                         leftparen,
-                        alternative,
+                        new NodeList(alternativeGather),
                         rightparen,
                     ]),
                 };
@@ -695,133 +695,159 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     #endregion // Target
 }
 
-internal record GrammarNode : GreenNode
+internal partial record GrammarNode : GreenNode
 {
     internal NodeArray<MetadataNode> Metadata => ((NodeList)Children![0]).GetArray<MetadataNode>();
     internal NodeArray<RuleNode> Rules => ((NodeList)Children![1]).GetArray<RuleNode>();
 }
 
-internal record MetadataNode : GreenNode
+internal partial record MetadataNode : GreenNode
 {
     internal TokenNode Key => (TokenNode)Children![1];
     internal TokenNode Value => (TokenNode)Children![2];
 }
 
-internal record RuleNode : GreenNode
+internal partial record RuleNode : GreenNode
 {
     internal NodeArray<DecoratorNode> Decorators => ((NodeList)Children![0]).GetArray<DecoratorNode>();
     internal TokenNode Name => (TokenNode)Children![1];
 }
 
-internal record ArmedRuleNode : RuleNode
+internal partial record ArmedRuleNode : RuleNode
 {
     internal NodeArray<ArmNode> Arms => ((NodeList)Children![5]).GetArray<ArmNode>();
 }
 
-internal record SingleAlternativeRuleNode : RuleNode
+internal partial record SingleAlternativeRuleNode : RuleNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![3];
 }
 
-internal record ArmNode : GreenNode
+internal partial record ArmNode : GreenNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![1];
 }
 
-internal record DecoratorNode : GreenNode
+internal partial record DecoratorNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
 }
 
-internal record AlternativeNode : GreenNode
+internal partial record AlternativeNode : GreenNode
 {
     internal NodeArray<MoleculeNode> Molecules => ((NodeList)Children![0]).GetArray<MoleculeNode>();
     internal ActionNode? Action => Children![1] as ActionNode;
 }
 
-internal record MoleculeNode : GreenNode
+internal partial record MoleculeNode : GreenNode
 {
 }
 
-internal record OptionalGroupNode : MoleculeNode
+internal partial record OptionalGroupNode : MoleculeNode
 {
-    internal AlternativeNode Alternative => (AlternativeNode)Children![1];
+    private global::System.Collections.Immutable.ImmutableArray<AlternativeNode>? _field_Alternatives = null;
+    internal global::System.Collections.Immutable.ImmutableArray<AlternativeNode> Alternatives
+    {
+        get
+        {
+            if (_field_Alternatives is null)
+            {
+                var _tmp = AstAlternatives.Where(static (_, i) => i % 2 == 0).Cast<AlternativeNode>();
+                _field_Alternatives = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_Alternatives.Value;
+        }
+    }
+    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
 }
 
-internal record PositiveLookaheadNode : MoleculeNode
+internal partial record PositiveLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal record NegativeLookaheadNode : MoleculeNode
+internal partial record NegativeLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal record OptionalNode : MoleculeNode
+internal partial record OptionalNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal record GatherNode : MoleculeNode
+internal partial record GatherNode : MoleculeNode
 {
     internal AtomNode ValueAtom => (AtomNode)Children![0];
     internal AtomNode Separator => (AtomNode)Children![3];
 }
 
-internal record RepeatOneMoreNode : MoleculeNode
+internal partial record RepeatOneMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal record RepeatZeroMoreNode : MoleculeNode
+internal partial record RepeatZeroMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal record AtomMoleculeNode : MoleculeNode
+internal partial record AtomMoleculeNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal record CutNode : MoleculeNode
+internal partial record CutNode : MoleculeNode
 {
 }
 
-internal record AtomNode : GreenNode
+internal partial record AtomNode : GreenNode
 {
 }
 
-internal record GroupAtomNode : AtomNode
+internal partial record GroupAtomNode : AtomNode
 {
-    internal AlternativeNode Alternative => (AlternativeNode)Children![1];
+    private global::System.Collections.Immutable.ImmutableArray<AlternativeNode>? _field_Alternatives = null;
+    internal global::System.Collections.Immutable.ImmutableArray<AlternativeNode> Alternatives
+    {
+        get
+        {
+            if (_field_Alternatives is null)
+            {
+                var _tmp = AstAlternatives.Where(static (_, i) => i % 2 == 0).Cast<AlternativeNode>();
+                _field_Alternatives = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_Alternatives.Value;
+        }
+    }
+    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
 }
 
-internal record NameAtomNode : AtomNode
+internal partial record NameAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
 }
 
-internal record StringAtomNode : AtomNode
+internal partial record StringAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
 }
 
-internal record ActionNode : GreenNode
+internal partial record ActionNode : GreenNode
 {
     internal ArgumentsNode? Arguments => Children![3] as ArgumentsNode;
 }
 
-internal record InferredActionNode : ActionNode
+internal partial record InferredActionNode : ActionNode
 {
 }
 
-internal record NamedActionNode : ActionNode
+internal partial record NamedActionNode : ActionNode
 {
     internal TokenNode Name => (TokenNode)Children![1];
 }
 
-internal record ArgumentsNode : GreenNode
+internal partial record ArgumentsNode : GreenNode
 {
     private global::System.Collections.Immutable.ImmutableArray<TargetNode>? _field_Value = null;
     internal global::System.Collections.Immutable.ImmutableArray<TargetNode> Value
@@ -839,7 +865,7 @@ internal record ArgumentsNode : GreenNode
     internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
 }
 
-internal record TargetNode : GreenNode
+internal partial record TargetNode : GreenNode
 {
     internal TokenNode Field => (TokenNode)Children![0];
     internal TokenNode Variable => (TokenNode)Children![2];

@@ -17,7 +17,7 @@ internal class BoundGrammar
 internal class BoundRule
 {
     internal required string Name { get; init; }
-    internal required IList<AlternativeNode> AstAlternatives { get; init; }
+    internal required IReadOnlyList<AlternativeNode> AstAlternatives { get; init; }
     internal required string SourceText { get; init; }
     internal required BoundType Type { get; init; }
     internal List<BoundAlternative> Alternatives { get; } = [];

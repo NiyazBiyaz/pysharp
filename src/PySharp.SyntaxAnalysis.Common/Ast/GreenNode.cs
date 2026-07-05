@@ -3,7 +3,7 @@ using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
-public abstract record GreenNode
+public abstract record GreenNode : IGreenNode
 {
     public virtual TokenPosition FullOffset2D
     {

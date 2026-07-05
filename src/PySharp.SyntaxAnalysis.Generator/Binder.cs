@@ -1,5 +1,7 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
+using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Generator;
@@ -10,7 +12,8 @@ internal class Binder
     internal readonly BoundGrammar Grammar = new();
 
     private readonly VariableNamingScope groupTypeNameStore = new();
-    private readonly Dictionary<AlternativeNode, BoundRule> groupRules = [];
+    // TODO: now it's too messy to create identity by the ast. Would be better to replace it with the some more deterministic.
+    private readonly Dictionary<NodeArray<GreenNode>, BoundRule> groupRules = [];
 
     internal void ReadMetadata(IEnumerable<MetadataNode> metadata)
     {
@@ -71,10 +74,7 @@ internal class Binder
             foreach (var alt in alternatives)
             {
                 foreach (var group in getGroups(alt))
-                    createGroupRule(group.Alternative);
-
-                foreach (var group in getOptGroups(alt))
-                    createGroupRule(group.Alternative);
+                    createGroupRule(group);
             }
 
             if (astRule.Decorators.Select(d => d.Value.RawString).Contains("main"))
@@ -91,17 +91,26 @@ internal class Binder
             throw new CompilationException("Grammar should contain one rule declared with `@main` decorator.");
     }
 
-    private void createGroupRule(AlternativeNode alternative)
+    private void createGroupRule(IGroup astGroup)
     {
-        string name = alternative.Action is NamedActionNode typeHint
-            ? typeHint.Name.RawString
-            : groupTypeNameStore.NextTypeName();
+        string name;
+        if (astGroup.Alternatives.Length == 1)
+        {
+            name = astGroup.Alternatives[0].Action is NamedActionNode typeHint
+                ? typeHint.Name.RawString
+                : groupTypeNameStore.NextTypeName();
+        }
+        else
+        {
+            // TODO: Add better way to create names for groups.
+            name = groupTypeNameStore.NextTypeName();
+        }
 
         var groupRule = new BoundRule
         {
             Name = name,
-            SourceText = alternative.RecoverText(),
-            AstAlternatives = [alternative],
+            SourceText = astGroup.AstAlternatives.RecoverText(),
+            AstAlternatives = astGroup.Alternatives,
             Type = new BoundType
             {
                 Name = name + "Node",
@@ -109,24 +118,19 @@ internal class Binder
             }
         };
 
-        if (!groupRules.ContainsKey(alternative))
+        if (!groupRules.ContainsKey(astGroup.AstAlternatives))
         {
             Rules[groupRule.Name] = groupRule;
             Grammar.Rules.Add(groupRule);
-            groupRules[alternative] = groupRule;
+            groupRules[astGroup.AstAlternatives] = groupRule;
         }
 
-        foreach (var group in getGroups(alternative))
-            createGroupRule(group.Alternative);
-        foreach (var group in getOptGroups(alternative))
-            createGroupRule(group.Alternative);
+        foreach (var group in astGroup.Alternatives.SelectMany(getGroups))
+            createGroupRule(group);
     }
 
-    private static IEnumerable<OptionalGroupNode> getOptGroups(AlternativeNode alternative)
-        => alternative.Molecules.Where(m => m is OptionalGroupNode).Select(m => (OptionalGroupNode)m);
-
-    private static IEnumerable<GroupAtomNode> getGroups(AlternativeNode alternative) => alternative.Molecules
-        .Where(m => m is not OptionalGroupNode) // Optional groups should be processed separately.
+    private static IEnumerable<IGroup> getGroups(AlternativeNode alternative) => alternative.Molecules
+        .Where(m => m is not OptionalGroupNode) // Add it later.
         .SelectMany<MoleculeNode, AtomNode>(m => m switch
         {
             AtomMoleculeNode hydrogen => [hydrogen.Atom],
@@ -139,7 +143,8 @@ internal class Binder
             CutNode => [],
             _ => throw new UnreachableException($"Unexpected MoleculeNode subclass: {m.GetType()}")
         })
-        .OfType<GroupAtomNode>();
+        .OfType<IGroup>()
+        .Concat(alternative.Molecules.Where(m => m is OptionalGroupNode).Cast<OptionalGroupNode>());
 
     internal void PopulateRules()
     {
@@ -208,7 +213,7 @@ internal class Binder
                     break;
 
                 case OptionalGroupNode optGroup:
-                    var rule = groupRules[optGroup.Alternative];
+                    var rule = groupRules[optGroup.AstAlternatives];
                     yield return new BoundRuleAlternativeEntry
                     {
                         Name = nameScope.NextName(rule.Name),
@@ -294,8 +299,8 @@ internal class Binder
         GroupAtomNode groupAtom => new BoundRuleAlternativeEntry
         {
             Quantifier = quant,
-            Name = nameScope.NextName(groupRules[groupAtom.Alternative].Name) + quant.GetSuffix(count),
-            Value = groupRules[groupAtom.Alternative],
+            Name = nameScope.NextName(groupRules[groupAtom.AstAlternatives].Name) + quant.GetSuffix(count),
+            Value = groupRules[groupAtom.AstAlternatives],
             MinRepeatCount = count,
             Positiveness = positive,
         },

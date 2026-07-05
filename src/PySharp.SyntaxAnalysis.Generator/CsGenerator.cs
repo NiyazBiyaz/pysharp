@@ -342,7 +342,7 @@ internal class CsGenerator
 
         baseName ??= nameof(GreenNode);
 
-        addLine($"{modifierName} record {typeName} : {baseName}");
+        addLine($"{modifierName} partial record {typeName} : {baseName}");
     }
 
     private const string indent_string = "    ";
