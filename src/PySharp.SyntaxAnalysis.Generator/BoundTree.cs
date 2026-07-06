@@ -230,6 +230,7 @@ internal abstract class BoundType
     internal static readonly BoundRuleType TokenNodeType = new()
     {
         Base = null,
+        IsAbstract = false,
         Name = "TokenNode",
     };
 
@@ -237,15 +238,16 @@ internal abstract class BoundType
     {
         var gen = new CsGenerator();
 
-        if (this is not BoundUnionType)
+        if (this is BoundRuleType ruleType)
         {
             gen.AddTypeSignature(
                 AccessModifier.Internal,
                 Name,
-                (this as BoundRuleType)?.Base?.Name,
+                ruleType.Base?.Name,
+                ruleType.IsAbstract,
                 UnionMembership.Select(u => u.Name));
 
-            var fields = (this as BoundRuleType)?.Fields ?? [];
+            var fields = ruleType.Fields ?? [];
             gen.AddTypeBody(fields.Select(f => new FieldIr(f, AccessModifier.Internal)));
         }
         else
@@ -263,6 +265,7 @@ internal abstract class BoundType
 internal sealed class BoundRuleType : BoundType
 {
     internal required BoundRuleType? Base { get; init; }
+    internal required bool IsAbstract { get; init; }
     internal List<BoundField> Fields { get; set; } = null!;
 }
 

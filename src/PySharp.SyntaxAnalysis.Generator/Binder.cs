@@ -82,6 +82,7 @@ internal class Binder
                 BoundRuleKind.Type => new BoundRuleType
                 {
                     Name = name + "Node",
+                    IsAbstract = alternatives.Count() != 1,
                     Base = null,
                 },
                 BoundRuleKind.Union => new BoundUnionType
@@ -148,6 +149,7 @@ internal class Binder
             Type = new BoundRuleType
             {
                 Name = name + "Node",
+                IsAbstract = astGroup.Alternatives.Length != 1,
                 Base = null,
             },
             Kind = BoundRuleKind.Type, // TODO: Maybe add some decorators to groups syntax too?
@@ -432,6 +434,7 @@ internal class Binder
                     type = new BoundRuleType
                     {
                         Base = (BoundRuleType)rule.Type,
+                        IsAbstract = false,
                         Name = namedAction.Name.RawString + "Node",
                     };
                 }

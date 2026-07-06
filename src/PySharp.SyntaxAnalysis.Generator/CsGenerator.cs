@@ -334,14 +334,14 @@ internal class CsGenerator
         close();
     }
 
-    internal void AddTypeSignature(AccessModifier accessModifier, string typeName, string? baseName, IEnumerable<string> unionMembership)
+    internal void AddTypeSignature(AccessModifier accessModifier, string typeName, string? baseName, bool isAbstract, IEnumerable<string> unionMembership)
     {
         string modifierName = accessModifier.CodeRepresentation();
 
         baseName ??= nameof(GreenNode);
 
         beginLine();
-        add($"{modifierName} partial record {typeName} : {baseName}");
+        add($"{modifierName} {(isAbstract ? "abstract" : "sealed")} partial record {typeName} : {baseName}");
         foreach (var union in unionMembership)
             add($", {union}");
         endLine();

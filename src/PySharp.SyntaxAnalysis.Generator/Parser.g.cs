@@ -695,55 +695,55 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     #endregion // Target
 }
 #region Type definitions
-internal partial record GrammarNode : GreenNode
+internal sealed partial record GrammarNode : GreenNode
 {
     internal NodeArray<MetadataNode> Metadata => ((NodeList)Children![0]).GetArray<MetadataNode>();
     internal NodeArray<RuleNode> Rules => ((NodeList)Children![1]).GetArray<RuleNode>();
 }
 
-internal partial record MetadataNode : GreenNode
+internal sealed partial record MetadataNode : GreenNode
 {
     internal TokenNode Key => (TokenNode)Children![1];
     internal TokenNode Value => (TokenNode)Children![2];
 }
 
-internal partial record RuleNode : GreenNode
+internal abstract partial record RuleNode : GreenNode
 {
     internal NodeArray<DecoratorNode> Decorators => ((NodeList)Children![0]).GetArray<DecoratorNode>();
     internal TokenNode Name => (TokenNode)Children![1];
 }
 
-internal partial record ArmedRuleNode : RuleNode
+internal sealed partial record ArmedRuleNode : RuleNode
 {
     internal NodeArray<ArmNode> Arms => ((NodeList)Children![5]).GetArray<ArmNode>();
 }
 
-internal partial record SingleAlternativeRuleNode : RuleNode
+internal sealed partial record SingleAlternativeRuleNode : RuleNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![3];
 }
 
-internal partial record ArmNode : GreenNode
+internal sealed partial record ArmNode : GreenNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![1];
 }
 
-internal partial record DecoratorNode : GreenNode
+internal sealed partial record DecoratorNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
 }
 
-internal partial record AlternativeNode : GreenNode
+internal sealed partial record AlternativeNode : GreenNode
 {
     internal NodeArray<MoleculeNode> Molecules => ((NodeList)Children![0]).GetArray<MoleculeNode>();
     internal ActionNode? Action => Children![1] as ActionNode;
 }
 
-internal partial record MoleculeNode : GreenNode
+internal abstract partial record MoleculeNode : GreenNode
 {
 }
 
-internal partial record OptionalGroupNode : MoleculeNode
+internal sealed partial record OptionalGroupNode : MoleculeNode
 {
     private global::System.Collections.Immutable.ImmutableArray<AlternativeNode>? _field_Alternatives = null;
     internal global::System.Collections.Immutable.ImmutableArray<AlternativeNode> Alternatives
@@ -761,51 +761,51 @@ internal partial record OptionalGroupNode : MoleculeNode
     internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
 }
 
-internal partial record PositiveLookaheadNode : MoleculeNode
+internal sealed partial record PositiveLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal partial record NegativeLookaheadNode : MoleculeNode
+internal sealed partial record NegativeLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal partial record OptionalNode : MoleculeNode
+internal sealed partial record OptionalNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
 }
 
-internal partial record GatherNode : MoleculeNode
+internal sealed partial record GatherNode : MoleculeNode
 {
     internal AtomNode ValueAtom => (AtomNode)Children![0];
     internal AtomNode Separator => (AtomNode)Children![3];
 }
 
-internal partial record RepeatOneMoreNode : MoleculeNode
+internal sealed partial record RepeatOneMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal partial record RepeatZeroMoreNode : MoleculeNode
+internal sealed partial record RepeatZeroMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal partial record AtomMoleculeNode : MoleculeNode
+internal sealed partial record AtomMoleculeNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
 }
 
-internal partial record CutNode : MoleculeNode
+internal sealed partial record CutNode : MoleculeNode
 {
 }
 
-internal partial record AtomNode : GreenNode
+internal abstract partial record AtomNode : GreenNode
 {
 }
 
-internal partial record GroupAtomNode : AtomNode
+internal sealed partial record GroupAtomNode : AtomNode
 {
     private global::System.Collections.Immutable.ImmutableArray<AlternativeNode>? _field_Alternatives = null;
     internal global::System.Collections.Immutable.ImmutableArray<AlternativeNode> Alternatives
@@ -823,31 +823,31 @@ internal partial record GroupAtomNode : AtomNode
     internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
 }
 
-internal partial record NameAtomNode : AtomNode
+internal sealed partial record NameAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
 }
 
-internal partial record StringAtomNode : AtomNode
+internal sealed partial record StringAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
 }
 
-internal partial record ActionNode : GreenNode
+internal abstract partial record ActionNode : GreenNode
 {
     internal ArgumentsNode? Arguments => Children![3] as ArgumentsNode;
 }
 
-internal partial record InferredActionNode : ActionNode
+internal sealed partial record InferredActionNode : ActionNode
 {
 }
 
-internal partial record NamedActionNode : ActionNode
+internal sealed partial record NamedActionNode : ActionNode
 {
     internal TokenNode Name => (TokenNode)Children![1];
 }
 
-internal partial record ArgumentsNode : GreenNode
+internal sealed partial record ArgumentsNode : GreenNode
 {
     private global::System.Collections.Immutable.ImmutableArray<TargetNode>? _field_Value = null;
     internal global::System.Collections.Immutable.ImmutableArray<TargetNode> Value
@@ -865,7 +865,7 @@ internal partial record ArgumentsNode : GreenNode
     internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
 }
 
-internal partial record TargetNode : GreenNode
+internal sealed partial record TargetNode : GreenNode
 {
     internal TokenNode Field => (TokenNode)Children![0];
     internal TokenNode Variable => (TokenNode)Children![2];
