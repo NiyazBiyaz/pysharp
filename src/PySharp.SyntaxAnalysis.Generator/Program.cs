@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Tokens;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("PySharp.SyntaxAnalysis.Generator.Tests")]
@@ -56,104 +55,10 @@ internal class Program
 
         fileGenerator.AddFileHeader(boundGrammar.UserHeader!, grammarPath);
 
-        string parserFile = createParser(fileGenerator, boundGrammar);
+        string generatedGrammar = boundGrammar.GenerateCode();
 
-        File.WriteAllText(outputPath, parserFile);
-    }
+        fileGenerator.AddFileBody(generatedGrammar);
 
-    private static string createParser(CsGenerator fileGenerator, BoundGrammar boundGrammar)
-    {
-        var parserGenerator = new CsGenerator();
-        parserGenerator.AddParserSignature(AccessModifier.Internal, boundGrammar.ParserName!, boundGrammar.TopLevelNodeName!);
-
-        List<string> ruleEmits = [];
-        foreach (var rule in boundGrammar.Rules)
-        {
-            ruleEmits.Add(createRule(rule));
-        }
-
-        Debug.Assert(boundGrammar.MainRule is not null);
-
-        parserGenerator.AddParserBody(boundGrammar.MainRule.Name, boundGrammar.MainRule.Type.Name,
-                                      ruleEmits, []);
-
-        fileGenerator.AddParser(parserGenerator.Dump());
-
-        fileGenerator.AddTypes(createTypes(boundGrammar.Types.OfType<BoundRuleType>()));
-
-        return fileGenerator.Dump();
-    }
-
-    private static IEnumerable<string> createTypes(IEnumerable<BoundRuleType> types)
-    {
-        foreach (var type in types)
-        {
-            var typeGenerator = new CsGenerator();
-
-            typeGenerator.AddTypeSignature(AccessModifier.Internal, type.Name, type.Base?.Name);
-
-            typeGenerator.AddTypeBody(type.Fields.Select(f => new FieldIr(f, AccessModifier.Internal)));
-
-            yield return typeGenerator.Dump();
-        }
-    }
-
-    private static string createRule(BoundRule rule)
-    {
-        var ruleGenerator = new CsGenerator();
-        var ir = new RuleIr(rule.SourceText, rule.Name, rule.Type.Name);
-        ruleGenerator.AddRuleHeader(ir);
-
-        var altEmits = rule.Alternatives.Select(alt =>
-        {
-            List<VariableIr> variables = alt.Variables
-                .Select(v => new VariableIr(v.Name, v.Quantifier.IsArray, v.Quantifier is QuantifierKind.Optional))
-                .ToList();
-
-            var actionGenerator = new CsGenerator();
-
-            actionGenerator.AddAction(alt.Action!.Type.Name, variables);
-
-            List<string> conditions = alt.Entries.Select(createCondition).ToList();
-
-            var altGenerator = new CsGenerator();
-
-            altGenerator.AddAlternative(alt.SourceText, variables, conditions, actionGenerator.Dump());
-
-            return (altGenerator.Dump(), alt.Entries.Any(e => e.Quantifier == QuantifierKind.Cut));
-        });
-        ruleGenerator.AddRuleBody(altEmits);
-        ruleGenerator.AddRuleEnd(ir);
-
-        return ruleGenerator.Dump();
-    }
-
-    private static string createCondition(BoundAlternativeEntry alternativeEntry)
-    {
-        static AtomIr? getAtom(BoundAlternativeEntry alternativeEntry) => alternativeEntry switch
-        {
-            BoundTokenAlternativeEntry token => new AtomIr(token.Value.ToString(), false, true),
-            BoundStringAlternativeEntry str => new AtomIr(str.Value, true, false),
-            BoundRuleAlternativeEntry rule => new AtomIr(rule.Value.Name, false, false),
-            BoundGatherAlternativeEntry gath => getAtom(gath.Value),
-            BoundCutAlternativeEntry => null,
-            _ => throw new UnreachableException("Unexpected bound alternative entry class."),
-        };
-
-        var conditionIr = new ConditionIr
-        {
-            Kind = alternativeEntry.Quantifier,
-            MinCount = alternativeEntry.MinRepeatCount,
-            Positive = alternativeEntry.Positiveness,
-            AssignedVar = alternativeEntry.Name,
-            Atom = getAtom(alternativeEntry) ?? null!, // Null can be returned only when quantifier is Cut.
-            Separator = alternativeEntry is BoundGatherAlternativeEntry gath ? getAtom(gath.Separator) : null,
-        };
-
-        var condGenerator = new CsGenerator();
-
-        condGenerator.AddCondition(conditionIr);
-
-        return condGenerator.Dump();
+        File.WriteAllText(outputPath, fileGenerator.Dump());
     }
 }

@@ -694,7 +694,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     }
     #endregion // Target
 }
-
+#region Type definitions
 internal partial record GrammarNode : GreenNode
 {
     internal NodeArray<MetadataNode> Metadata => ((NodeList)Children![0]).GetArray<MetadataNode>();
@@ -870,3 +870,4 @@ internal partial record TargetNode : GreenNode
     internal TokenNode Field => (TokenNode)Children![0];
     internal TokenNode Variable => (TokenNode)Children![2];
 }
+#endregion

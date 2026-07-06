@@ -11,12 +11,12 @@ internal record VariableIr(string Name, bool IsArray, bool IsOptional)
 
 internal record ConditionIr
 {
-    public QuantifierKind Kind { get; init; }
-    public string? AssignedVar { get; init; }
-    public bool? Positive { get; init; }
-    public int? MinCount { get; init; }
-    public AtomIr Atom { get; init; } = null!;
-    public AtomIr? Separator { get; init; }
+    public required QuantifierKind Kind { get; init; }
+    public required string? AssignedVar { get; init; }
+    public required bool? Positive { get; init; }
+    public required int? MinCount { get; init; }
+    public required AtomIr Atom { get; init; } = null!;
+    public required AtomIr? Separator { get; init; }
 }
 
 internal record AtomIr(string CallData, bool IsString, bool IsToken);

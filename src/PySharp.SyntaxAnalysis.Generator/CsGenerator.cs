@@ -24,11 +24,11 @@ internal class CsGenerator
         return builder.ToString();
     }
 
-    internal void AddAction(string returnTypeName, IEnumerable<VariableIr> variables)
+    internal void AddCreationAction(string returnTypeName, IEnumerable<VariableIr> variables)
     {
-        addLine($"return new {returnTypeName}()");
+        AddLine($"return new {returnTypeName}()");
         open();
-        addLine("Children = new NodeArray<GreenNode>([");
+        AddLine("Children = new NodeArray<GreenNode>([");
         indentation++;
         foreach (var variable in variables)
         {
@@ -38,13 +38,15 @@ internal class CsGenerator
             else if (variable.IsOptional)
                 varName = $"{varName} ?? VoidNode.Instance";
 
-            addLine($"{varName},");
+            AddLine($"{varName},");
         }
         indentation--;
-        addLine("]),");
+        AddLine("]),");
         indentation--;
-        addLine("};");
+        AddLine("};");
     }
+
+    internal void AddPassAction(string name) => AddLine($"return {name};");
 
     internal void AddCondition(ConditionIr conditionIr)
     {
@@ -122,19 +124,19 @@ internal class CsGenerator
         static string wrapNull(ReadOnlySpan<char> value) => $"({value}) is not null";
     }
 
-    internal void AddAlternative(string originalText, IEnumerable<VariableIr> variables, IEnumerable<string> conditionEmits, string actionEmit)
+    internal void AddAlternative(string originalText, IEnumerable<VariableIr> variables, IEnumerable<string> conditionEmits, string? actionEmit)
     {
         foreach (var line in originalText.Trim().EnumerateLines())
         {
-            addLine($"// {line}");
+            AddLine($"// {line}");
         }
 
         foreach (var varEmit in variables)
         {
             if (varEmit.IsArray)
-                addLine($"INodeArray<GreenNode>? {varEmit.Name};");
+                AddLine($"INodeArray<GreenNode>? {varEmit.Name};");
             else
-                addLine($"GreenNode? {varEmit.Name};");
+                AddLine($"GreenNode? {varEmit.Name};");
         }
 
         if (conditionEmits.Count() == 1)
@@ -145,15 +147,15 @@ internal class CsGenerator
         }
         else
         {
-            addLine($"if ({conditionEmits.First()}");
+            AddLine($"if ({conditionEmits.First()}");
             indentation++;
             foreach (var condEmit in conditionEmits.Skip(1))
             {
-                addLine("&&");
-                addLine(condEmit);
+                AddLine("&&");
+                AddLine(condEmit);
             }
             indentation--;
-            addLine(")");
+            AddLine(")");
         }
 
         open();
@@ -163,20 +165,20 @@ internal class CsGenerator
 
     internal void AddRuleHeader(RuleIr ruleIr)
     {
-        addLine($"#region {ruleIr.Name}");
+        AddLine($"#region {ruleIr.Name}");
         foreach (var line in ruleIr.OriginalText.Trim('\n', '\r', ' ', '\t').EnumerateLines())
-            addLine($"// {line}");
+            AddLine($"// {line}");
 
-        addLine($"{ruleIr.ReturnTypeName}? rule_{ruleIr.Name}()");
+        AddLine($"{ruleIr.ReturnTypeName}? rule_{ruleIr.Name}()");
     }
 
     internal void AddRuleBody(IEnumerable<(string alternativeText, bool hasCut)> alternativeEmits)
     {
         open();
 
-        addLine("int _mark = base.Mark();");
+        AddLine("int _mark = base.Mark();");
         if (alternativeEmits.Any(ae => ae.hasCut))
-            addLine("bool _cut = false;");
+            AddLine("bool _cut = false;");
 
         foreach (var (altText, hasCut) in alternativeEmits)
         {
@@ -184,7 +186,7 @@ internal class CsGenerator
             addLines(altText);
             close();
 
-            addLine("base.Reset(_mark);");
+            AddLine("base.Reset(_mark);");
             if (hasCut)
             {
                 addLines("""
@@ -196,18 +198,18 @@ internal class CsGenerator
             }
         }
 
-        addLine("return null;");
+        AddLine("return null;");
 
         close();
     }
 
-    internal void AddRuleEnd(RuleIr ruleIr) => addLine($"#endregion // {ruleIr.Name}");
+    internal void AddRuleEnd(RuleIr ruleIr) => AddLine($"#endregion // {ruleIr.Name}");
 
     internal void AddParserSignature(AccessModifier accessModifier, string parserName, string topLevelNodeName)
     {
         string modifierName = accessModifier.CodeRepresentation();
 
-        addLine($"{modifierName} class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
+        AddLine($"{modifierName} class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
     }
 
     internal void AddParserBody(string mainName, string mainTypeName, IEnumerable<string> ruleEmits, IEnumerable<string> keywords)
@@ -222,10 +224,10 @@ internal class CsGenerator
             indentation++;
             foreach (var kwd in keywords)
             {
-                addLine($"\"{kwd}\",");
+                AddLine($"\"{kwd}\",");
             }
             indentation--;
-            addLine("];");
+            AddLine("];");
         }
         else
         {
@@ -235,7 +237,7 @@ internal class CsGenerator
 
         addBlankLine();
 
-        addLine($"public override {mainTypeName}? Parse() => rule_{mainName}();");
+        AddLine($"public override {mainTypeName}? Parse() => rule_{mainName}();");
 
         foreach (var emitRule in ruleEmits)
         {
@@ -255,16 +257,12 @@ internal class CsGenerator
         #nullable enable
         """);
         addBlankLine();
-        addLine($"// Generated from '{grammarName}'");
+        AddLine($"// Generated from '{grammarName}'");
         addLines(userHeader);
         addBlankLine();
     }
 
-    internal void AddParser(string parserEmit)
-    {
-        addLines(parserEmit);
-        addBlankLine();
-    }
+    internal void AddFileBody(string grammarEmit) => addLines(grammarEmit);
 
     internal void AddTypes(IEnumerable<string> typeEmits)
     {
@@ -295,16 +293,16 @@ internal class CsGenerator
                 case FieldKind.Plain:
                     if (field.IsOptional)
                     {
-                        addLine($"{modifier} {field.TypeName}? {field.Name} => Children![{field.ChildIndex}] as {field.TypeName};");
+                        AddLine($"{modifier} {field.TypeName}? {field.Name} => Children![{field.ChildIndex}] as {field.TypeName};");
                     }
                     else
                     {
-                        addLine($"{modifier} {field.TypeName} {field.Name} => ({field.TypeName})Children![{field.ChildIndex}];");
+                        AddLine($"{modifier} {field.TypeName} {field.Name} => ({field.TypeName})Children![{field.ChildIndex}];");
                     }
                     break;
 
                 case FieldKind.Array:
-                    addLine($"""
+                    AddLine($"""
                     {modifier} NodeArray<{field.TypeName}> {field.Name} => ((NodeList)Children![{field.ChildIndex}]).GetArray<{field.TypeName}>();
                     """);
                     break;
@@ -336,28 +334,52 @@ internal class CsGenerator
         close();
     }
 
-    internal void AddTypeSignature(AccessModifier accessModifier, string typeName, string? baseName)
+    internal void AddTypeSignature(AccessModifier accessModifier, string typeName, string? baseName, IEnumerable<string> unionMembership)
     {
         string modifierName = accessModifier.CodeRepresentation();
 
         baseName ??= nameof(GreenNode);
 
-        addLine($"{modifierName} partial record {typeName} : {baseName}");
+        beginLine();
+        add($"{modifierName} partial record {typeName} : {baseName}");
+        foreach (var union in unionMembership)
+            add($", {union}");
+        endLine();
+    }
+
+    internal void AddUnion(AccessModifier accessModifier, string typeName, IEnumerable<string> unionMembership)
+    {
+        string modifierName = accessModifier.CodeRepresentation();
+
+        beginLine();
+        add($"{modifierName} partial interface {typeName} : IGreenNode");
+        foreach (var union in unionMembership)
+            add($", {union}");
+
+        add(";");
+        endLine();
     }
 
     private const string indent_string = "    ";
     private const string new_line = "\n";
 
+    internal void AddLine(ReadOnlySpan<char> value)
+    {
+        beginLine();
+        add(value);
+        endLine();
+    }
+
     private void open()
     {
-        addLine("{");
+        AddLine("{");
         indentation++;
     }
 
     private void close()
     {
         indentation--;
-        addLine("}");
+        AddLine("}");
     }
 
     private void addBlankLine() => endLine();
@@ -374,15 +396,8 @@ internal class CsGenerator
     {
         foreach (var line in value.Trim().EnumerateLines())
         {
-            addLine(line);
+            AddLine(line);
         }
-    }
-
-    private void addLine(ReadOnlySpan<char> value)
-    {
-        beginLine();
-        add(value);
-        endLine();
     }
 
     private void add(ReadOnlySpan<char> value) => builder.Append(value);

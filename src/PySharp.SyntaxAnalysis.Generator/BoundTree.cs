@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
@@ -6,12 +7,29 @@ namespace PySharp.SyntaxAnalysis.Generator;
 
 internal class BoundGrammar
 {
-    internal string? ParserName { get; set; }
-    internal string? TopLevelNodeName { get; set; }
-    internal string? UserHeader { get; set; }
+    internal string ParserName { get; set; } = null!;
+    internal string TopLevelNodeName { get; set; } = null!;
+    internal string UserHeader { get; set; } = null!;
+    internal BoundRule MainRule { get; set; } = null!;
     internal List<BoundRule> Rules { get; } = [];
-    internal BoundRule? MainRule { get; set; }
     internal List<BoundType> Types { get; } = [];
+
+    internal string GenerateCode()
+    {
+        var gen = new CsGenerator();
+
+        gen.AddParserSignature(AccessModifier.Internal, ParserName, TopLevelNodeName);
+
+        gen.AddParserBody(MainRule.Name, TopLevelNodeName, Rules.Select(r => r.GenerateCode()), []);
+
+        gen.AddLine("#region Type definitions");
+
+        gen.AddTypes(Types.Select(t => t.GenerateCode()));
+
+        gen.AddLine("#endregion");
+
+        return gen.Dump();
+    }
 }
 
 internal class BoundRule
@@ -20,8 +38,23 @@ internal class BoundRule
     internal required BoundRuleKind Kind { get; init; }
     internal required IReadOnlyList<AlternativeNode> AstAlternatives { get; init; }
     internal required string SourceText { get; init; }
-    internal virtual required BoundType Type { get; init; }
+    internal required BoundType Type { get; init; }
     internal List<BoundAlternative> Alternatives { get; } = [];
+
+    internal string GenerateCode()
+    {
+        var gen = new CsGenerator();
+
+        var ir = new RuleIr(SourceText, Name, Type.Name);
+
+        gen.AddRuleHeader(ir);
+
+        gen.AddRuleBody(Alternatives.Select(a => a.GenerateCode()));
+
+        gen.AddRuleEnd(ir);
+
+        return gen.Dump();
+    }
 }
 
 internal enum BoundRuleKind
@@ -35,9 +68,39 @@ internal class BoundAlternative
 {
     internal required string SourceText { get; init; }
     internal List<BoundAlternativeEntry> Entries { get; } = [];
-    internal IEnumerable<BoundAlternativeEntry> Variables => Entries
-        .Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut);
+    internal IEnumerable<BoundAlternativeEntry> Variables
+        => Entries.Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut);
     internal BoundAction? Action { get; set; }
+
+    internal (string alternativeText, bool hasCut) GenerateCode()
+    {
+        var gen = new CsGenerator();
+
+        var variables = Variables.Select(v => new VariableIr(v.Name, v.Quantifier.IsArray, v.Quantifier == QuantifierKind.Optional));
+
+        var conditions = Entries.Select(e => e.GenerateCode());
+
+        gen.AddAlternative(SourceText, variables, conditions, createAction());
+
+        return (gen.Dump(), Entries.Any(e => e is BoundCutAlternativeEntry));
+    }
+
+    private string createAction()
+    {
+        var gen = new CsGenerator();
+        if (Action is not null)
+        {
+            gen.AddCreationAction(Action.Type.Name,
+                Entries
+                .Where(e => e.Quantifier != QuantifierKind.Cut)
+                .Select(e => new VariableIr(e.Name, e.Quantifier.IsArray, e.Quantifier == QuantifierKind.Optional)));
+        }
+        else
+        {
+            gen.AddPassAction(Variables.First().Name);
+        }
+        return gen.Dump();
+    }
 }
 
 internal class BoundAction
@@ -46,6 +109,7 @@ internal class BoundAction
     /// Type that this action would return if alternative is matched.
     /// </summary>
     internal required BoundRuleType Type { get; init; }
+
     /// <summary>
     /// Variables that was captured in the <see cref="ActionNode"/> and would be used to generate
     /// type fields.
@@ -95,6 +159,36 @@ internal abstract class BoundAlternativeEntry
     /// is set in <see cref="Quantifier"/>. <see langword="null"/> if <see cref="Quantifier"/> is another.
     /// </summary>
     internal required bool? Positiveness { get; init; }
+
+    internal string GenerateCode()
+    {
+        var gen = new CsGenerator();
+
+        var ir = new ConditionIr()
+        {
+            Kind = Quantifier,
+            AssignedVar = Name,
+            Positive = Positiveness,
+            MinCount = MinRepeatCount,
+            Atom = getAtom(this)!, // Atom may be null if cut, but cut never uses Atom.
+            Separator = getAtom((this as BoundGatherAlternativeEntry)?.Separator)
+        };
+
+        gen.AddCondition(ir);
+
+        return gen.Dump();
+    }
+
+    private static AtomIr? getAtom(BoundAlternativeEntry? alternativeEntry) => alternativeEntry switch
+    {
+        BoundTokenAlternativeEntry token => new AtomIr(token.Value.ToString(), false, true),
+        BoundStringAlternativeEntry str => new AtomIr(str.Value, true, false),
+        BoundRuleAlternativeEntry rule => new AtomIr(rule.Value.Name, false, false),
+        BoundGatherAlternativeEntry gath => getAtom(gath.Value),
+        BoundCutAlternativeEntry => null,
+        null => null,
+        _ => throw new UnreachableException("Unexpected bound alternative entry class."),
+    };
 }
 
 internal class BoundCutAlternativeEntry : BoundAlternativeEntry
@@ -138,6 +232,32 @@ internal abstract class BoundType
         Base = null,
         Name = "TokenNode",
     };
+
+    internal string GenerateCode()
+    {
+        var gen = new CsGenerator();
+
+        if (this is not BoundUnionType)
+        {
+            gen.AddTypeSignature(
+                AccessModifier.Internal,
+                Name,
+                (this as BoundRuleType)?.Base?.Name,
+                UnionMembership.Select(u => u.Name));
+
+            var fields = (this as BoundRuleType)?.Fields ?? [];
+            gen.AddTypeBody(fields.Select(f => new FieldIr(f, AccessModifier.Internal)));
+        }
+        else
+        {
+            gen.AddUnion(
+                AccessModifier.Internal,
+                Name,
+                UnionMembership.Select(u => u.Name));
+        }
+
+        return gen.Dump();
+    }
 }
 
 internal sealed class BoundRuleType : BoundType

@@ -205,7 +205,7 @@ internal class Binder
                     if (alt.Variables.Count() != 1)
                         throw new InvalidUnionException($"should have exactly one variable entry: '{astAlt.Molecules.RecoverText()}'. Consider using lookahead because they do not produce variables.");
 
-                    if (rule.Kind == BoundRuleKind.TokenUnion && alt.Variables.First() is not BoundTokenAlternativeEntry)
+                    if (rule.Kind == BoundRuleKind.TokenUnion && alt.Variables.First() is not BoundTokenAlternativeEntry and not BoundStringAlternativeEntry)
                         throw new CompilationException($"Token union rules cannot have non-token entry as variable: '{astAlt.Molecules.RecoverText()}'");
 
                     if (rule.Kind == BoundRuleKind.Union && alt.Variables.First() is not BoundRuleAlternativeEntry)
@@ -516,6 +516,8 @@ internal class Binder
                         unionMember.UnionMembership.Add(unionType);
                         unionType.Members.Add(unionMember);
                     }
+
+                    Grammar.Types.Add(rule.Type);
 
                     break;
 
