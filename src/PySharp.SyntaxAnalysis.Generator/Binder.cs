@@ -443,6 +443,7 @@ internal class Binder
                 {
                     var fieldNameScope = new VariableNamingScope();
                     capturedVariables = boundAlt.Entries
+                    .Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut)
                     .Select(e => new BoundCapturedVariable
                     {
                         FieldName = fieldNameScope.NextNamePreserveCase(getEntryType(e).Name),
@@ -568,7 +569,7 @@ internal class Binder
             QuantifierKind.Expect or QuantifierKind.Optional => FieldKind.Plain,
             QuantifierKind.Repeat => FieldKind.Array,
             QuantifierKind.Gather => FieldKind.Gather,
-            _ => throw new ArgumentOutOfRangeException(),
+            _ => throw new ArgumentOutOfRangeException(variable.Entry.Quantifier.ToString()),
         },
         Type = getEntryType(variable.Entry),
         AccessModifier = AccessModifier.Internal,
