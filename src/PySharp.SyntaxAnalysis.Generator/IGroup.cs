@@ -7,6 +7,7 @@ internal interface IGroup : IGreenNode
 {
     ImmutableArray<AlternativeNode> Alternatives { get; }
     NodeArray<GreenNode> AstAlternatives { get; }
+    GroupDecoratorNode? Decorator { get; }
 }
 
 internal partial record GroupAtomNode : IGroup
@@ -14,6 +15,8 @@ internal partial record GroupAtomNode : IGroup
     ImmutableArray<AlternativeNode> IGroup.Alternatives => Alternatives;
 
     NodeArray<GreenNode> IGroup.AstAlternatives => AstAlternatives;
+
+    GroupDecoratorNode? IGroup.Decorator => Decorator;
 }
 
 internal partial record OptionalGroupNode : IGroup
@@ -21,4 +24,6 @@ internal partial record OptionalGroupNode : IGroup
     ImmutableArray<AlternativeNode> IGroup.Alternatives => Alternatives;
 
     NodeArray<GreenNode> IGroup.AstAlternatives => AstAlternatives;
+
+    GroupDecoratorNode? IGroup.Decorator => Decorator;
 }

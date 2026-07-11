@@ -141,18 +141,46 @@ internal class Binder
             name = groupTypeNameStore.NextTypeName();
         }
 
+        BoundType? type = null;
+        bool isInline = false;
+
+        if (astGroup.Decorator is GroupDecoratorNode dec)
+        {
+            if (dec.Value.RawString == decor_token_union)
+            {
+                if (astGroup.Alternatives.Any(a => a.Action != null))
+                    throw new CompilationException("Inline groups cannot contain arms with the actions.");
+
+                bool manyVariables = astGroup.Alternatives.Any(a =>
+                    a.Molecules
+                    .Count(m => m is not PositiveLookaheadNode and not NegativeLookaheadNode) > 1);
+
+                if (manyVariables)
+                    throw new CompilationException("Inline groups cannot contain arms with the variables count more than 1. Consider using lookahead.");
+
+                type = BoundType.TokenNodeType;
+                isInline = true;
+            }
+            else
+            {
+                throw new CompilationException($"Unsupported decorator type: '{dec.Value.RawString}'");
+            }
+        }
+
+        type ??= new BoundRuleType
+        {
+            Name = name + "Node",
+            IsAbstract = astGroup.Alternatives.Length != 1,
+            Base = null,
+        };
+
         var groupRule = new BoundRule
         {
-            Name = name,
-            SourceText = astGroup.AstAlternatives.RecoverText(),
+            Name = isInline ? groupTypeNameStore.NextNamePreserveCase("_TokenInlineGroup") : name,
+            SourceText = astGroup.RecoverText(),
             AstAlternatives = astGroup.Alternatives,
-            Type = new BoundRuleType
-            {
-                Name = name + "Node",
-                IsAbstract = astGroup.Alternatives.Length != 1,
-                Base = null,
-            },
-            Kind = BoundRuleKind.Type, // TODO: Maybe add some decorators to groups syntax too?
+            Type = type,
+            Kind = isInline ? BoundRuleKind.TokenUnion : BoundRuleKind.Type,
         };
 
         if (!groupRules.ContainsKey(astGroup.AstAlternatives))

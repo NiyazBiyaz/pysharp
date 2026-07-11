@@ -8,7 +8,7 @@
             "request": "launch",
             "cwd": "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator",
             "program": 
-                "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/bin/Debug/net10.0/PySharp.SyntaxAnalysis.Generator.dll",
+                "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/bin/Debug/net10.0/pegennet.dll",
             "args": [
                 "--input", 
                 "${workspaceFolder}/src/PySharp.SyntaxAnalysis.Generator/Meta.ebnf", 

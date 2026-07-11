@@ -176,7 +176,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     #endregion // Rule
 
     #region Arm
-    // "|" Alternative NewLine -> Arm(Alternative=alternative)
+    // ("|" Alternative NewLine -> Arm(Alternative=alternative))
     ArmNode? rule_Arm()
     {
         int _mark = base.Mark();
@@ -267,9 +267,37 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     }
     #endregion // Alternative
 
+    #region GroupDecorator
+    // GroupDecorator: "@" Name -> new(Value=name)
+    GroupDecoratorNode? rule_GroupDecorator()
+    {
+        int _mark = base.Mark();
+        {
+            // "@" Name -> new(Value=name)
+            GreenNode? at;
+            GreenNode? name;
+            if ((at = Expect(TokenType.At)) is not null
+                &&
+                (name = Expect(TokenType.Name)) is not null
+            )
+            {
+                return new GroupDecoratorNode()
+                {
+                    Children = new NodeArray<GreenNode>([
+                        at,
+                        name,
+                    ]),
+                };
+            }
+        }
+        base.Reset(_mark);
+        return null;
+    }
+    #endregion // GroupDecorator
+
     #region Molecule
     // Molecule:
-    //     | "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather)
+    //     | "[" ~ -GroupDecorator Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather, Decorator=group_decorator)
     //     | "&" ~ Atom -> PositiveLookahead(Atom=atom)
     //     | "!" ~ Atom -> NegativeLookahead(Atom=atom)
     //     | "-" ~ Atom -> Optional(Atom=atom)
@@ -283,13 +311,16 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         int _mark = base.Mark();
         bool _cut = false;
         {
-            // "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather)
+            // "[" ~ -GroupDecorator Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather, Decorator=group_decorator)
             GreenNode? left_square_bracket;
+            GreenNode? group_decorator;
             INodeArray<GreenNode>? alternative_Gather;
             GreenNode? right_square_bracket;
             if ((left_square_bracket = Expect(TokenType.LeftSquareBracket)) is not null
                 &&
                 (_cut = true)
+                &&
+                ((group_decorator = rule_GroupDecorator()) is not null || true) // Optional
                 &&
                 (alternative_Gather = base.Gather(rule_Alternative, TokenType.VertBar)) is not null
                 &&
@@ -300,6 +331,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
                 {
                     Children = new NodeArray<GreenNode>([
                         left_square_bracket,
+                        group_decorator ?? VoidNode.Instance,
                         new NodeList(alternative_Gather),
                         right_square_bracket,
                     ]),
@@ -491,7 +523,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
 
     #region Atom
     // Atom:
-    //     | "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather)
+    //     | "(" ~ -GroupDecorator Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather, Decorator=group_decorator)
     //     | Name -> NameAtom(Value=name)
     //     | StringLiteral -> StringAtom(Value=string_literal)
     AtomNode? rule_Atom()
@@ -499,13 +531,16 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
         int _mark = base.Mark();
         bool _cut = false;
         {
-            // "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather)
+            // "(" ~ -GroupDecorator Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather, Decorator=group_decorator)
             GreenNode? left_paren;
+            GreenNode? group_decorator;
             INodeArray<GreenNode>? alternative_Gather;
             GreenNode? right_paren;
             if ((left_paren = Expect(TokenType.LeftParen)) is not null
                 &&
                 (_cut = true)
+                &&
+                ((group_decorator = rule_GroupDecorator()) is not null || true) // Optional
                 &&
                 (alternative_Gather = base.Gather(rule_Alternative, TokenType.VertBar)) is not null
                 &&
@@ -516,6 +551,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
                 {
                     Children = new NodeArray<GreenNode>([
                         left_paren,
+                        group_decorator ?? VoidNode.Instance,
                         new NodeList(alternative_Gather),
                         right_paren,
                     ]),
@@ -640,7 +676,7 @@ internal class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser<Grammar
     #endregion // Action
 
     #region Arguments
-    // Target+."," -> Arguments(Value=target_Gather)
+    // [Target+."," -> Arguments(Value=target_Gather)]
     ArgumentsNode? rule_Arguments()
     {
         int _mark = base.Mark();
@@ -739,6 +775,11 @@ internal sealed partial record AlternativeNode : GreenNode
     internal ActionNode? Action => Children![1] as ActionNode;
 }
 
+internal sealed partial record GroupDecoratorNode : GreenNode
+{
+    internal TokenNode Value => (TokenNode)Children![1];
+}
+
 internal abstract partial record MoleculeNode : GreenNode
 {
 }
@@ -758,7 +799,8 @@ internal sealed partial record OptionalGroupNode : MoleculeNode
             return _field_Alternatives.Value;
         }
     }
-    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
 }
 
 internal sealed partial record PositiveLookaheadNode : MoleculeNode
@@ -820,7 +862,8 @@ internal sealed partial record GroupAtomNode : AtomNode
             return _field_Alternatives.Value;
         }
     }
-    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
 }
 
 internal sealed partial record NameAtomNode : AtomNode
