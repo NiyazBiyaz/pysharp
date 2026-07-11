@@ -26,22 +26,14 @@ public class Tokenizer : BaseTokenizer, ITokenizer
 
     private int pendingIndentation
     {
-        get => field;
+        get;
         set
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 1);
             field = value;
         }
     } = 0;
-    private int bracketsLevel
-    {
-        get => field;
-        set
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
-            field = value;
-        }
-    }
+    private int bracketsLevel { get; set; }
 
     // Partial strings stuff.
     private Tokenizer? partialNestedTokenizer;
