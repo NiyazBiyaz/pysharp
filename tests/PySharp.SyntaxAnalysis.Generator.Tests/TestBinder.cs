@@ -262,9 +262,9 @@ public class TestBinder
         Ring: "ring"
         """;
         string[][] names = [
-            ["baubauPlus"],
-            ["bau", "baubauStar"],
-            ["ponderingGather"],
+            ["bau_bau_Plus"],
+            ["bau", "baubau_Star"],
+            ["pon_de_ring_Gather"],
             [null!, null!, "ring"], // For lookahead names are undefined.
             // For strings names are not guaranteed to be stable.
         ];
@@ -285,6 +285,21 @@ public class TestBinder
                 Assert.Equal(names[r][e], alt.Entries[e].Name);
             }
         }
+    }
+
+    [Fact]
+    public void TestPopulateRules_NameDoesNotExist()
+    {
+        const string src = """
+        @main
+        BauBau: BauBauBau Bau
+        BauBauBau: "bau" "bau" "bau"
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+
+        Assert.Throws<InvalidNameException>(binder.PopulateRules);
     }
 
     [Fact]

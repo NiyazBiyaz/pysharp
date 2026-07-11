@@ -9,21 +9,21 @@ namespace PySharp.SyntaxAnalysis.Generator;
 @parser_name "GrammarParser"
 
 @main
-Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadataStar, Rules=ruleStar)
+Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadata_Star, Rules=rule_Star)
 
-Metadata: "@" Name StringLiteral NewLine -> new(Key=name, Value=stringliteral)
+Metadata: "@" Name StringLiteral NewLine -> new(Key=name, Value=string_literal)
 
 Rule:
     | Decorator* Name ":" NewLine ~ Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
-        -> ArmedRule(Decorators=decoratorStar, Name=name, Arms=armPlus)
-    | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decoratorStar, Name=name, Alternative=alternative)
+        -> ArmedRule(Decorators=decorator_Star, Name=name, Arms=arm_Plus)
+    | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decorator_Star, Name=name, Alternative=alternative)
 
 Decorator: "@" Name NewLine -> new(Value=name)
 
-Alternative: Molecule+ -Action -> new(Molecules=moleculePlus, Action=action)
+Alternative: Molecule+ -Action -> new(Molecules=molecule_Plus, Action=action)
 
 Molecule:
-    | "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternativeGather)
+    | "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather)
     | "&" ~ Atom -> PositiveLookahead(Atom=atom)
     | "!" ~ Atom -> NegativeLookahead(Atom=atom)
     | "-" ~ Atom -> Optional(Atom=atom)
@@ -34,12 +34,12 @@ Molecule:
     | "~" -> Cut()
 
 Atom:
-    | "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternativeGather)
+    | "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather)
     | Name -> NameAtom(Value=name)
-    | StringLiteral -> StringAtom(Value=stringliteral)
+    | StringLiteral -> StringAtom(Value=string_literal)
 
 Action:
-    | "->" "new" ~ "(" [Target+."," -> Arguments(Value=targetGather)] ")" -> InferredAction(Arguments=arguments)
-    | "->" Name "(" [Target+."," -> Arguments(Value=targetGather)] ")" -> NamedAction(Name=name, Arguments=arguments)
+    | "->" "new" ~ "(" [Target+."," -> Arguments(Value=target_Gather)] ")" -> InferredAction(Arguments=arguments)
+    | "->" Name "(" [Target+."," -> Arguments(Value=target_Gather)] ")" -> NamedAction(Name=name, Arguments=arguments)
 
 Target: Name "=" Name -> new(Field=name, Variable=name1)

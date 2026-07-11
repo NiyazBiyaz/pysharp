@@ -1,14 +1,14 @@
+using Humanizer;
+
 namespace PySharp.SyntaxAnalysis.Generator;
 
 internal class VariableNamingScope
 {
-    private int overallCount = 0;
     private readonly HashSet<string> existing = [];
 
     public string NextName(string original)
     {
-        overallCount += 1;
-        string name = original = original.ToLowerInvariant();
+        string name = original = original.Underscore();
         int suffixNumber = 1;
         while (existing.Contains(name))
             name = original + suffixNumber++;
@@ -19,7 +19,6 @@ internal class VariableNamingScope
 
     public string NextNamePreserveCase(string original)
     {
-        overallCount += 1;
         string name = original;
         int suffixNumber = 1;
         while (existing.Contains(name))
@@ -29,7 +28,7 @@ internal class VariableNamingScope
         return name;
     }
 
-    public string NextString() => $"__token{overallCount++}";
+    public string NextString() => NextName("_string_token");
 
-    public string NextTypeName() => $"_PegenNetAnonymousType{overallCount++}";
+    public string NextTypeName() => NextNamePreserveCase("_PegenNetAnonymousType");
 }

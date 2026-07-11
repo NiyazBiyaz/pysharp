@@ -287,7 +287,7 @@ internal class Binder
                     var sep = createEntry(gather.Separator, localNameScope, QuantifierKind.Expect, null, null);
                     yield return new BoundGatherAlternativeEntry()
                     {
-                        Name = nameScope.NextName(value.Name) + QuantifierKind.Gather.ToString(),
+                        Name = nameScope.NextName(value.Name) + "_" + QuantifierKind.Gather.ToString(),
                         Value = value,
                         Separator = sep,
                         Quantifier = QuantifierKind.Gather,
@@ -319,7 +319,7 @@ internal class Binder
     {
         StringAtomNode aliasedToken when TokenType.TryGetDelimiterByString(StringParser.ParseQuoted(aliasedToken.Value.RawString), out var tok) => new BoundTokenAlternativeEntry
         {
-            Name = nameScope.NextName(tok.ToString()) + quant.GetSuffix(count),
+            Name = nameScope.NextName(tok.ToString()) + quant.AddSuffix(count),
             Value = tok,
             Quantifier = quant,
             MinRepeatCount = count,
@@ -327,7 +327,7 @@ internal class Binder
         },
         StringAtomNode str => new BoundStringAlternativeEntry()
         {
-            Name = nameScope.NextString() + quant.GetSuffix(count),
+            Name = nameScope.NextString() + quant.AddSuffix(count),
             Value = StringParser.ParseQuoted(str.Value.RawString),
             Quantifier = quant,
             MinRepeatCount = count,
@@ -337,7 +337,7 @@ internal class Binder
         {
             string tokenName when Enum.TryParse<TokenType>(tokenName, out _) => new BoundTokenAlternativeEntry
             {
-                Name = nameScope.NextName(tokenName) + quant.GetSuffix(count),
+                Name = nameScope.NextName(tokenName) + quant.AddSuffix(count),
                 Value = Enum.Parse<TokenType>(tokenName),
                 Quantifier = quant,
                 MinRepeatCount = count,
@@ -345,7 +345,7 @@ internal class Binder
             },
             string ruleName => new BoundRuleAlternativeEntry
             {
-                Name = nameScope.NextName(ruleName) + quant.GetSuffix(count),
+                Name = nameScope.NextName(ruleName) + quant.AddSuffix(count),
                 Value = Rules.GetValueOrDefault(ruleName) ?? throw new InvalidNameException($"Rule '{ruleName}' is not defined."),
                 Quantifier = quant,
                 MinRepeatCount = count,
@@ -355,7 +355,7 @@ internal class Binder
         GroupAtomNode groupAtom => new BoundRuleAlternativeEntry
         {
             Quantifier = quant,
-            Name = nameScope.NextName(groupRules[groupAtom.AstAlternatives].Name) + quant.GetSuffix(count),
+            Name = nameScope.NextName(groupRules[groupAtom.AstAlternatives].Name) + quant.AddSuffix(count),
             Value = groupRules[groupAtom.AstAlternatives],
             MinRepeatCount = count,
             Positiveness = positive,

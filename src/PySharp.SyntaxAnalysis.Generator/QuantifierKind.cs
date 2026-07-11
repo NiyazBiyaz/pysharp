@@ -16,11 +16,10 @@ internal static class QuantifierKindExtensions
     {
         internal bool IsArray => quantifier is QuantifierKind.Repeat or QuantifierKind.Gather;
 
-        internal string GetSuffix(int? repCount) => quantifier switch
+        internal string AddSuffix(int? repCount) => quantifier switch
         {
-            QuantifierKind.Expect or QuantifierKind.Optional => "",
-            QuantifierKind.Repeat => repCount == 1 ? "Plus" : "Star",
-            QuantifierKind.Lookahead => "_",
+            QuantifierKind.Expect or QuantifierKind.Optional or QuantifierKind.Lookahead => "",
+            QuantifierKind.Repeat => repCount == 1 ? "_Plus" : "_Star",
             _ => throw new ArgumentOutOfRangeException()
         };
     }
