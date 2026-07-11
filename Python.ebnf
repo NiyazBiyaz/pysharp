@@ -1,0 +1,761 @@
+# Copyright (c) 2001 Python Software Foundation; All Rights Reserved
+
+@header '''\
+using PySharp.SyntaxAnalysis.Tokens;
+using PySharp.SyntaxAnalysis.Common;
+using PySharp.SyntaxAnalysis.Common.Ast;
+
+namespace PySharp.SyntaxAnalysis;
+'''
+@parser_name 'PythonParser'
+
+# Starting rule
+# =============
+
+@main
+File: Statement* EndOfFile -> new(Statements=statement_Star)
+
+# General statements
+# ==================
+
+@union
+Statement:
+    | CompoundStatement
+    | SimpleStatements
+
+SimpleStatements:
+    | SimpleStatement !';' NewLine -> SingleSimpleStatement(Value=simple_statement)
+    | SimpleStatement+.';' -';' NewLine -> SeparatedSimpleStatements(Values=simple_statement_Gather)
+
+@union
+SimpleStatement:
+    | Assignment
+    | StarExpressions
+    | &'type'       TypeAlias
+    | &ImportStart  ImportStatement
+    | &'return'     ReturnStatement
+    | &'raise'      RaiseStatement
+    | &'pass'       PassStatement
+    | &'del'        DeleteStatement
+    | &'yield'      YieldStatement
+    | &'assert'     AssertStatement
+    | &'break'      BreakStatement
+    | &'continue'   ContinueStatement
+    | &'global'     GlobalStatement
+    | &'nonlocal'   NonlocalStatement
+
+@inline
+ImportStart:
+    | 'from'
+    | 'import'
+    | 'lazy'
+
+@union
+CompoundStatement:
+    | &(@inline 'def' | '@' | 'async') FunctionDef
+
+    | &'if' IfStatement
+
+    | &(@inline 'class' | '@') ClassDef
+
+    | &(@inline 'with' | 'async') WithStatement
+
+    | &(@inline 'for' | 'async') ForStatement
+
+    | &'try' TryStatement
+
+    | &'while' WhileStatement
+
+    # NSY | MatchStatement
+
+# Simple statements
+# =================
+
+Assignment:
+    | Name ':' Expression -EqualAnnotatedRhs -> AnnotatedAssignment(Target=name, TypeHint=expression, Rhs=equal_annotated_rhs)
+
+    | '(' SingleTarget ')' ':' Expression -EqualAnnotatedRhs -> AnnotatedParenthesizedAssignment(
+        Target=single_target, TypeHint=expression, Rhs=equal_annotated_rhs)
+
+    | SingleSubscriptAttributeTarget ':' Expression -EqualAnnotatedRhs -> AnnotatedSubscriptAttributeAssignment(
+        Target=single_subscript_attribute_target, TypeHint=expression, Rhs=equal_annotated_rhs)
+
+    | (StarTargets '=' -> AssignmentTarget(Value=star_targets))+ AnnotatedRhs !'=' -> CascadeAssignment(Targets=assignment_target_Plus, Rhs=annotated_rhs)
+
+    | SingleTarget AugAssign ~ AnnotatedRhs -> AugmentedAssignment(Target=single_target, Operator=aug_assign, Rhs=annotated_rhs)
+
+EqualAnnotatedRhs: '=' AnnotatedRhs -> new(Value=annotated_rhs)
+
+@inline
+AugAssign:
+    | '+='
+    | '-='
+    | '*='
+    | '@='
+    | '|='
+    | '%='
+    | '&='
+    | '|='
+    | '^='
+    | '<<='
+    | '>>='
+    | '**='
+    | '|='
+
+@union
+AnnotatedRhs:
+    | YieldExpression
+    | StarExpressions
+
+ReturnStatement: 'return' -StarExpressions -> new(Expression=star_expressions)
+
+RaiseStatement:
+    | 'raise' Expression 'from' Expression -> RaiseFromStatement(NewException=expression, OldExpression=expression1)
+    | 'raise' Expression -> RaiseFromScratchStatement(Exception=expression)
+    | 'raise' -> PassedRaiseStatement()
+
+PassStatement: 'pass' -> new()
+
+BreakStatement: 'break' -> new()
+
+ContinueStatement: 'continue' -> new()
+
+GlobalStatement: 'global' Name+.',' -> new(Variables=name_Gather)
+
+NonlocalStatement: 'nonlocal' Name+.',' -> new(Variables=name_Gather)
+
+DeleteStatement: 'del' DeleteTarget+.',' -',' &(@inline ';' | NewLine) -> new(Targets=delete_target_Gather)
+
+YieldStatement: YieldExpression -> new(Expression=yield_expression)
+
+AssertStatement: 'assert' Expression [',' Expression -> AssertMessage(Value=expression)] -> new(Guard=expression, Message=assert_message)
+
+@union
+@memo
+ImportStatement:
+    | ImportName
+    | LazyImportName
+    | ImportFrom
+    | LazyImportFrom
+
+# Import Statements
+# =================
+
+# CPython uses the `?` (`-` here) and NULL check for lazy. But it feels more like a hack, so make different rules for that.
+# If changed: don't forget to change lazy also because it's just copypaste.
+
+ImportName: 'import' DottedAsName+.',' -> new(Import=dotted_as_name_Gather)
+
+LazyImportName: 'lazy' 'import' DottedAsName+.',' -> new(Import=dotted_as_name_Gather)
+
+ImportFrom:
+    | 'from' RelativeImportDots* DottedName 'import' ImportFromTargets -> ImportFromNames(
+        RelativePath=relative_import_dots_Star, Path=dotted_name, Targets=import_from_targets)
+
+    | 'from' RelativeImportDots+ 'import' ImportFromTargets -> ImportFromRelative(
+        RelativePath=relative_import_dots_Plus, Targets=import_from_targets)
+
+LazyImportFrom:
+    | 'lazy' 'from' RelativeImportDots* DottedAsName+.',' 'import' ImportFromTargets -> LazyImportFromNames(
+        RelativePath=relative_import_dots_Star, Path=dotted_as_name_Gather, Targets=import_from_targets)
+
+    | 'lazy' 'from' RelativeImportDots+ 'import' ImportFromTargets -> LazyImportFromRelative(
+        RelativePath=relative_import_dots_Plus, Targets=import_from_targets)
+
+@inline
+RelativeImportDots:
+    | '.'
+    | '...'  # Necessary because it tokenized as Ellipsis
+
+ImportFromTargets:
+    | '(' ImportFromAsName+.',' -',' ')' -> ImportFromParenthesizedTargets(Value=import_from_as_name_Gather)
+    | ImportFromAsName+.',' !',' -> ImportFromFlatTargets(Value=import_from_as_name_Gather)
+    | '*' -> ImportFromAllTargets()
+
+ImportFromAsName: Name ['as' Name -> AsName(Value=name)] -> new(ToImport=name, Alias=as_name)
+
+DottedAsName: DottedName ['as' Name -> AsName(Value=name)] -> new(Name=dotted_name, Alias=as_name)
+
+DottedName:
+    | DottedName '.' Name -> ManyDottedName(Left=dotted_name, Right=name)
+    | Name -> SingleDottedName(Value=name)
+
+# Compound Statements
+# ===================
+
+# Common nodes
+# ------------
+
+@memo
+Block:
+    | NewLine Indent Statement+ Dedent -> IndentedBlock(Statements=statement_Plus)
+    | SimpleStatements -> OneLinedBlock(Statements=simple_statements)
+
+Decorator: '@' NamedExpression NewLine -> new(Value=named_expression)
+
+# Class definitions
+# -----------------
+
+ClassDef:
+    | Decorator* ClassDefRaw -> DecoratedClassDef(Decorators=decorator_Star, ClassDef=class_def_raw)
+    | ClassDefRaw -> RawClassDef(Value=class_def_raw)
+
+ClassDefRaw: 'class' Name -TypeParameters ['(' -Arguments ')' -> ClassDefArgs(Value=arguments)] ':' Block -> new(
+        Name=name, 
+        TypeParameters=type_parameters, 
+        Arguments=class_def_args, 
+        Block=block)
+
+# Function definitions
+# --------------------
+
+FunctionDef:
+    | Decorator* FunctionDefRaw -> DecoratedFunctionDef(Decorators=decorator_Star, FunctionDef=function_def_raw)
+    | FunctionDefRaw -> RawFunctionDef(Value=function_def_raw)
+
+FunctionDefRaw:
+    | 'def' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block -> \
+        NormalFunctionDef(Name=name, TypeParameters=type_parameters, Parameters=parameters, ReturnHint=function_return_hint, Block=block)
+
+    | 'async' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block -> \
+        AsyncFunctionDef(Name=name, TypeParameters=type_parameters, Parameters=parameters, ReturnHint=function_return_hint, Block=block)
+
+# Function parameters
+# -------------------
+
+# TODO: Create actions.
+Parameters:
+    | SlashNoDefault ParamNoDefault* ParamWithDefault* -StarEtc
+    | SlashWithDefault ParamWithDefault* -StarEtc
+    | ParamNoDefault+ ParamWithDefault* -StarEtc
+    | ParamWithDefault* -StarEtc
+    | StarEtc
+
+# TODO: Think about how to optimize AST. Maybe we can move lookahead on paren in level higher or something.
+# If not, it means that we have to use different node names.
+# Maybe use something like: `Param+.',' &')'`
+
+SlashNoDefault:
+    | ParamNoDefault+ '/' ','
+    | ParamNoDefault+ '/' &')'
+
+SlashWithDefault:
+    | ParamNoDefault* ParamWithDefault+ '/' ','
+    | ParamNoDefault* ParamWithDefault+ '/' &')'
+
+StarEtc:
+    | '*' ParamNoDefault ParamMaybeDefault* -Keywords
+    | '*' ParamNoDefaultStarAnnotation ParamMaybeDefault* -Keywords
+    | '*' ',' ParamMaybeDefault+ -Keywords
+    | Keywords
+
+Keywords: '**' ParamNoDefault -> new(Parameter=param_no_default)
+
+ParamNoDefault:
+    | Param ','
+    | Param &')'
+
+ParamNoDefaultStarAnnotation:
+    | ParamStarAnnotation ','
+    | ParamStarAnnotation &')'
+
+ParamWithDefault:
+    | Param DefaultValue ','
+    | Param DefaultValue &')'
+
+ParamMaybeDefault:
+    | Param -DefaultValue ','
+    | Param -DefaultValue &')'
+
+Param: Name -Annotation -> new(Name=name, Annotation=annotation)
+
+ParamStarAnnotation: Name StarAnnotation -> new(Name=name, Annotation=star_annotation)
+
+Annotation: ':' Expression -> new(Value=expression)
+
+StarAnnotation: ':' StarExpression -> new(Value=star_expression)
+
+DefaultValue: '=' Expression -> new(Value=expression)
+
+# If statement
+# ------------
+
+IfStatement:
+    | 'if' NamedExpression ':' Block ElifStatement -> IfElifStatement(Condition=named_expression, Block=block, Elif=elif_statement)
+    | 'if' NamedExpression ':' Block -ElseBlock -> IfMaybeElseStatement(Condition=named_expression, Block=block, Else=else_block)
+
+ElifStatement:
+    | 'elif' NamedExpression ':' Block ElifStatement -> ElifElifStatement(Condition=named_expression, Block=block, Elif=elif_statement)
+    | 'elif' NamedExpression ':' Block -ElseBlock -> ElifMaybeElseStatement(Condition=named_expression, Block=block, Else=else_block)
+
+ElseBlock: 'else' ':' Block -> new(Block=block)
+
+# While statement
+# ---------------
+
+WhileStatement: 'while' NamedExpression ':' Block -ElseBlock -> new(Condition=named_expression, Block=block, Else=else_block)
+
+# For statement
+# -------------
+
+ForStatement:
+    | 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock -> NormalForStatement(
+        Targets=star_targets, Expression=star_expressions, Block=block, Else=else_block)
+
+    | 'async' 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock -> AsyncForStatement(
+        Targets=star_targets, Expression=star_expressions, Block=block, Else=else_block)
+
+# With statement
+# --------------
+
+WithStatement:
+    | 'with' '(' WithItem+.',' -',' ')' ':' Block -> ParenthesizedWithStatement(Items=with_item_Gather, Block=block)
+    | 'with' WithItem+.',' ':' Block -> OneLinedWithStatement(Items=with_item_Gather, Block=block)
+    | 'async' 'with' '(' WithItem+.',' -',' ')' ':' Block -> ParenthesizedAsyncWithStatement(Items=with_item_Gather, Block=block)
+    | 'async' 'with' WithItem+.',' ':' Block -> OneLinedAsyncWithStatement(Items=with_item_Gather, Block=block)
+
+WithItem:
+    | Expression 'as' StarTarget &(@inline ',' | ')' | ':') -> NamedWithItem(Expression=expression, Target=star_target)
+    | Expression -> PlainWithItem(Expression=expression)
+
+# Try statement
+# -------------
+
+TryStatement:
+    | 'try' ':' Block FinallyBlock -> TryFinallyStatement(Try=block, Finally=finally_block)
+
+    | 'try' ':' Block ExceptBlock+ -ElseBlock -FinallyBlock -> TryExceptStatement(
+        Try=block, Excepts=except_block_Plus, Else=else_block, Finally=finally_block)
+
+    | 'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock -> TryExceptStatement(
+        Try=block, Excepts=except_star_block_Plus, Else=else_block, Finally=finally_block)
+
+ExceptBlock:
+    | 'except' Expression ':' Block -> PlainExceptBlock(Exception=expression, Block=block)
+    | 'except' Expression 'as' Name ':' Block -> AliasExceptBlock(Exception=expression, Alias=name, Block=block)
+    | 'except' Expression+.',' -',' ':' Block -> MultipleExceptBlock(Exceptions=expression_Gather, Block=block)
+    | 'except' ':' Block -> EmptyExceptBlock(Block=block)
+
+ExceptStarBlock:
+    | 'except' '*' Expression ':' Block -> PlainExceptStarBlock(Exception=expression, Block=block)
+    | 'except' '*' Expression 'as' Name ':' Block -> AliasExceptStarBlock(Exception=expression, Alias=name, Block=block)
+    | 'except' '*' Expression+.',' -',' ':' Block -> MultipleExceptStarBlock(Exceptions=expression_Gather, Block=block)
+
+FinallyBlock: 'finally' ':' Block -> new(Value=block) 
+
+# Match statement
+# ---------------
+
+# SKIPPA SKIPPA
+
+# Type statement
+# --------------
+
+TypeAlias: 'type' Name -TypeParameters '=' Expression -> new(Name=name, TypeParameters=type_parameters, Value=expression)
+
+TypeParameters: '[' TypeParameter+.',' -',' ']' -> new(Values=type_parameter_Gather)
+
+@memo
+TypeParameter:
+    | Name -TypeParameterBound -TypeParameterDefault
+    | Name '*' -TypeParameterStarredDefault
+    | Name '**' -TypeParameterDefault
+
+TypeParameterBound: ':' Expression -> new(Value=expression)
+
+TypeParameterDefault: '=' Expression -> new(Value=expression)
+
+TypeParameterStarredDefault: '=' StarExpression -> new(Value=star_expression)
+
+# Expressions
+# ===========
+
+# Top level expressions
+# ---------------------
+
+@union
+@memo
+Expression:
+    | IfExpression
+    | Disjunction
+    # NSY | LambdaDef
+
+IfExpression: Disjunction 'if' Disjunction 'else' Expression
+
+YieldExpression:
+    | 'yield' 'from' Expression -> YieldFromExpression(Expression=expression)
+    | 'yield' -StarExpressions -> YieldStarExpression(Expression=star_expressions)
+
+StarExpressions: StarExpression+.',' -',' -> new(Values=star_expression_Gather)
+
+@memo
+StarExpression:
+    | '*' BitwiseOr -> NormalStarExpression(Value=bitwise_or)
+    | Expression -> WithoutStarExpression(Value=expression)
+
+StarNamedExpression:
+    | '*' BitwiseOr -> NormalStarNamedExpression(Value=bitwise_or)
+    | NamedExpression -> WithoutStarNamedExpression(Value=named_expression)
+
+StarNamedExpressions: StarNamedExpression+.',' -',' -> new(Items=star_named_expression_Gather)
+
+AssignmentExpression: Name ':=' ~ Expression -> new(Target=name, Value=expression)
+
+@union
+NamedExpression:
+    | AssignmentExpression
+    | Expression !':='
+
+@memo
+Disjunction: Conjunction+.'or' -> new(Values=conjunction_Gather)
+
+@memo
+Conjunction: Inversion+.'and' -> new(Values=inversion_Gather)
+
+@memo
+Inversion:
+    | 'not' Inversion -> NotInversion(Value=inversion)
+    | Comparison -> DirectInversion(Value=comparison)
+
+# Comparison operators
+# --------------------
+
+Comparison:
+    | BitwiseOr CompareOperation+ -> ManyValueComparison(First=bitwise_or, Rest=compare_operation_Plus)
+    | BitwiseOr -> SingleValueComparison(First=bitwise_or)
+
+# Cannot use `@inline` because some operators is 2 tokens wide.
+CompareOperation:
+    | '==' BitwiseOr        -> EqOperation(Right=bitwise_or)
+    | '!=' BitwiseOr        -> NotEqOperation(Right=bitwise_or)
+    | '<=' BitwiseOr        -> LtEqOperation(Right=bitwise_or)
+    | '<' BitwiseOr         -> LtOperation(Right=bitwise_or)
+    | '>=' BitwiseOr        -> GtEqOperation(Right=bitwise_or)
+    | '>' BitwiseOr         -> GtOperation(Right=bitwise_or)
+    | 'not' 'in' BitwiseOr  -> NotInOperation(Right=bitwise_or)
+    | 'in' BitwiseOr        -> InOperation(Right=bitwise_or)
+    | 'is' 'not' BitwiseOr  -> IsNotOperation(Right=bitwise_or)
+    | 'is' BitwiseOr        -> IsOperation(Right=bitwise_or)
+
+# Bitwise operators
+# -----------------
+
+@memo
+BitwiseOr:
+    | BitwiseOr '|' BitwiseXor -> BinaryBitwiseOr(Left=bitwise_or, Right=bitwise_xor)
+    | BitwiseXor -> DirectBitwiseOr(Value=bitwise_xor)
+
+@memo
+BitwiseXor:
+    | BitwiseXor '^' BitwiseAnd -> BinaryBitwiseXor(Left=bitwise_xor, Right=bitwise_and)
+    | BitwiseAnd -> DirectBitwiseXor(Value=bitwise_and)
+
+@memo
+BitwiseAnd:
+    | BitwiseAnd '&' BitShift -> BinaryBitwiseAnd(Left=bitwise_and, Right=bit_shift)
+    | BitShift -> DirectBitwiseAnd(Value=bit_shift)
+
+@memo
+BitShift:
+    | BitShift BitShiftOperator Sum -> BinaryBitShift(Left=bit_shift, Right=sum, Operator=bit_shift_operator)
+    | Sum -> DirectBitShift(Value=sum)
+
+@inline
+BitShiftOperator:
+    | '<<'
+    | '>>'
+
+# Arithmetic operators
+# --------------------
+
+@memo
+Sum:
+    | Sum SumOperator Term -> BinarySum(Left=sum, Right=term, Operator=sum_operator)
+    | Term -> DirectSum(Value=term)
+
+@inline
+SumOperator:
+    | '+'
+    | '-'
+
+@memo
+Term:
+    | Term TermOperator Factor -> BinaryTerm(Left=term, Right=factor, Operator=term_operator)
+    | Factor -> DirectTerm(Value=factor)
+
+@inline
+TermOperator:
+    | '*'
+    | '/'
+    | '//'
+    | '%'
+    | '@'
+
+@memo
+Factor:
+    | FactorOperator Factor -> UnaryFactor(Operator=factor_operator, Value=factor)
+    | Power -> DirectFactor(Value=power)
+
+@inline
+FactorOperator:
+    | '+'
+    | '-'
+    | '~'
+
+@memo
+Power:
+    | Primary '**' Factor -> BinaryPower(Left=primary, Right=factor)
+    | Primary -> DirectPower(Value=primary)
+
+# Primary elements
+# ----------------
+
+@union
+Primary:
+    | AwaitPrimary
+    | RawPrimary
+
+AwaitPrimary: 'await' RawPrimary -> new(Value=raw_primary)
+
+@memo
+RawPrimary:
+    | RawPrimary '.' Name -> DotOperationPrimary(Left=raw_primary, Right=name)
+    | RawPrimary GeneratorExpression -> CallWithGeneratorPrimary(Function=raw_primary, Argument=generator_expression)
+    | RawPrimary '(' -Arguments ')' -> CallWithArgumentsPrimary(Function=raw_primary, Arguments=arguments)
+    | RawPrimary '[' Slices ']' -> SubscriptPrimary(Target=raw_primary, Subscript=slices)
+    | Atom -> AtomPrimary(Value=atom)
+
+Slices:
+    | Slice !',' -> OneSliceSubscript(Value=slice)
+    | Dimension+.',' -',' -> DimensionalSubscript(Values=dimension_Gather)
+
+Dimension:
+    | Slice -> DimensionSlice(Value=slice) 
+    | StarExpression -> DimensionExpression(Value=star_expression)
+
+Slice:
+    | NamedExpression -> NamedSliceExpression(Value=named_expression)
+
+    | -Expression ':' -Expression [':' -Expression -> StepSliceParam(Value=expression)] -> ColonSlice(
+        Start=expression, End=expression1, Step=step_slice_param)
+
+@union
+Atom:
+    | OneTokenAtom
+    | &(@inline StringLiteral | FStringStart | TStringStart) StringAtom
+    | &'(' GeneratorExpression
+    | &'(' Tuple
+    | &'(' Group
+    | &'[' ListComprehension
+    | &'[' List
+    | &'{' DictComprehension
+    | &'{' SetComprehension
+    | &'{' Dict
+    | &'{' Set
+
+OneTokenAtom:
+    | Name -> NameAtom(Value=name)
+    | 'True' -> TrueAtom()
+    | 'False' -> FalseAtom()
+    | 'None' -> NoneAtom()
+    | Number -> NumberAtom(Value=number)
+    | '...' -> EllipsisAtom()
+
+Group:
+    | '(' NamedExpression ')' -> NamedGroupExpression(Value=named_expression)
+    | '(' YieldExpression ')' -> YieldGroupExpression(Value=yield_expression)
+
+# Lambda functions
+# ----------------
+
+# SKIPPA SKIPPA
+
+# Literals
+# ========
+
+FString: FStringStart FStringValue* FStringEnd -> new(Header=f_string_start, Values=f_string_value_Star)
+
+FStringValue:
+    | FStringMiddle -> FStringValueLiteral(Value=f_string_middle)
+    | FStringReplacementField -> FStringValueReplacement(Value=f_string_replacement_field)
+
+FStringReplacementField: 
+    | '{' AnnotatedRhs -DebugSpecifier -Conversion -FStringFullFormatSpec '}' -> new(
+        Value=annotated_rhs, DebugSpecifier=debug_specifier, Conversion=conversion, FormatSpec=f_string_full_format_spec)
+    
+FStringFullFormatSpec: ':' FStringFormatSpec* -> new(Specs=f_string_format_spec_Star)
+
+FStringFormatSpec:
+    | FStringMiddle -> FStringFormatLiteral(Value=f_string_middle)
+    | FStringReplacementField -> FStringFormatReplacement(Value=f_string_replacement_field)
+
+TString: TStringStart TStringValue* TStringEnd -> new(Header=t_string_start, Values=t_string_value_Star)
+
+TStringValue:
+    | TStringMiddle -> TStringValueLiteral(Value=t_string_middle)
+    | TStringReplacementField -> TStringValueReplacement(Value=t_string_replacement_field)
+
+TStringReplacementField: '{' AnnotatedRhs -DebugSpecifier -Conversion -TStringFullFormatSpec '}' -> new(
+    Value=annotated_rhs, DebugSpecifier=debug_specifier, Conversion=conversion, FormatSpec=t_string_full_format_spec)
+
+TStringFullFormatSpec: ':' TStringFormatSpec* -> new(Specs=t_string_format_spec_Star)
+
+TStringFormatSpec:
+    | TStringMiddle -> TStringFormatLiteral(Value=t_string_middle)
+    | TStringReplacementField -> TStringFormatReplacement(Value=t_string_replacement_field)
+
+# TODO: Maybe remove it because now i can recover text of the expressions.
+# Maybe not because i can extend DebugSpecifierNode and override RecoverText
+# that will skippa skippa this hacky-wacky token.
+# Any solution of these is a little bit of hack, Python wtf?
+DebugSpecifier: '=' DebugSpecifierString -> new(Value=debug_specifier_string)
+
+Conversion: '!' Name -> new(Value=name)
+
+@memo
+StringAtom:
+    | StringValue+ -> StringValueAtom(Parts=string_value_Plus)
+    | TString+ -> StringTemplateAtom(Parts=t_string_Plus)
+
+StringConstant: StringLiteral -> new(Value=string_literal)
+
+@union
+StringValue:
+    | StringConstant
+    | FString
+
+List: '[' -StarNamedExpressions ']' -> new(Items=star_named_expressions)
+
+Tuple: '(' StarNamedExpression ',' -StarNamedExpressions ')' -> new(First=star_named_expression, Rest=star_named_expressions)
+
+Set: '{' StarNamedExpressions '}' -> new(Items=star_named_expressions)
+
+# Dicts
+# -----
+
+Dict: '{' -StarredOrKeyValues '}' -> new(KeyValuePairs=starred_or_key_values)
+
+StarredOrKeyValues: StarredOrKeyValue+.',' -',' -> new(Items=starred_or_key_value_Gather)
+
+StarredOrKeyValue:
+    | '**' BitwiseOr -> DoubleStarred(Value=bitwise_or)
+    | Expression ':' Expression -> KeyValuePair(Key=expression, Value=expression1)
+
+# Comprehensions and Generators
+# -----------------------------
+
+ForIfClause:
+    | 'async' 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))* -> AsyncForIfClause(
+        Variables=star_targets, Iterable=disjunction, Conditions=if_clause_Star)
+    
+    | 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))* -> NormalForIfClause(
+        Variables=star_targets, Iterable=disjunction, Conditions=if_clause_Star)
+
+ListComprehension: '[' StarNamedExpression ForIfClause+ ']' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
+
+SetComprehension: '{' StarNamedExpression ForIfClause+ '}' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
+
+GeneratorExpression: '(' StarNamedExpression ForIfClause+ ')' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
+
+DictComprehension: 
+    | '{' Expression ':' Expression ForIfClause+ '}' -> KeyValueDictComprehension(Key=expression, Value=expression1, Iterators=for_if_clause_Plus)
+    | '{' '**' Expression ForIfClause+ '}' -> UnpackingDictComprehension(Expression=expression, Iterators=for_if_clause_Plus)
+
+# Function call arguments
+# =======================
+
+@memo
+Arguments:
+    | PositionalArgument+.',' [',' Kwargs -> KeywordArgumentsPart(Value=kwargs)] -',' -> WithPositionalArguments(
+        PositionalArgumentsPart=positional_argument_Gather, KeywordArgumentsPart=keyword_arguments_part)
+    
+    | Kwargs -',' -> OnlyKeywordArguments(Value=kwargs)
+
+@union
+PositionalArgument:
+    | StarredExpression !'='
+    | NamedExpression !'='
+
+Kwargs:
+    | KwargOrStarred+.',' ',' KwargOrDoubleStarred+.',' -> BothStarredKwargs(
+        OneStarred=kwarg_or_starred_Gather, DoubleStarred=kwarg_or_double_starred_Gather)
+
+    | KwargOrStarred+.',' -> OneStarredKwargs(Items=kwarg_or_starred_Gather)
+
+    | KwargOrDoubleStarred+.',' -> DoubleStarredKwargs(Items=kwarg_or_double_starred_Gather)
+
+@union
+KwargOrStarred:
+    | Kwarg
+    | StarExpression
+
+@union
+KwargOrDoubleStarred:
+    | Kwarg
+    | DoubleStarredExpression
+
+DoubleStarredExpression: '**' Expression -> new(Expression=expression)
+
+StarredExpression: '*' Expression -> new(Expression=expression)
+
+Kwarg: Name '=' Expression -> new(Keyword=name, Value=expression)
+
+# Assignment targets
+# ==================
+
+StarTargets:
+    | StarTarget !','
+    | StarTarget+.',' -','
+
+StarTarget:
+    | '*' TargetWithStarAtom -> ActuallyStarTarget(Target=target_with_star_atom)
+    | TargetWithStarAtom -> NotStarTarget(Target=target_with_star_atom)
+
+TargetWithStarAtom:
+    | TargetPrimary '.' Name !TargetPrimaryContinuation -> DottedStarTarget(Left=target_primary, Right=name)
+    | TargetPrimary '[' Slices ']' !TargetPrimaryContinuation -> SubscriptStarTarget(Primary=target_primary, Subscript=slices)
+    | StarAtom -> SingleStarTarget(Atom=star_atom)
+
+StarAtom:
+    | Name -> NameStarAtom(Value=name)
+    # | '(' TargetWithStarAtom ')'  # Deleted because not needed actually
+    | '(' -StarTargetSequence ')' -> TupleStarAtom(Items=star_target_sequence)
+    | '[' -StarTargetSequence ']' -> ListStarAtom(Items=star_target_sequence)
+
+StarTargetSequence: StarTarget+.',' -',' -> new(Items=star_target_Gather)
+
+SingleTarget:
+    | SingleSubscriptAttributeTarget -> SubscriptSingleTarget(Value=single_subscript_attribute_target)
+    | Name -> NameSingleTarget(Value=name)
+    # | '(' SingleTarget ')'  # Deleted because not needed actually
+
+SingleSubscriptAttributeTarget:
+    | TargetPrimary '.' Name !TargetPrimaryContinuation -> SingleAttributeTarget(Primary=target_primary, AttributeName=name)
+    | TargetPrimary '[' Slices ']' !TargetPrimaryContinuation -> SingleSubscriptTarget(Primary=target_primary, Subscript=slices)
+
+@memo
+TargetPrimary:
+    | TargetPrimary '.' Name &TargetPrimaryContinuation -> AttributeTarget(Primary=target_primary, AttributeName=name)
+    | TargetPrimary '[' Slices ']' &TargetPrimaryContinuation -> SubscriptTarget(Primary=target_primary, Subscript=slices)
+    | TargetPrimary GeneratorExpression &TargetPrimaryContinuation -> GeneratorTarget(Primary=target_primary, Generator=generator_expression)
+    | TargetPrimary '(' -Arguments ')' &TargetPrimaryContinuation -> CallTarget(Primary=target_primary, Arguments=arguments)
+    | Atom &TargetPrimaryContinuation -> AtomTarget(Value=atom)
+
+@inline
+TargetPrimaryContinuation:
+    | '('
+    | '['
+    | '.'
+
+
+# Targets for delete statement
+# ----------------------------
+
+@memo
+DeleteTarget:
+    | TargetPrimary '.' Name !TargetPrimaryContinuation -> DeleteAttributeTarget(Primary=target_primary, AttributeName=name)
+    | TargetPrimary '[' Slices ']' &TargetPrimaryContinuation -> DeleteSubscriptTarget(Primary=target_primary, Subscript=slices)
+    | DeleteTargetAtom -> DeleteAtomTarget(Value=delete_target_atom)
+
+DeleteTargetAtom: Name -> new(Value=name)
+# Rest is not supported because not needed actually
