@@ -22,8 +22,10 @@ Decorator: "@" Name NewLine -> new(Value=name)
 
 Alternative: Molecule+ -Action -> new(Molecules=molecule_Plus, Action=action)
 
+GroupDecorator: "@" Name -> new(Value=name)
+
 Molecule:
-    | "[" ~ Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather)
+    | "[" ~ -GroupDecorator Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather, Decorator=group_decorator)
     | "&" ~ Atom -> PositiveLookahead(Atom=atom)
     | "!" ~ Atom -> NegativeLookahead(Atom=atom)
     | "-" ~ Atom -> Optional(Atom=atom)
@@ -34,7 +36,7 @@ Molecule:
     | "~" -> Cut()
 
 Atom:
-    | "(" ~ Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather)
+    | "(" ~ -GroupDecorator Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather, Decorator=group_decorator)
     | Name -> NameAtom(Value=name)
     | StringLiteral -> StringAtom(Value=string_literal)
 
