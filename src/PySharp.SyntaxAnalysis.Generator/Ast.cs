@@ -48,7 +48,7 @@ internal partial record MoleculeNode
     internal string GetName() => this switch
     {
         AtomMoleculeNode hydrogen => hydrogen.Atom.GetName(),
-        OptionalGroupNode => "optGroup", // Se below about GroupAtomNode
+        OptionalGroupNode og => og.RecoverText(), // Se below about GroupAtomNode
         OptionalNode opt => opt.Atom.GetName(),
         RepeatOneMoreNode r1 => r1.Atom.GetName(),
         RepeatZeroMoreNode r0 => r0.Atom.GetName(),
@@ -66,9 +66,9 @@ internal partial record AtomNode
     {
         StringAtomNode s => s.Value.RawString,
         NameAtomNode n => n.Value.RawString,
-        // It's not good to make just group, but i think it's rare to have 2 exactly same
-        // groups that contain 2 exactly same groups with the different spaces.
-        GroupAtomNode => "Group",
+        // It's not good to use just group source text, but i think it's enough rare to have
+        // 2 exactly same groups that contain 2 exactly same groups with the different spaces.
+        GroupAtomNode g => g.RecoverText(),
         _ => throw new ArgumentOutOfRangeException(),
     };
 }

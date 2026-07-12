@@ -532,6 +532,172 @@ public class TestBinder
     }
 
     [Fact]
+    public void TestBinder_PreventUsingSameTypeNames_Rules()
+    {
+        const string src = """
+        @main
+        Bau: 'bau'
+        Bau: 'Bau'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidNameException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_PreventUsingSameTypeNames_ActionsBetweenRules()
+    {
+        const string src = """
+        @main
+        Bau:
+            | 'bau' -> Fluffy()
+            | "hoeh" -> Fuzzy()
+        BauBau:
+            | 'whaet' -> Fluffy()
+            | "iyargh" -> Hoeh()
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidNameException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_PreventUsingSameTypeNames_ActionsInOneRule()
+    {
+        const string src = """
+        @main
+        Bau:
+            | 'bau' -> BauBau()
+            | "hoeh" -> BauBau()
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidNameException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_PreventUsingSameTypeNames_RuleAndInAction()
+    {
+        const string src = """
+        @main
+        Bau:
+            | 'bau' -> Fluffy()
+            | "hoeh" -> Fuzzy()
+        BauBau:
+            | 'whaet' -> Bau()
+            | "iyargh" -> Hoeh()
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidNameException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_UnionRule_OnlyOneVariableAllowed()
+    {
+        const string src = """
+        @main
+        @union
+        BauBau:
+            | Bau
+            | PonDeRing
+            | FluffyOne FuzzyOne
+
+        Bau: 'bau'
+        PonDeRing: 'pon' 'de' 'ring'
+        FluffyOne: "fuwawae"
+        FuzzyOne: 'mococoe'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidUnionException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_InlineGroups_OnlyOneVariableAllowed()
+    {
+        const string src = """
+        @main
+        Bau: [@inline 'fuzz' 'fluff' | "baubau"]
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidUnionException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_UnionRule_ActionsIsNotAllowed()
+    {
+        const string src = """
+        @main
+        @union
+        Bau:
+            | BauBau -> BauBauBau(Value=bau_bau)
+            | Whaet -> Hoeh(Fuzz=whaet)
+        BauBau: 'bau' -> new()
+        Whaet: "iyargh" -> new()
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidUnionException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
+    public void TestBinder_TokenUnionRule_ActionsIsNotAllowed()
+    {
+        const string src = """
+        @main
+        @inline
+        Bau:
+            | "BauBau" -> BauBauBau()
+            | "Whaet" -> Hoeh()
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        Assert.Throws<InvalidUnionException>(() =>
+        {
+            binder.RegisterRules(gram.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+        });
+    }
+
+    [Fact]
     public void TestBinder_GroupRuleCreatedOnce_IfSameContent()
     {
         const string src = """
@@ -550,9 +716,57 @@ public class TestBinder
         Assert.Equal(rules_count, binder.Grammar.Types.Count);
     }
 
+    [Fact]
+    public void TestBinder_GroupRuleCreatedTwice_IfHaveDecorator()
+    {
+        const string src = """
+        @main
+        Bau: [@inline "BauBau" | 'fluff']
+        BauBau: 'fuzz' !("BauBau" | 'fluff')
+        """;
+        const int rules_count = 4;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        Assert.Equal(rules_count, binder.Grammar.Rules.Count);
+    }
+
+    [Fact]
+    public void TestCreateTypes_UnionType_Membership()
+    {
+        const string src = """
+        @main
+        @union
+        Bau:
+            | BauBau
+            | Fluff
+            | Fuzz
+        BauBau: "pondering"
+        Fluff: "fuwawae"
+        Fuzz: 'mogojyan'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        var union = binder.Grammar.Types.First(t => t.Name == "BauNode");
+        var rest = binder.Grammar.Types.Where(t => t.Name != "BauNode");
+
+        foreach (var member in rest)
+        {
+            Assert.Contains(union, member.UnionMembership);
+            Assert.Contains(member, ((BoundUnionType)union).Members);
+        }
+    }
+
     private static GrammarNode getNode(string src)
     {
-        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), true);
+        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), saveTrivia: true);
         var parser = new GrammarParser(new TokenNodeStream(tokenizer));
         var node = parser.Parse();
         Debug.Assert(node is not null, "Given syntax is not valid.");

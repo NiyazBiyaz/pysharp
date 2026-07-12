@@ -10,6 +10,8 @@ internal class Binder
     internal readonly Dictionary<string, BoundRule> Rules = [];
     internal readonly BoundGrammar Grammar = new();
 
+    private readonly HashSet<string> typeNames = [];
+
     private BinderStage stage = BinderStage.Empty;
 
     private const string
@@ -64,6 +66,9 @@ internal class Binder
 
             string name = astRule.Name.RawString;
 
+            if (Rules.ContainsKey(name))
+                throw new InvalidNameException($"Name {name} was used twice.");
+
             if (Enum.TryParse<TokenType>(name, out _))
                 throw new InvalidNameException($"Cannot create such rule: name '{name}' is reserved for token types.");
 
@@ -86,7 +91,7 @@ internal class Binder
                 },
                 BoundRuleKind.Union => new BoundUnionType
                 {
-                    Name = "I" + name + "Node",
+                    Name = name + "Node",
                 },
                 BoundRuleKind.TokenUnion => BoundType.TokenNodeType,
                 _ => throw new ArgumentOutOfRangeException(),
@@ -104,6 +109,7 @@ internal class Binder
             };
             Rules[rule.Name] = rule;
             Grammar.Rules.Add(rule);
+            typeNames.Add(rule.Name);
 
             foreach (var alt in alternatives)
             {
@@ -151,13 +157,6 @@ internal class Binder
             {
                 if (astGroup.Alternatives.Any(a => a.Action != null))
                     throw new CompilationException("Inline groups cannot contain arms with the actions.");
-
-                bool manyVariables = astGroup.Alternatives.Any(a =>
-                    a.Molecules
-                    .Count(m => m is not PositiveLookaheadNode and not NegativeLookaheadNode) > 1);
-
-                if (manyVariables)
-                    throw new CompilationException("Inline groups cannot contain arms with the variables count more than 1. Consider using lookahead.");
 
                 type = BoundType.TokenNodeType;
                 isInline = true;
@@ -218,9 +217,6 @@ internal class Binder
     {
         Debug.Assert(stage == BinderStage.CreatedRules);
 
-        if (Rules.Count < 1)
-            throw new InvalidOperationException("No registered rules found.");
-
         foreach (var rule in Rules.Values)
         {
             foreach (var astAlt in rule.AstAlternatives)
@@ -230,7 +226,6 @@ internal class Binder
                 foreach (var entry in createEntries(astAlt))
                 {
                     alt.Entries.Add(entry);
-
                 }
 
                 if (rule.Kind != BoundRuleKind.Type)
@@ -400,7 +395,7 @@ internal class Binder
         {
             if (rule.Kind != BoundRuleKind.Type)
             {
-                if (rule.Alternatives.Any(a => a.Action is not null))
+                if (rule.AstAlternatives.Any(a => a.Action is not null))
                     throw new InvalidUnionException($"cannot have actions: '{rule.Name}'");
 
                 continue;
@@ -442,17 +437,16 @@ internal class Binder
                             throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.");
                     }
                 }
-                else // If action is null, use all entries as captured variables.
+                else // If action is null, use all variables as captured variables.
                 {
                     var fieldNameScope = new VariableNamingScope();
-                    capturedVariables = boundAlt.Entries
-                    .Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut)
-                    .Select(e => new BoundCapturedVariable
-                    {
-                        FieldName = fieldNameScope.NextNamePreserveCase(getEntryType(e).Name),
-                        Entry = e,
-                    })
-                    .ToList();
+                    capturedVariables = boundAlt.Variables
+                        .Select(e => new BoundCapturedVariable
+                        {
+                            FieldName = fieldNameScope.NextNamePreserveCase(getEntryType(e).Name),
+                            Entry = e,
+                        })
+                        .ToList();
                 }
 
                 if (astAlt.Action is InferredActionNode && rule.Alternatives.Count > 1)
@@ -463,6 +457,13 @@ internal class Binder
                 BoundRuleType? type = null;
                 if (astAlt.Action is NamedActionNode namedAction)
                 {
+                    string name = namedAction.Name.RawString;
+
+                    if (typeNames.Contains(name))
+                        throw new InvalidNameException($"Type name {name} used twice in the grammar.");
+
+                    typeNames.Add(name);
+
                     type = new BoundRuleType
                     {
                         Base = (BoundRuleType)rule.Type,
