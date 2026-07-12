@@ -42,6 +42,7 @@ internal class BoundRule
     internal List<BoundAlternative> Alternatives { get; } = [];
     internal required bool IsGroup { get; init; }
     internal required bool EnableMemoization { get; init; }
+    internal bool IsLeftRecursive { get; set; } = false;
 
     internal string GenerateCode()
     {

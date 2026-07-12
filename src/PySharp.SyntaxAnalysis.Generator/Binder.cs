@@ -9,6 +9,7 @@ internal class Binder
 {
     internal readonly Dictionary<string, BoundRule> Rules = [];
     internal readonly BoundGrammar Grammar = new();
+    internal readonly List<CompilationWarning> Warnings = [];
 
     private readonly HashSet<string> typeNames = [];
 
@@ -197,7 +198,7 @@ internal class Binder
     }
 
     private static IEnumerable<IGroup> getGroups(AlternativeNode alternative) => alternative.Molecules
-        .Where(m => m is not OptionalGroupNode) // Add it later.
+        .Where(m => m is not OptionalGroupNode)
         .SelectMany<MoleculeNode, AtomNode>(m => m switch
         {
             AtomMoleculeNode hydrogen => [hydrogen.Atom],
@@ -591,10 +592,5 @@ internal class Binder
                 ? getEntryType(gatherEntry.Value)
                 : BoundType.TokenNodeType;
 
-    private static string createFieldNameFromEntry(BoundAlternativeEntry entry, int index)
-        => entry is BoundRuleAlternativeEntry ruleEntry
-            ? ruleEntry.Value.Type.Name
-            : entry is BoundGatherAlternativeEntry gatherEntry
-                ? $"Gather{index}{createFieldNameFromEntry(gatherEntry.Value, index)}"
-                : $"Token{index}";
+    internal void InspectRules() => throw new NotImplementedException();
 }

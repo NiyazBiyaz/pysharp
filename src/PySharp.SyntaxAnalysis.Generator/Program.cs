@@ -44,10 +44,24 @@ internal class Program
         }
 
         var binder = new Binder();
-        binder.ReadMetadata(grammarParsed.Metadata);
-        binder.RegisterRules(grammarParsed.Rules);
-        binder.PopulateRules();
-        binder.CreateTypes();
+
+        try
+        {
+            binder.ReadMetadata(grammarParsed.Metadata);
+            binder.RegisterRules(grammarParsed.Rules);
+            binder.PopulateRules();
+            binder.CreateTypes();
+            binder.InspectRules();
+        }
+        catch (CompilationException e)
+        {
+            Console.Error.WriteLine($"Error at line {e.Line}: {e.Message}");
+        }
+
+        foreach (var warn in binder.Warnings)
+        {
+            Console.WriteLine($"Warning at line {warn.Line}: {warn.Message}");
+        }
 
         var boundGrammar = binder.Grammar;
 

@@ -764,6 +764,101 @@ public class TestBinder
         }
     }
 
+    [Fact]
+    public void TestInspectRules_MarkAsLeftRecursive()
+    {
+        const string src = """
+        @main
+        Bau: 'bau' BauBau
+
+        @memo
+        BauBau:
+            | BauBau 'fluff' 'fuzz'
+            | 'fuzz'
+
+        @memo
+        BauBauBau:
+            | 'fuzz'
+            | BauBau 'fuzz'
+            | 'fluff'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+        binder.InspectRules();
+
+        var normal = binder.Rules.Values.First(r => r.Name == "Bau");
+        var leftRecursive1 = binder.Rules.Values.First(r => r.Name == "BauBau");
+        var leftRecursive2 = binder.Rules.Values.First(r => r.Name == "BauBauBau");
+
+        Assert.False(normal.IsLeftRecursive);
+        Assert.True(leftRecursive1.IsLeftRecursive);
+        Assert.True(leftRecursive2.IsLeftRecursive);
+    }
+
+    [Fact]
+    public void TestInspectRules_RequireMemoOnLeftRecursive()
+    {
+        const string src = """
+        @main
+        Bau: 'bau' BauBau
+
+        BauBau:
+            | BauBau 'fluff' 'fuzz'
+            | 'fuzz'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        Assert.Throws<CompilationException>(binder.InspectRules);
+    }
+
+    [Fact]
+    public void TestInspectRules_ArmNeverReached()
+    {
+        const string src = """
+        @main
+        BauBau:
+            | 'bau'
+            | 'bau' 'halo'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+        binder.InspectRules();
+
+        Assert.Single(binder.Warnings);
+    }
+
+    [Fact]
+    public void TestInspectRules_RuleNeverUsed()
+    {
+        const string src = """
+        @main
+        BauBau:
+            | 'bau'
+            | 'halo'
+
+        Bau: 'fuwamocoe'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+        binder.InspectRules();
+
+        Assert.Single(binder.Warnings);
+        Assert.Contains("Bau", binder.Warnings[0].Message);
+    }
+
     private static GrammarNode getNode(string src)
     {
         var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), saveTrivia: true);
