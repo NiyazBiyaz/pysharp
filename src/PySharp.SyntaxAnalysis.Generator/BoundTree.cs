@@ -40,6 +40,8 @@ internal class BoundRule
     internal required string SourceText { get; init; }
     internal required BoundType Type { get; init; }
     internal List<BoundAlternative> Alternatives { get; } = [];
+    internal required bool IsGroup { get; init; }
+    internal required bool EnableMemoization { get; init; }
 
     internal string GenerateCode()
     {

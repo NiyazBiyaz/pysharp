@@ -163,6 +163,37 @@ public class TestBinder
     }
 
     [Fact]
+    public void TestRegisterRules_InlineGroups()
+    {
+        const string src = """
+        @main
+        Bau: &(@inline "fluff" | "fuzz" | "mogojyan") Bau
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+
+        Assert.Equal(BoundRuleKind.TokenUnion, binder.Grammar.Rules.First(r => r.IsGroup).Kind);
+    }
+
+    [Fact]
+    public void TestRegisterRules_MemoFlag()
+    {
+        const string src = """
+        @main
+        @memo
+        Bau: BauBau
+        BauBau: "bau"
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+
+        Assert.True(binder.Grammar.MainRule.EnableMemoization);
+        Assert.False(binder.Grammar.Rules[1].EnableMemoization);
+    }
+
+    [Fact]
     public void TestPopulateRules_ReferenceToRule()
     {
         const string src = """
@@ -445,9 +476,83 @@ public class TestBinder
         Assert.Throws<InvalidNameException>(binder.CreateTypes);
     }
 
+    [Fact]
+    public void TestCreateTypes_SingleArm_CanUseInferred()
+    {
+        const string src = """
+        @main
+        Bau:
+            | "bau" Name -> new(Fluff=name)
+        """,
+            type_name = "BauNode";
+        const int type_count = 1;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
+        Assert.Equal(type_count, binder.Grammar.Types.Count);
+        Assert.Equal(type_name, binder.Grammar.Types[0].Name);
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
+    }
+
+    [Fact]
+    public void TestCreateTypes_ForceToUseInferred()
+    {
+        const string src = """
+        @main
+        Bau: "bau" Name -> BauBau(Fluff=name)
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        Assert.Throws<CompilationException>(binder.CreateTypes);
+    }
+
+    [Fact]
+    public void TestCreateTypes_GroupTypes()
+    {
+        const string src = """
+        @main
+        Bau: 'bau' ('fluff' Name -> Fuzz(Bau=name))
+        """,
+        group_type_name = "FuzzNode";
+        const int types_count = 2;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        Assert.Equal(types_count, binder.Grammar.Types.Count);
+        Assert.Equal(group_type_name, binder.Grammar.Types[1].Name);
+    }
+
+    [Fact]
+    public void TestBinder_GroupRuleCreatedOnce_IfSameContent()
+    {
+        const string src = """
+        @main
+        Bau: [BauBau    'fluff'] # add spaces
+        BauBau: 'fuzz' !(BauBau 'fluff')
+        """;
+        const int rules_count = 3;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        Assert.Equal(rules_count, binder.Grammar.Rules.Count);
+        Assert.Equal(rules_count, binder.Grammar.Types.Count);
+    }
+
     private static GrammarNode getNode(string src)
     {
-        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), false);
+        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), true);
         var parser = new GrammarParser(new TokenNodeStream(tokenizer));
         var node = parser.Parse();
         Debug.Assert(node is not null, "Given syntax is not valid.");

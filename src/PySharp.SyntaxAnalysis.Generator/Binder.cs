@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
-using PySharp.SyntaxAnalysis.Common.Ast;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Generator;
@@ -18,11 +17,11 @@ internal class Binder
         meta_parser_name = "parser_name",
         decor_main = "main",
         decor_union = "union",
-        decor_token_union = "inline";
+        decor_token_union = "inline",
+        decor_memo = "memo";
 
     private readonly VariableNamingScope groupTypeNameStore = new();
-    // TODO: now it's too messy to create identity by the ast. Would be better to replace it with the some more deterministic.
-    private readonly Dictionary<NodeArray<GreenNode>, BoundRule> groupRules = [];
+    private readonly Dictionary<GroupIdentifier, BoundRule> groupRules = [];
 
     internal void ReadMetadata(IEnumerable<MetadataNode> metadata)
     {
@@ -100,6 +99,8 @@ internal class Binder
                 AstAlternatives = alternatives.ToList(),
                 Kind = kind,
                 Type = type,
+                IsGroup = false,
+                EnableMemoization = decorators.Contains(decor_memo),
             };
             Rules[rule.Name] = rule;
             Grammar.Rules.Add(rule);
@@ -181,13 +182,15 @@ internal class Binder
             AstAlternatives = astGroup.Alternatives,
             Type = type,
             Kind = isInline ? BoundRuleKind.TokenUnion : BoundRuleKind.Type,
+            IsGroup = true,
+            EnableMemoization = false, // Groups cannot use memo.
         };
 
-        if (!groupRules.ContainsKey(astGroup.AstAlternatives))
+        if (!groupRules.ContainsKey(astGroup.Identifier))
         {
             Rules[groupRule.Name] = groupRule;
             Grammar.Rules.Add(groupRule);
-            groupRules[astGroup.AstAlternatives] = groupRule;
+            groupRules[astGroup.Identifier] = groupRule;
         }
 
         foreach (var group in astGroup.Alternatives.SelectMany(getGroups))
@@ -297,7 +300,7 @@ internal class Binder
                     break;
 
                 case OptionalGroupNode optGroup:
-                    var rule = groupRules[optGroup.AstAlternatives];
+                    var rule = groupRules[((IGroup)optGroup).Identifier];
                     yield return new BoundRuleAlternativeEntry
                     {
                         Name = nameScope.NextName(rule.Name),
@@ -383,8 +386,8 @@ internal class Binder
         GroupAtomNode groupAtom => new BoundRuleAlternativeEntry
         {
             Quantifier = quant,
-            Name = nameScope.NextName(groupRules[groupAtom.AstAlternatives].Name) + quant.AddSuffix(count),
-            Value = groupRules[groupAtom.AstAlternatives],
+            Name = nameScope.NextName(groupRules[((IGroup)groupAtom).Identifier].Name) + quant.AddSuffix(count),
+            Value = groupRules[((IGroup)groupAtom).Identifier],
             MinRepeatCount = count,
             Positiveness = positive,
         },
@@ -496,6 +499,9 @@ internal class Binder
                     if (rule.Alternatives.Count == 1)
                     {
                         var fields = rule.Alternatives[0].Action!.CapturedVariables.Select(createField);
+
+                        if (!rule.IsGroup && rule.AstAlternatives[0].Action is NamedActionNode)
+                            throw new CompilationException($"Using name for the rule with single arm is not allowed: {rule.Name}");
 
                         ((BoundRuleType)rule.Type).Fields = fields.ToList();
                         Grammar.Types.Add(rule.Type);
