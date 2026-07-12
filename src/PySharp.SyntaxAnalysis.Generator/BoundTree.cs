@@ -47,11 +47,11 @@ internal class BoundRule
     {
         var gen = new CsGenerator();
 
-        var ir = new RuleIr(SourceText, Name, Type.Name);
+        var ir = new RuleIr(SourceText, Name, Type.Name, EnableMemoization);
 
         gen.AddRuleHeader(ir);
 
-        gen.AddRuleBody(Alternatives.Select(a => a.GenerateCode()));
+        gen.AddRuleBody(ir, Alternatives.Select(a => a.GenerateCode()));
 
         gen.AddRuleEnd(ir);
 

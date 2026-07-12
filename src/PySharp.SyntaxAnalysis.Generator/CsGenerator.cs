@@ -26,7 +26,7 @@ internal class CsGenerator
 
     internal void AddCreationAction(string returnTypeName, IEnumerable<VariableIr> variables)
     {
-        AddLine($"return new {returnTypeName}()");
+        AddLine($"_res = new {returnTypeName}()");
         open();
         AddLine("Children = new NodeArray<GreenNode>([");
         indentation++;
@@ -42,11 +42,19 @@ internal class CsGenerator
         }
         indentation--;
         AddLine("]),");
+
+        // close(), but with the semicolon.
         indentation--;
         AddLine("};");
+
+        AddLine("goto _Return;");
     }
 
-    internal void AddPassAction(string name) => AddLine($"return {name};");
+    internal void AddPassAction(string name)
+    {
+        AddLine($"_res = {name};");
+        AddLine("goto _Return;");
+    }
 
     internal void AddCondition(ConditionIr conditionIr)
     {
@@ -166,17 +174,36 @@ internal class CsGenerator
     internal void AddRuleHeader(RuleIr ruleIr)
     {
         AddLine($"#region {ruleIr.Name}");
+
+        if (ruleIr.IsMemoEnabled)
+        {
+            AddLine($"private readonly IMemoContainer<{ruleIr.ReturnTypeName}> _memo_{ruleIr.Name} = CreateContainer<{ruleIr.ReturnTypeName}>();");
+        }
+
         foreach (var line in ruleIr.OriginalText.Trim('\n', '\r', ' ', '\t').EnumerateLines())
             AddLine($"// {line}");
 
         AddLine($"{ruleIr.ReturnTypeName}? rule_{ruleIr.Name}()");
     }
 
-    internal void AddRuleBody(IEnumerable<(string alternativeText, bool hasCut)> alternativeEmits)
+    internal void AddRuleBody(RuleIr ir, IEnumerable<(string alternativeText, bool hasCut)> alternativeEmits)
     {
         open();
 
         AddLine("int _mark = base.Mark();");
+
+        if (ir.IsMemoEnabled)
+        {
+            addLines($$"""
+            if (_memo_{{ir.Name}}.TryGetCache(_mark, out {{ir.ReturnTypeName}}? _memoized))
+            {
+                return _memoized;
+            }
+            """);
+        }
+
+        AddLine($"{ir.ReturnTypeName}? _res = null;");
+
         if (alternativeEmits.Any(ae => ae.hasCut))
             AddLine("bool _cut = false;");
 
@@ -192,13 +219,30 @@ internal class CsGenerator
                 addLines("""
                 if (_cut)
                 {
-                    return null;
+                    _res = null;
+                    goto _Return;
                 }
                 """);
             }
         }
 
-        AddLine("return null;");
+        indentation--;
+        if (ir.IsMemoEnabled)
+        {
+            addLines($"""
+            _Return:
+                _memo_{ir.Name}.AddCache(_mark, _res);
+                return _res;
+            """);
+        }
+        else
+        {
+            AddLine("""
+            _Return:
+                return _res;
+            """);
+        }
+        indentation++;
 
         close();
     }

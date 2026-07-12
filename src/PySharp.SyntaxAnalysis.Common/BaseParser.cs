@@ -12,6 +12,9 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
 
     private readonly ITokenNodeStream tokenStream = tokenNodeStream;
 
+    protected static IMemoContainer<TNode> CreateContainer<TNode>()
+        where TNode : IGreenNode => new DictMemoContainer<TNode>();
+
     protected TokenNode? Expect(TokenType type)
     {
         var tok = tokenStream.PeekToken();
