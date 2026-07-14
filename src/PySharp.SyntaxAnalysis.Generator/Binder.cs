@@ -125,6 +125,8 @@ internal class Binder
 
                 Grammar.MainRule = rule;
                 Grammar.TopLevelNodeName = rule.Type.Name;
+                rule.IsEntryPoint = true;
+                rule.WasUsed = true;
             }
         }
 
@@ -333,8 +335,10 @@ internal class Binder
             }
 
             var entry = createEntry(atom, nameScope, quant, count, positive);
-            entry.Index = entry.Quantifier != QuantifierKind.Lookahead ? index : -1;
-            yield return entry;
+            yield return entry with
+            {
+                Index = entry.Quantifier != QuantifierKind.Lookahead ? index : -1,
+            };
 
             if (entry.Quantifier != QuantifierKind.Lookahead)
                 index++;
@@ -592,5 +596,175 @@ internal class Binder
                 ? getEntryType(gatherEntry.Value)
                 : BoundType.TokenNodeType;
 
-    internal void InspectRules() => throw new NotImplementedException();
+    internal void InspectRules()
+    {
+        foreach (var rule in computeReachableRules(Grammar.MainRule))
+        {
+            rule.WasUsed = true;
+        }
+
+        foreach (var rule in Rules.Values.Where(r => !r.WasUsed))
+        {
+            Warnings.Add(new CompilationWarning()
+            {
+                Line = rule.LineCreated,
+                Message = $"Rule '{rule.Name}' is created but never used."
+            });
+        }
+
+        var sccHandled = new List<HashSet<BoundRule>>();
+
+        foreach (var rule in Rules.Values)
+        {
+            // Rules overall quality.
+            if (rule.Kind == BoundRuleKind.TokenUnion)
+                continue;
+
+            if (rule.GetAllUsedRules().Any(r => r.IsEntryPoint))
+            {
+                throw new CompilationException("Rules cannot refer to the top-level rules.")
+                {
+                    Line = rule.LineCreated,
+                };
+            }
+
+            for (int currentAltIndex = 1; currentAltIndex < rule.Alternatives.Count; currentAltIndex++)
+            {
+                var currentAlt = rule.Alternatives[currentAltIndex];
+                foreach (var previousAlt in rule.Alternatives[0..currentAltIndex])
+                {
+                    if (currentAlt.StartsWith(previousAlt))
+                    {
+                        var warn = new CompilationWarning
+                        {
+                            Message = $"Alternative will never be reached.",
+                            Line = currentAlt.LineCreated,
+                        };
+                        Warnings.Add(warn);
+                    }
+                }
+            }
+
+            // Process SCCs.
+            var sccIterator = searchStronglyConnectedComponents(rule);
+            foreach (var scc in sccIterator)
+            {
+                // Skip already handled SCCs
+                if (sccHandled.Any(handled => handled.SetEquals(scc)))
+                    continue;
+
+                switch (scc.Count)
+                {
+                    case 0:
+                        throw new UnreachableException("SCC cannot have 0 elements.");
+
+                    case 1:
+                        if (rule.GetPotentialLeftRecursive([]).Contains(rule))
+                        {
+                            rule.IsLeftRecursive = true;
+
+                            if (!rule.EnableMemoization)
+                                throw new CompilationException($"Rule '{rule.Name}' is left recursive and should have explicit memoization tag.")
+                                {
+                                    Line = rule.LineCreated,
+                                };
+                        }
+                        break;
+
+                    default:
+                        throw new NotImplementedException("");
+                }
+
+                sccHandled.Add(scc);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Search for the strongly connected components (SCC) in the given rules by the
+    /// <see cref="BoundRule.GetPotentialLeftRecursive"/> to detect indirect left recursion.
+    /// </summary>
+    /// <remarks>
+    /// For example for these rules:
+    /// <code>
+    /// Rule1:
+    ///     | Rule2 "terminal"
+    ///     | "terminal"
+    /// Rule2: Rule3 "alsoTerminal"
+    /// Rule3:
+    ///     | Rule1 "anotherTerminal"
+    ///     | Rule0 "anotherTerminal"
+    /// Rule0: "hello"
+    /// </code>
+    /// going to return SCC: <c>{ Rule1, Rule2, Rule3 }</c> and <c>{ Rule0 }</c>
+    /// </remarks>
+    /// <param name="vertex">Rule to search on left recursion.</param>
+    /// <returns>Sets of the rules that creates SCC.</returns>
+    private IEnumerable<HashSet<BoundRule>> searchStronglyConnectedComponents(BoundRule vertex)
+    {
+        var identified = new HashSet<BoundRule>();
+        var stack = new List<BoundRule>();
+        var index = new Dictionary<BoundRule, int>();
+        var boundaries = new Stack<int>();
+
+        IEnumerable<HashSet<BoundRule>> deepFirstSearch(BoundRule vertex)
+        {
+            index[vertex] = stack.Count;
+            stack.Add(vertex);
+            boundaries.Push(index[vertex]);
+
+            foreach (var edge in vertex.GetPotentialLeftRecursive(Warnings))
+            {
+                if (!index.TryGetValue(edge, out int edgeIndex))
+                {
+                    foreach (var next in deepFirstSearch(edge))
+                        yield return next;
+                }
+                else if (!identified.Contains(edge))
+                {
+                    while (edgeIndex < boundaries.Peek())
+                        boundaries.Pop();
+                }
+            }
+
+            if (boundaries.Peek() == index[vertex])
+            {
+                boundaries.Pop();
+                HashSet<BoundRule> stronglyConnectedComponents = stack[index[vertex]..].ToHashSet();
+                identified.UnionWith(stronglyConnectedComponents);
+
+                stack.RemoveRange(index[vertex], stack.Count - index[vertex]);
+
+                yield return stronglyConnectedComponents;
+            }
+        }
+
+        foreach (var scc in deepFirstSearch(vertex))
+            yield return scc;
+    }
+
+    /// <summary>
+    /// Recursively computes all rules that can be reached starting from the given <paramref name="vertex"/>.
+    /// </summary>
+    private static IEnumerable<BoundRule> computeReachableRules(BoundRule vertex, HashSet<BoundRule>? reached = null)
+    {
+        reached ??= [];
+
+        reached.Add(vertex);
+
+        foreach (var child in vertex.GetAllUsedRules())
+        {
+            if (reached.Contains(child))
+                continue;
+
+            reached.Add(child);
+
+            yield return child;
+
+            foreach (var grandChild in computeReachableRules(child, reached))
+            {
+                yield return grandChild;
+            }
+        }
+    }
 }

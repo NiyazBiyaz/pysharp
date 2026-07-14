@@ -795,7 +795,7 @@ public class TestBinder
 
         Assert.False(normal.IsLeftRecursive);
         Assert.True(leftRecursive1.IsLeftRecursive);
-        Assert.True(leftRecursive2.IsLeftRecursive);
+        Assert.False(leftRecursive2.IsLeftRecursive);
     }
 
     [Fact]
@@ -857,6 +857,24 @@ public class TestBinder
 
         Assert.Single(binder.Warnings);
         Assert.Contains("Bau", binder.Warnings[0].Message);
+    }
+
+    [Fact]
+    public void TestInspectRules_DoNotUseMainInOtherRules()
+    {
+        const string src = """
+        @main
+        BauBau: Fluffy
+        Fluffy: 'fuzzy' Bau
+        Bau: 'bau' BauBau
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        Assert.Throws<CompilationException>(binder.InspectRules);
     }
 
     private static GrammarNode getNode(string src)

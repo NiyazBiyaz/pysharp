@@ -40,7 +40,7 @@ internal class Program
         if (grammarParsed is null)
         {
             Console.Error.WriteLine($"Parsing error. Line: {tokenizer.Synchronize().StartLine + 1}");
-            Environment.Exit(3);
+            Environment.Exit(1);
         }
 
         var binder = new Binder();
@@ -56,6 +56,7 @@ internal class Program
         catch (CompilationException e)
         {
             Console.Error.WriteLine($"Error at line {e.Line}: {e.Message}");
+            Environment.Exit(1);
         }
 
         foreach (var warn in binder.Warnings)
