@@ -327,7 +327,7 @@ TryStatement:
     | 'try' ':' Block ExceptBlock+ -ElseBlock -FinallyBlock -> TryExceptStatement(
         Try=block, Excepts=except_block_Plus, Else=else_block, Finally=finally_block)
 
-    | 'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock -> TryExceptStatement(
+    | 'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock -> TryExceptStarStatement(
         Try=block, Excepts=except_star_block_Plus, Else=else_block, Finally=finally_block)
 
 ExceptBlock:
