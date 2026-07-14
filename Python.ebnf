@@ -176,6 +176,7 @@ ImportFromAsName: Name ['as' Name -> AsName(Value=name)] -> new(ToImport=name, A
 
 DottedAsName: DottedName ['as' Name -> AsName(Value=name)] -> new(Name=dotted_name, Alias=as_name)
 
+@memo
 DottedName:
     | DottedName '.' Name -> ManyDottedName(Left=dotted_name, Right=name)
     | Name -> SingleDottedName(Value=name)

@@ -612,7 +612,6 @@ internal class Binder
             });
         }
 
-        var sccHandled = new List<HashSet<BoundRule>>();
 
         foreach (var rule in Rules.Values)
         {
@@ -644,6 +643,8 @@ internal class Binder
                     }
                 }
             }
+
+            var sccHandled = new List<HashSet<BoundRule>>();
 
             // Process SCCs.
             var sccIterator = searchStronglyConnectedComponents(rule);

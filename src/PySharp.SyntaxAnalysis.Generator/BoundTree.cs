@@ -80,7 +80,7 @@ internal class BoundRule
     {
         var gen = new CsGenerator();
 
-        var ir = new RuleIr(SourceText, Name, Type.Name, EnableMemoization);
+        var ir = new RuleIr(SourceText, Name, Type.Name, EnableMemoization, IsLeftRecursive);
 
         gen.AddRuleHeader(ir);
 

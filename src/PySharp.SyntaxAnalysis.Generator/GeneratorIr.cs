@@ -2,7 +2,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
-internal record RuleIr(string OriginalText, string Name, string ReturnTypeName, bool IsMemoEnabled);
+internal record RuleIr(
+    string OriginalText,
+    string Name,
+    string ReturnTypeName,
+    bool IsMemoEnabled,
+    bool IsLeftRecursive);
+
 
 internal record VariableIr(string Name, bool IsArray, bool IsOptional)
 {

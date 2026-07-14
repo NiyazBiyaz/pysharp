@@ -171,19 +171,59 @@ internal class CsGenerator
         close();
     }
 
-    internal void AddRuleHeader(RuleIr ruleIr)
+    internal void AddRuleHeader(RuleIr ir)
     {
-        AddLine($"#region {ruleIr.Name}");
+        AddLine($"#region {ir.Name}");
 
-        if (ruleIr.IsMemoEnabled)
+        if (ir.IsMemoEnabled)
         {
-            AddLine($"private readonly IMemoContainer<{ruleIr.ReturnTypeName}> _memo_{ruleIr.Name} = CreateContainer<{ruleIr.ReturnTypeName}>();");
+            AddLine($"private readonly IMemoContainer<{ir.ReturnTypeName}> _memo_{ir.Name} = CreateContainer<{ir.ReturnTypeName}>();");
         }
 
-        foreach (var line in ruleIr.OriginalText.Trim('\n', '\r', ' ', '\t').EnumerateLines())
+        if (ir.IsLeftRecursive)
+        {
+            addLeftRecursionWrapper(ir);
+        }
+
+        foreach (var line in ir.OriginalText.Trim('\n', '\r', ' ', '\t').EnumerateLines())
             AddLine($"// {line}");
 
-        AddLine($"{ruleIr.ReturnTypeName}? rule_{ruleIr.Name}()");
+        string rawPrefix = ir.IsLeftRecursive ? "raw_" : "";
+
+        AddLine($"{ir.ReturnTypeName}? {rawPrefix}rule_{ir.Name}()");
+    }
+
+    private void addLeftRecursionWrapper(RuleIr ir)
+    {
+        AddLine($"{ir.ReturnTypeName}? rule_{ir.Name}()");
+
+        open();
+
+        addLines($$"""
+        {{ir.ReturnTypeName}}? _res = null;
+        int _mark = base.Mark();
+        int _lastMark = base.Mark();
+        if (_memo_{{ir.Name}}.TryGetCache(_mark, out var _memoized))
+        {
+            return _memoized;
+        }
+        while (true)
+        {
+            _memo_.UpdateCache(_mark, _res);
+            base.Reset(_mark);
+            var _rawResult = raw_rule_{{ir.Name}}();
+            if (_rawResult == null || base.Mark() <= _lastMark)
+            {
+                break;
+            }
+            _lastMark = base.Mark();
+            _res = _rawResult;
+        }
+        base.Reset(_lastMark);
+        return _res;
+        """);
+
+        close();
     }
 
     internal void AddRuleBody(RuleIr ir, IEnumerable<(string alternativeText, bool hasCut)> alternativeEmits)
@@ -192,7 +232,7 @@ internal class CsGenerator
 
         AddLine("int _mark = base.Mark();");
 
-        if (ir.IsMemoEnabled)
+        if (ir.IsMemoEnabled && !ir.IsLeftRecursive)
         {
             addLines($$"""
             if (_memo_{{ir.Name}}.TryGetCache(_mark, out {{ir.ReturnTypeName}}? _memoized))
@@ -227,7 +267,7 @@ internal class CsGenerator
         }
 
         indentation--;
-        if (ir.IsMemoEnabled)
+        if (ir.IsMemoEnabled && !ir.IsLeftRecursive)
         {
             addLines($"""
             _Return:
