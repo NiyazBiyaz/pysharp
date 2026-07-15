@@ -39,7 +39,7 @@ public record TokenNode : GreenNode
         return builder.ToString();
     }
 
-    protected override void AppendToBuilder(StringBuilder builder)
+    public override void AppendToBuilder(StringBuilder builder)
     {
         foreach (var trivia in Leading)
             builder.Append(trivia.RawString);

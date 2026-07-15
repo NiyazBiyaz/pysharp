@@ -28,7 +28,7 @@ internal class CsGenerator
     {
         AddLine($"_res = new {returnTypeName}()");
         open();
-        AddLine("Children = new NodeArray<GreenNode>([");
+        AddLine("Children = new NodeArray<IGreenNode>([");
         indentation++;
         foreach (var variable in variables)
         {
@@ -142,9 +142,9 @@ internal class CsGenerator
         foreach (var varEmit in variables)
         {
             if (varEmit.IsArray)
-                AddLine($"INodeArray<GreenNode>? {varEmit.Name};");
+                AddLine($"INodeArray<IGreenNode>? {varEmit.Name};");
             else
-                AddLine($"GreenNode? {varEmit.Name};");
+                AddLine($"IGreenNode? {varEmit.Name};");
         }
 
         if (conditionEmits.Count() == 1)
@@ -293,7 +293,7 @@ internal class CsGenerator
     {
         string modifierName = accessModifier.CodeRepresentation();
 
-        AddLine($"{modifierName} class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
+        AddLine($"{modifierName} partial class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
     }
 
     internal void AddParserBody(string mainName, string mainTypeName, IEnumerable<string> ruleEmits, IEnumerable<string> keywords)

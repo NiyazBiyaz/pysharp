@@ -18,7 +18,8 @@ public abstract record GreenNode : IGreenNode
             }
         }
     }
-    public virtual INodeArray<GreenNode>? Children { get; init; }
+
+    public virtual INodeArray<IGreenNode>? Children { get; init; }
 
     public virtual string RecoverText()
     {
@@ -32,7 +33,7 @@ public abstract record GreenNode : IGreenNode
         return builder.ToString();
     }
 
-    protected virtual void AppendToBuilder(StringBuilder builder)
+    public virtual void AppendToBuilder(StringBuilder builder)
     {
         if (Children is null)
             return;

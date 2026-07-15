@@ -7,7 +7,7 @@ namespace PySharp.SyntaxAnalysis.Common.Ast;
 
 [CollectionBuilder(typeof(NodeArrayBuilder), "Create")]
 public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
-    where TNode : GreenNode
+    where TNode : IGreenNode
 {
     private readonly ImmutableArray<TNode> nodes;
 
@@ -34,7 +34,7 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
 
         for (int i = 0; i < Count; i++)
         {
-            if (this[i] != other[i])
+            if (this[i].Equals(other[i]))
                 return false;
         }
 
@@ -73,6 +73,8 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
 
         return builder.ToString();
     }
+
+    public bool Equals(INodeArray<IGreenNode>? other) => other is NodeArray<IGreenNode> otherArray && Equals(otherArray);
 }
 
 public static class NodeArrayBuilder
