@@ -7,7 +7,8 @@ internal record RuleIr(
     string Name,
     string ReturnTypeName,
     bool IsMemoEnabled,
-    bool IsLeftRecursive);
+    bool IsLeftRecursive,
+    IEnumerable<AlternativeIr> Alternatives);
 
 
 internal record VariableIr(string Name, bool IsArray, bool IsOptional)
@@ -25,7 +26,37 @@ internal record ConditionIr
     public required AtomIr? Separator { get; init; }
 }
 
+internal enum ActionKind
+{
+    Generative,
+    Passive,
+}
+
+internal record ActionIr(ActionKind Kind, string? TypeName, IEnumerable<VariableIr> Variables);
+
+internal record AlternativeIr(
+    bool HasCut,
+    string SourceText,
+    IEnumerable<VariableIr> Variables,
+    IEnumerable<ConditionIr> Conditions,
+    ActionIr Action);
+
 internal record AtomIr(string CallData, bool IsString, bool IsToken);
+
+internal enum TypeKind
+{
+    Rule,
+    Union,
+}
+
+internal record TypeIr(
+    TypeKind Kind,
+    IEnumerable<FieldIr> Fields,
+    AccessModifier AccessModifier,
+    string Name,
+    string BaseName,
+    bool? IsAbstract,
+    IEnumerable<string> UnionMembership);
 
 internal record FieldIr
 {

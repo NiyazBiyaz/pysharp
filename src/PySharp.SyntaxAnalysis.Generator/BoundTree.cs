@@ -20,11 +20,11 @@ internal class BoundGrammar
 
         gen.AddParserSignature(AccessModifier.Internal, ParserName, TopLevelNodeName);
 
-        gen.AddParserBody(MainRule.Name, TopLevelNodeName, Rules.Select(r => r.GenerateCode()), []);
+        gen.AddParserBody(MainRule.Name, TopLevelNodeName, Rules.Select(r => r.ToIr()), []);
 
         gen.AddLine("#region Type definitions");
 
-        gen.AddTypes(Types.Select(t => t.GenerateCode()));
+        gen.AddTypes(Types.Select(t => t.ToIr()));
 
         gen.AddLine("#endregion");
 
@@ -76,20 +76,13 @@ internal class BoundRule
         return hash.ToHashCode();
     }
 
-    internal string GenerateCode()
-    {
-        var gen = new CsGenerator();
-
-        var ir = new RuleIr(SourceText, Name, Type.Name, EnableMemoization, IsLeftRecursive);
-
-        gen.AddRuleHeader(ir);
-
-        gen.AddRuleBody(ir, Alternatives.Select(a => a.GenerateCode()));
-
-        gen.AddRuleEnd(ir);
-
-        return gen.Dump();
-    }
+    internal RuleIr ToIr() => new(
+        SourceText,
+        Name,
+        Type.Name,
+        EnableMemoization,
+        IsLeftRecursive,
+        Alternatives.Select(a => a.ToIr()));
 
     internal IEnumerable<BoundRule> GetPotentialLeftRecursive(List<CompilationWarning> warnings) =>
         Alternatives
@@ -117,34 +110,16 @@ internal class BoundAlternative
         => Entries.Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut);
     internal BoundAction? Action { get; set; }
 
-    internal (string alternativeText, bool hasCut) GenerateCode()
+    internal AlternativeIr ToIr()
     {
-        var gen = new CsGenerator();
+        var variables = Variables
+            .Select(v => new VariableIr(v.Name, v.Quantifier.IsArray, v.Quantifier == QuantifierKind.Optional));
 
-        var variables = Variables.Select(v => new VariableIr(v.Name, v.Quantifier.IsArray, v.Quantifier == QuantifierKind.Optional));
+        var conditions = Entries.Select(e => e.ToConditionIr());
 
-        var conditions = Entries.Select(e => e.GenerateCode());
+        var action = Action?.ToIr(variables) ?? new ActionIr(ActionKind.Generative, null, variables);
 
-        gen.AddAlternative(SourceText, variables, conditions, createAction());
-
-        return (gen.Dump(), Entries.Any(e => e is BoundCutAlternativeEntry));
-    }
-
-    private string createAction()
-    {
-        var gen = new CsGenerator();
-        if (Action is not null)
-        {
-            gen.AddCreationAction(Action.Type.Name,
-                Entries
-                .Where(e => e.Quantifier != QuantifierKind.Cut)
-                .Select(e => new VariableIr(e.Name, e.Quantifier.IsArray, e.Quantifier == QuantifierKind.Optional)));
-        }
-        else
-        {
-            gen.AddPassAction(Variables.First().Name);
-        }
-        return gen.Dump();
+        return new AlternativeIr(conditions.Any(c => c.Kind == QuantifierKind.Cut), SourceText, variables, conditions, action);
     }
 
     internal IEnumerable<BoundRuleAlternativeEntry> GetPotentialLeftRecursive(List<CompilationWarning> warnings)
@@ -244,10 +219,12 @@ internal class BoundAction
     internal required BoundRuleType Type { get; init; }
 
     /// <summary>
-    /// Variables that was captured in the <see cref="ActionNode"/> and would be used to generate
+    /// Variables that was captured in the <see cref="ActionNode"/>  would be used to generate
     /// type fields.
     /// </summary>
     internal required List<BoundCapturedVariable> CapturedVariables { get; init; }
+
+    internal ActionIr ToIr(IEnumerable<VariableIr> variables) => new(ActionKind.Generative, Type.Name, variables);
 }
 
 internal class BoundCapturedVariable
@@ -293,24 +270,15 @@ internal abstract record BoundAlternativeEntry
     /// </summary>
     internal required bool? Positiveness { get; init; }
 
-    internal string GenerateCode()
+    internal ConditionIr ToConditionIr() => new()
     {
-        var gen = new CsGenerator();
-
-        var ir = new ConditionIr()
-        {
-            Kind = Quantifier,
-            AssignedVar = Name,
-            Positive = Positiveness,
-            MinCount = MinRepeatCount,
-            Atom = getAtom(this)!, // Atom may be null if cut, but cut never uses Atom.
-            Separator = getAtom((this as BoundGatherAlternativeEntry)?.Separator)
-        };
-
-        gen.AddCondition(ir);
-
-        return gen.Dump();
-    }
+        Kind = Quantifier,
+        AssignedVar = Name,
+        Positive = Positiveness,
+        MinCount = MinRepeatCount,
+        Atom = getAtom(this)!, // Atom may be null if cut, but cut never uses Atom.
+        Separator = getAtom((this as BoundGatherAlternativeEntry)?.Separator)
+    };
 
     private static AtomIr? getAtom(BoundAlternativeEntry? alternativeEntry) => alternativeEntry switch
     {
@@ -367,32 +335,15 @@ internal abstract class BoundType
         Name = "TokenNode",
     };
 
-    internal string GenerateCode()
-    {
-        var gen = new CsGenerator();
-
-        if (this is BoundRuleType ruleType)
-        {
-            gen.AddTypeSignature(
-                AccessModifier.Internal,
-                Name,
-                ruleType.Base?.Name,
-                ruleType.IsAbstract,
-                UnionMembership.Select(u => u.Name));
-
-            var fields = ruleType.Fields ?? [];
-            gen.AddTypeBody(fields.Select(f => new FieldIr(f, AccessModifier.Internal)));
-        }
-        else
-        {
-            gen.AddUnion(
-                AccessModifier.Internal,
-                Name,
-                UnionMembership.Select(u => u.Name));
-        }
-
-        return gen.Dump();
-    }
+    internal TypeIr ToIr() => new(
+        this is BoundRuleType ? TypeKind.Rule : TypeKind.Union,
+        (this as BoundRuleType)?.Fields.Select(f => new FieldIr(f, AccessModifier.Internal)) ?? [],
+        AccessModifier.Internal,
+        Name,
+        (this as BoundRuleType)?.Base?.Name ?? "GreenNode",
+        (this as BoundRuleType)?.IsAbstract,
+        UnionMembership.Select(u => u.Name)
+    );
 }
 
 internal sealed class BoundRuleType : BoundType

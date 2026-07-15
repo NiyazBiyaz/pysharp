@@ -4,7 +4,7 @@ using PySharp.SyntaxAnalysis.Tokens;
 namespace PySharp.SyntaxAnalysis.Common;
 
 public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
-    where TStartNode : GreenNode
+    where TStartNode : IGreenNode
 {
     public abstract TStartNode? Parse();
 

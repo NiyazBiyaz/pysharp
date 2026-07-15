@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
@@ -24,13 +23,13 @@ internal class CsGenerator
         return builder.ToString();
     }
 
-    internal void AddCreationAction(string returnTypeName, IEnumerable<VariableIr> variables)
+    internal void AddGenerativeAction(ActionIr action)
     {
-        AddLine($"_res = new {returnTypeName}()");
+        AddLine($"_res = new {action.TypeName!}()");
         open();
         AddLine("Children = new NodeArray<IGreenNode>([");
         indentation++;
-        foreach (var variable in variables)
+        foreach (var variable in action.Variables)
         {
             string varName = variable.Name;
             if (variable.IsArray)
@@ -50,9 +49,9 @@ internal class CsGenerator
         AddLine("goto _Return;");
     }
 
-    internal void AddPassAction(string name)
+    internal void AddPassAction(ActionIr action)
     {
-        AddLine($"_res = {name};");
+        AddLine($"_res = {action.Variables.First()};");
         AddLine("goto _Return;");
     }
 
@@ -125,21 +124,21 @@ internal class CsGenerator
                 break;
 
             default:
-                throw new UnreachableException($"Unexpected ConditionKind: {conditionIr.Kind}");
+                throw new ArgumentOutOfRangeException(nameof(conditionIr), $"Unexpected ConditionKind: {conditionIr.Kind}");
         }
 
         static string wrapOpt(ReadOnlySpan<char> value) => $"(({value}) is not null || true) // Optional";
         static string wrapNull(ReadOnlySpan<char> value) => $"({value}) is not null";
     }
 
-    internal void AddAlternative(string originalText, IEnumerable<VariableIr> variables, IEnumerable<string> conditionEmits, string? actionEmit)
+    internal void AddAlternative(AlternativeIr ir)
     {
-        foreach (var line in originalText.Trim().EnumerateLines())
+        foreach (var line in ir.SourceText.Trim().EnumerateLines())
         {
             AddLine($"// {line}");
         }
 
-        foreach (var varEmit in variables)
+        foreach (var varEmit in ir.Variables)
         {
             if (varEmit.IsArray)
                 AddLine($"INodeArray<IGreenNode>? {varEmit.Name};");
@@ -147,28 +146,45 @@ internal class CsGenerator
                 AddLine($"IGreenNode? {varEmit.Name};");
         }
 
-        if (conditionEmits.Count() == 1)
+        beginLine();
+        add("if (");
+        AddCondition(ir.Conditions.First());
+        if (ir.Conditions.Count() == 1)
         {
-            addLines($"""
-            if ({conditionEmits.First()})
-            """);
+            add(")");
+            endLine();
         }
         else
         {
-            AddLine($"if ({conditionEmits.First()}");
+            endLine();
             indentation++;
-            foreach (var condEmit in conditionEmits.Skip(1))
+            foreach (var condition in ir.Conditions.Skip(1))
             {
                 AddLine("&&");
-                AddLine(condEmit);
+                beginLine();
+                AddCondition(condition);
+                endLine();
             }
             indentation--;
             AddLine(")");
         }
 
         open();
-        addLines(actionEmit);
+
+        if (ir.Action.Kind == ActionKind.Generative)
+            AddGenerativeAction(ir.Action);
+
+        else
+            AddPassAction(ir.Action);
+
         close();
+    }
+
+    internal void AddRule(RuleIr ir)
+    {
+        AddRuleHeader(ir);
+        AddRuleBody(ir);
+        AddRuleEnd(ir);
     }
 
     internal void AddRuleHeader(RuleIr ir)
@@ -226,7 +242,7 @@ internal class CsGenerator
         close();
     }
 
-    internal void AddRuleBody(RuleIr ir, IEnumerable<(string alternativeText, bool hasCut)> alternativeEmits)
+    internal void AddRuleBody(RuleIr ir)
     {
         open();
 
@@ -244,17 +260,19 @@ internal class CsGenerator
 
         AddLine($"{ir.ReturnTypeName}? _res = null;");
 
-        if (alternativeEmits.Any(ae => ae.hasCut))
+        if (ir.Alternatives.Any(a => a.HasCut))
             AddLine("bool _cut = false;");
 
-        foreach (var (altText, hasCut) in alternativeEmits)
+        foreach (var alt in ir.Alternatives)
         {
             open();
-            addLines(altText);
+
+            AddAlternative(alt);
+
             close();
 
             AddLine("base.Reset(_mark);");
-            if (hasCut)
+            if (alt.HasCut)
             {
                 addLines("""
                 if (_cut)
@@ -296,7 +314,7 @@ internal class CsGenerator
         AddLine($"{modifierName} partial class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
     }
 
-    internal void AddParserBody(string mainName, string mainTypeName, IEnumerable<string> ruleEmits, IEnumerable<string> keywords)
+    internal void AddParserBody(string mainName, string mainTypeName, IEnumerable<RuleIr> ruleIrs, IEnumerable<string> keywords)
     {
         open();
 
@@ -323,10 +341,11 @@ internal class CsGenerator
 
         AddLine($"public override {mainTypeName}? Parse() => rule_{mainName}();");
 
-        foreach (var emitRule in ruleEmits)
+        foreach (var rule in ruleIrs)
         {
             addBlankLine();
-            addLines(emitRule);
+
+            AddRule(rule);
         }
 
         close();
@@ -348,27 +367,36 @@ internal class CsGenerator
 
     internal void AddFileBody(string grammarEmit) => addLines(grammarEmit);
 
-    internal void AddTypes(IEnumerable<string> typeEmits)
+    internal void AddTypes(IEnumerable<TypeIr> typeIrs)
     {
-        if (!typeEmits.Any())
+        if (!typeIrs.Any())
             return;
 
         bool addBlank = false;
 
-        foreach (var typeEmit in typeEmits)
+        foreach (var type in typeIrs)
         {
             if (addBlank)
                 addBlankLine();
             addBlank = true;
-            addLines(typeEmit);
+
+            if (type.Kind == TypeKind.Rule)
+            {
+                AddTypeSignature(type);
+                AddTypeBody(type);
+            }
+            else
+            {
+                AddUnion(type);
+            }
         }
     }
 
-    internal void AddTypeBody(IEnumerable<FieldIr> fields)
+    internal void AddTypeBody(TypeIr ir)
     {
         open();
 
-        foreach (var field in fields)
+        foreach (var field in ir.Fields)
         {
             string modifier = field.AccessModifier.CodeRepresentation();
 
@@ -418,26 +446,28 @@ internal class CsGenerator
         close();
     }
 
-    internal void AddTypeSignature(AccessModifier accessModifier, string typeName, string? baseName, bool isAbstract, IEnumerable<string> unionMembership)
+    // internal void AddTypeSignature(, , , , )
+    internal void AddTypeSignature(TypeIr ir)
     {
-        string modifierName = accessModifier.CodeRepresentation();
-
-        baseName ??= nameof(GreenNode);
+        string modifierName = ir.AccessModifier.CodeRepresentation();
 
         beginLine();
-        add($"{modifierName} {(isAbstract ? "abstract" : "sealed")} partial record {typeName} : {baseName}");
-        foreach (var union in unionMembership)
+        add($"{modifierName} {(ir.IsAbstract!.Value ? "abstract" : "sealed")} partial record {ir.Name} : {ir.BaseName}");
+        foreach (string union in ir.UnionMembership)
+        {
+            Debug.Assert(union != null);
             add($", {union}");
+        }
         endLine();
     }
 
-    internal void AddUnion(AccessModifier accessModifier, string typeName, IEnumerable<string> unionMembership)
+    internal void AddUnion(TypeIr ir)
     {
-        string modifierName = accessModifier.CodeRepresentation();
+        string modifierName = ir.AccessModifier.CodeRepresentation();
 
         beginLine();
-        add($"{modifierName} partial interface {typeName} : IGreenNode");
-        foreach (var union in unionMembership)
+        add($"{modifierName} partial interface {ir.Name} : IGreenNode");
+        foreach (var union in ir.UnionMembership)
             add($", {union}");
 
         add(";");
