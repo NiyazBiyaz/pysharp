@@ -209,7 +209,7 @@ internal class CsGenerator
         }
         while (true)
         {
-            _memo_.UpdateCache(_mark, _res);
+            _memo_{{ir.Name}}.UpdateCache(_mark, _res);
             base.Reset(_mark);
             var _rawResult = raw_rule_{{ir.Name}}();
             if (_rawResult == null || base.Mark() <= _lastMark)
