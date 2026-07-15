@@ -532,6 +532,27 @@ public class TestBinder
     }
 
     [Fact]
+    public void TestCreateTypes_UndeclaredAction()
+    {
+        const string src = """
+        @main
+        BauBau:
+            | 'bau' 'bau'
+            | 'fluffy' 'fuzzy'
+        """;
+        var gram = getNode(src);
+        var binder = new Binder();
+        binder.RegisterRules(gram.Rules);
+        binder.PopulateRules();
+        binder.CreateTypes();
+
+        // Created 3 types
+        Assert.Equal(3, binder.Grammar.Types.Count);
+        // Names of all types is unique.
+        Assert.True(binder.Grammar.Types.TrueForAll(t => binder.Grammar.Types.Count(ot => ot.Name == t.Name) == 1));
+    }
+
+    [Fact]
     public void TestBinder_PreventUsingSameTypeNames_Rules()
     {
         const string src = """

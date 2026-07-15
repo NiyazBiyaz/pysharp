@@ -477,6 +477,26 @@ internal class Binder
                     };
                 }
 
+                if (astAlt.Action is null && rule.Alternatives.Count > 1)
+                {
+                    int counter = 0;
+                    string name = rule.Type.Name + "_Derived" + counter;
+                    while (typeNames.Contains(name))
+                    {
+                        counter++;
+                        name = rule.Type.Name + "_Derived" + counter;
+                    }
+
+                    typeNames.Add(name);
+
+                    type = new BoundRuleType
+                    {
+                        Name = name,
+                        Base = (BoundRuleType)rule.Type,
+                        IsAbstract = false,
+                    };
+                }
+
                 type ??= (BoundRuleType)rule.Type;
 
                 boundAlt.Action = new BoundAction
