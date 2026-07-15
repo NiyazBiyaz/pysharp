@@ -1,7 +1,7 @@
-﻿using CommandLine;
+﻿using System.CommandLine;
+using System.Runtime.CompilerServices;
 using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Tokens;
-using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("PySharp.SyntaxAnalysis.Generator.Tests")]
 
@@ -9,71 +9,100 @@ namespace PySharp.SyntaxAnalysis.Generator;
 
 internal class Program
 {
-    private static void Main(string[] args) =>
-    Parser.Default.ParseArguments<CliOptions>(args).WithParsed(opt =>
+    private static void Main(string[] args)
     {
-        if (!File.Exists(opt.GrammarPath))
+        RootCommand root = new("PEG parser compiler-like generator PegenNet inspired by CPython's pegen.");
+
+        Argument<FileInfo> grammarInput = new("Grammar file")
         {
-            Console.Error.WriteLine($"Error: File '{opt.GrammarPath}' does not exists.");
-            return;
-        }
-        if (File.Exists(opt.OutputPath) && !opt.ForceOverwrite)
+            Description = "Path to the grammar file generate parser to.",
+        };
+
+        root.Add(grammarInput);
+
+        Option<string> parserOutput = new("--output", "-o")
         {
-            Console.Error.WriteLine($"Error: File '{opt.OutputPath}' already exists. Use '--force' to force overwriting file.");
-            return;
-        }
+            Description = "Path to file of generated parser."
+        };
 
-        run(opt.GrammarPath, opt.OutputPath);
-    });
+        root.Add(parserOutput);
 
-    private static void run(string grammarPath, string outputPath)
-    {
-        string grammar = File.ReadAllText(grammarPath);
-
-        var gramBuffer = new StringBuffer(grammar);
-        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(gramBuffer), true);
-        var tokenStream = new TokenNodeStream(tokenizer);
-        var parser = new GrammarParser(tokenStream);
-
-        var grammarParsed = parser.Parse();
-
-        if (grammarParsed is null)
+        Option<bool> forceOption = new("--force", "-f")
         {
-            Console.Error.WriteLine($"Parsing error. Line: {tokenizer.Synchronize().StartLine + 1}");
-            Environment.Exit(1);
-        }
+            Description = "Force to overwrite parser file if it exists."
+        };
 
-        var binder = new Binder();
+        root.Add(forceOption);
 
-        try
+        root.SetAction(parseResult =>
         {
-            binder.ReadMetadata(grammarParsed.Metadata);
-            binder.RegisterRules(grammarParsed.Rules);
-            binder.PopulateRules();
-            binder.CreateTypes();
-            binder.InspectRules();
-        }
-        catch (CompilationException e)
-        {
-            Console.Error.WriteLine($"Error at line {e.Line}: {e.Message}");
-            Environment.Exit(1);
-        }
+            string? output = parseResult.GetValue(parserOutput);
+            var grammarFile = parseResult.GetValue(grammarInput) ?? throw new NullReferenceException("Given argument is null.");
+            bool forced = parseResult.GetValue(forceOption);
 
-        foreach (var warn in binder.Warnings)
-        {
-            Console.WriteLine($"Warning at line {warn.Line}: {warn.Message}");
-        }
+            if (!grammarFile.Exists)
+            {
+                Console.Error.WriteLine($"File '{grammarFile.FullName}' does not exists.");
+                Environment.Exit(1);
+            }
 
-        var boundGrammar = binder.Grammar;
+            string grammar = grammarFile.OpenText().ReadToEnd();
 
-        var fileGenerator = new CsGenerator();
+            var gramBuffer = new StringBuffer(grammar);
+            var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(gramBuffer), true);
+            var tokenStream = new TokenNodeStream(tokenizer);
+            var parser = new GrammarParser(tokenStream);
 
-        fileGenerator.AddFileHeader(boundGrammar.UserHeader!, grammarPath);
+            var grammarParsed = parser.Parse();
 
-        string generatedGrammar = boundGrammar.GenerateCode();
+            if (grammarParsed is null)
+            {
+                Console.Error.WriteLine($"Parsing error. Line: {tokenizer.Synchronize().StartLine + 1}");
+                Environment.Exit(1);
+            }
 
-        fileGenerator.AddFileBody(generatedGrammar);
+            var binder = new Binder();
 
-        File.WriteAllText(outputPath, fileGenerator.Dump());
+            try
+            {
+                binder.ReadMetadata(grammarParsed.Metadata);
+                binder.RegisterRules(grammarParsed.Rules);
+                binder.PopulateRules();
+                binder.CreateTypes();
+                binder.InspectRules();
+            }
+            catch (CompilationException e)
+            {
+                Console.Error.WriteLine($"Error at line {e.Line}: {e.Message}");
+                Environment.Exit(1);
+            }
+
+            foreach (var warn in binder.Warnings)
+            {
+                Console.WriteLine($"Warning at line {warn.Line}: {warn.Message}");
+            }
+
+            var boundGrammar = binder.Grammar;
+
+            var fileGenerator = new CsGenerator();
+
+            fileGenerator.AddFileHeader(boundGrammar.UserHeader!, grammarFile.Name);
+
+            string generatedGrammar = boundGrammar.GenerateCode();
+
+            fileGenerator.AddFileBody(generatedGrammar);
+
+            string outputPath = output ?? boundGrammar.ParserName + ".g.cs";
+
+            if (File.Exists(outputPath) && !forced)
+            {
+                Console.Error.WriteLine($"File '{outputPath}' already exists. Use --force flag to overwrite it.");
+                Environment.Exit(1);
+            }
+
+            File.WriteAllText(outputPath, fileGenerator.Dump());
+        });
+
+        root.Parse(args).Invoke();
     }
 }
