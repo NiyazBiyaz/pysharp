@@ -80,5 +80,5 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
 public static class NodeArrayBuilder
 {
     public static NodeArray<TNode> Create<TNode>(ReadOnlySpan<TNode> values)
-        where TNode : GreenNode => new(values);
+        where TNode : IGreenNode => new(values);
 }

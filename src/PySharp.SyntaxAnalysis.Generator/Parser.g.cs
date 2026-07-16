@@ -25,12 +25,12 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         GrammarNode? _res = null;
         {
             // Metadata* Rule* EndOfFile -> new(Metadata=metadata_Star, Rules=rule_Star)
-            INodeArray<IGreenNode>? metadata_Star;
-            INodeArray<IGreenNode>? rule_Star;
+            INodeArray<MetadataNode>? metadata_Star;
+            INodeArray<RuleNode>? rule_Star;
             IGreenNode? end_of_file;
-            if ((metadata_Star = base.Repeat(rule_Metadata, 0)) is not null
+            if ((metadata_Star = _RepeatHelper_metadata_Star()) is not null
                 &&
-                (rule_Star = base.Repeat(rule_Rule, 0)) is not null
+                (rule_Star = _RepeatHelper_rule_Star()) is not null
                 &&
                 (end_of_file = Expect(TokenType.EndOfFile)) is not null
             )
@@ -45,10 +45,32 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            NodeArray<MetadataNode>? _RepeatHelper_metadata_Star()
+            {
+                MetadataNode? _node = rule_Metadata();
+                if (_node == null) return [];
+                global::System.Collections.Generic.List<MetadataNode> _result = [_node];
+                while ((_node = rule_Metadata()) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
+            NodeArray<RuleNode>? _RepeatHelper_rule_Star()
+            {
+                RuleNode? _node = rule_Rule();
+                if (_node == null) return [];
+                global::System.Collections.Generic.List<RuleNode> _result = [_node];
+                while ((_node = rule_Rule()) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Grammar
 
@@ -87,7 +109,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Metadata
 
@@ -104,14 +126,14 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         {
             // Decorator* Name ":" NewLine ~ Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
             //         -> ArmedRule(Decorators=decorator_Star, Name=name, Arms=arm_Plus)
-            INodeArray<IGreenNode>? decorator_Star;
+            INodeArray<DecoratorNode>? decorator_Star;
             IGreenNode? name;
             IGreenNode? colon;
             IGreenNode? new_line;
             IGreenNode? indent;
-            INodeArray<IGreenNode>? arm_Plus;
+            INodeArray<ArmNode>? arm_Plus;
             IGreenNode? dedent;
-            if ((decorator_Star = base.Repeat(rule_Decorator, 0)) is not null
+            if ((decorator_Star = _RepeatHelper_decorator_Star()) is not null
                 &&
                 (name = Expect(TokenType.Name)) is not null
                 &&
@@ -123,7 +145,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 &&
                 (indent = Expect(TokenType.Indent)) is not null
                 &&
-                (arm_Plus = base.Repeat(rule_Arm, 1)) is not null
+                (arm_Plus = _RepeatHelper_arm_Plus()) is not null
                 &&
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
@@ -142,6 +164,28 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            NodeArray<DecoratorNode>? _RepeatHelper_decorator_Star()
+            {
+                DecoratorNode? _node = rule_Decorator();
+                if (_node == null) return [];
+                global::System.Collections.Generic.List<DecoratorNode> _result = [_node];
+                while ((_node = rule_Decorator()) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
+            NodeArray<ArmNode>? _RepeatHelper_arm_Plus()
+            {
+                ArmNode? _node = rule_Arm();
+                if (_node == null) return null;
+                global::System.Collections.Generic.List<ArmNode> _result = [_node];
+                while ((_node = rule_Arm()) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
         }
         base.Reset(_mark);
         if (_cut)
@@ -151,12 +195,12 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decorator_Star, Name=name, Alternative=alternative)
-            INodeArray<IGreenNode>? decorator_Star;
+            INodeArray<DecoratorNode>? decorator_Star;
             IGreenNode? name;
             IGreenNode? colon;
             IGreenNode? alternative;
             IGreenNode? new_line;
-            if ((decorator_Star = base.Repeat(rule_Decorator, 0)) is not null
+            if ((decorator_Star = _RepeatHelper_decorator_Star()) is not null
                 &&
                 (name = Expect(TokenType.Name)) is not null
                 &&
@@ -179,10 +223,21 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            NodeArray<DecoratorNode>? _RepeatHelper_decorator_Star()
+            {
+                DecoratorNode? _node = rule_Decorator();
+                if (_node == null) return [];
+                global::System.Collections.Generic.List<DecoratorNode> _result = [_node];
+                while ((_node = rule_Decorator()) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Rule
 
@@ -217,7 +272,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Arm
 
@@ -252,7 +307,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Decorator
 
@@ -264,9 +319,9 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         AlternativeNode? _res = null;
         {
             // Molecule+ -Action -> new(Molecules=molecule_Plus, Action=action)
-            INodeArray<IGreenNode>? molecule_Plus;
+            INodeArray<MoleculeNode>? molecule_Plus;
             IGreenNode? action;
-            if ((molecule_Plus = base.Repeat(rule_Molecule, 1)) is not null
+            if ((molecule_Plus = _RepeatHelper_molecule_Plus()) is not null
                 &&
                 ((action = rule_Action()) is not null || true) // Optional
             )
@@ -280,10 +335,21 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            NodeArray<MoleculeNode>? _RepeatHelper_molecule_Plus()
+            {
+                MoleculeNode? _node = rule_Molecule();
+                if (_node == null) return null;
+                global::System.Collections.Generic.List<MoleculeNode> _result = [_node];
+                while ((_node = rule_Molecule()) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Alternative
 
@@ -314,7 +380,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // GroupDecorator
 
@@ -338,7 +404,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
             // "[" ~ -GroupDecorator Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather, Decorator=group_decorator)
             IGreenNode? left_square_bracket;
             IGreenNode? group_decorator;
-            INodeArray<IGreenNode>? alternative_Gather;
+            INodeArray<GreenNode>? alternative_Gather;
             IGreenNode? right_square_bracket;
             if ((left_square_bracket = Expect(TokenType.LeftSquareBracket)) is not null
                 &&
@@ -346,7 +412,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 &&
                 ((group_decorator = rule_GroupDecorator()) is not null || true) // Optional
                 &&
-                (alternative_Gather = base.Gather(rule_Alternative, TokenType.VertBar)) is not null
+                (alternative_Gather = _GatherHelper_alternative_Gather()) is not null
                 &&
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
@@ -361,6 +427,28 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                     ]),
                 };
                 goto _Return;
+            }
+            NodeArray<GreenNode>? _GatherHelper_alternative_Gather()
+            {
+                GreenNode? _node = rule_Alternative();
+                GreenNode? _separator;
+                if (_node == null) return null;
+                global::System.Collections.Generic.List<GreenNode> _gathered = [(GreenNode)_node];
+                while (true)
+                {
+                    int _mark = base.Mark();
+                    _separator = Expect(TokenType.VertBar);
+                    if (_separator == null) break;
+                    _node = rule_Alternative();
+                    if (_node == null)
+                    {
+                        base.Reset(_mark);
+                        break;
+                    }
+                    _gathered.Add((GreenNode)_separator);
+                    _gathered.Add((GreenNode)_node);
+                }
+                return [.. _gathered];
             }
         }
         base.Reset(_mark);
@@ -556,7 +644,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Molecule
 
@@ -574,7 +662,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
             // "(" ~ -GroupDecorator Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather, Decorator=group_decorator)
             IGreenNode? left_paren;
             IGreenNode? group_decorator;
-            INodeArray<IGreenNode>? alternative_Gather;
+            INodeArray<GreenNode>? alternative_Gather;
             IGreenNode? right_paren;
             if ((left_paren = Expect(TokenType.LeftParen)) is not null
                 &&
@@ -582,7 +670,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 &&
                 ((group_decorator = rule_GroupDecorator()) is not null || true) // Optional
                 &&
-                (alternative_Gather = base.Gather(rule_Alternative, TokenType.VertBar)) is not null
+                (alternative_Gather = _GatherHelper_alternative_Gather()) is not null
                 &&
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
@@ -597,6 +685,28 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                     ]),
                 };
                 goto _Return;
+            }
+            NodeArray<GreenNode>? _GatherHelper_alternative_Gather()
+            {
+                GreenNode? _node = rule_Alternative();
+                GreenNode? _separator;
+                if (_node == null) return null;
+                global::System.Collections.Generic.List<GreenNode> _gathered = [(GreenNode)_node];
+                while (true)
+                {
+                    int _mark = base.Mark();
+                    _separator = Expect(TokenType.VertBar);
+                    if (_separator == null) break;
+                    _node = rule_Alternative();
+                    if (_node == null)
+                    {
+                        base.Reset(_mark);
+                        break;
+                    }
+                    _gathered.Add((GreenNode)_separator);
+                    _gathered.Add((GreenNode)_node);
+                }
+                return [.. _gathered];
             }
         }
         base.Reset(_mark);
@@ -636,7 +746,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Atom
 
@@ -721,7 +831,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Action
 
@@ -733,8 +843,8 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         ArgumentsNode? _res = null;
         {
             // Target+."," -> Arguments(Value=target_Gather)
-            INodeArray<IGreenNode>? target_Gather;
-            if ((target_Gather = base.Gather(rule_Target, TokenType.Comma)) is not null)
+            INodeArray<GreenNode>? target_Gather;
+            if ((target_Gather = _GatherHelper_target_Gather()) is not null)
             {
                 _res = new ArgumentsNode()
                 {
@@ -744,10 +854,32 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            NodeArray<GreenNode>? _GatherHelper_target_Gather()
+            {
+                GreenNode? _node = rule_Target();
+                GreenNode? _separator;
+                if (_node == null) return null;
+                global::System.Collections.Generic.List<GreenNode> _gathered = [(GreenNode)_node];
+                while (true)
+                {
+                    int _mark = base.Mark();
+                    _separator = Expect(TokenType.Comma);
+                    if (_separator == null) break;
+                    _node = rule_Target();
+                    if (_node == null)
+                    {
+                        base.Reset(_mark);
+                        break;
+                    }
+                    _gathered.Add((GreenNode)_separator);
+                    _gathered.Add((GreenNode)_node);
+                }
+                return [.. _gathered];
+            }
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Arguments
 
@@ -782,7 +914,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         base.Reset(_mark);
     _Return:
-    return _res;
+        return _res;
     }
     #endregion // Target
 }

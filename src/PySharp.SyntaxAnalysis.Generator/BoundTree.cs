@@ -82,7 +82,7 @@ internal class BoundRule
         Type.Name,
         EnableMemoization,
         IsLeftRecursive,
-        Alternatives.Select(a => a.ToIr()));
+        Alternatives.Select(a => a.ToIr(Kind != BoundRuleKind.Type)));
 
     internal IEnumerable<BoundRule> GetPotentialLeftRecursive(List<CompilationWarning> warnings) =>
         Alternatives
@@ -110,14 +110,14 @@ internal class BoundAlternative
         => Entries.Where(e => e.Quantifier is not QuantifierKind.Lookahead and not QuantifierKind.Cut);
     internal BoundAction? Action { get; set; }
 
-    internal AlternativeIr ToIr()
+    internal AlternativeIr ToIr(bool isUnion)
     {
-        var variables = Variables
-            .Select(v => new VariableIr(v.Name, v.Quantifier.IsArray, v.Quantifier == QuantifierKind.Optional));
+        var variables = Variables.Select(v => new VariableIr(v));
 
         var conditions = Entries.Select(e => e.ToConditionIr());
 
-        var action = Action?.ToIr(variables) ?? new ActionIr(ActionKind.Generative, null, variables);
+        var action = Action?.ToIr(variables) ??
+            new ActionIr(isUnion ? ActionKind.Passive : ActionKind.Generative, Action?.Type.Name, variables);
 
         return new AlternativeIr(conditions.Any(c => c.Kind == QuantifierKind.Cut), SourceText, variables, conditions, action);
     }
@@ -273,18 +273,27 @@ internal abstract record BoundAlternativeEntry
     internal ConditionIr ToConditionIr() => new()
     {
         Kind = Quantifier,
-        AssignedVar = Name,
-        Positive = Positiveness,
+        AssignedVar = new VariableIr(this),
+        Identifier = Name,
+        Positiveness = Positiveness,
         MinCount = MinRepeatCount,
         Atom = getAtom(this)!, // Atom may be null if cut, but cut never uses Atom.
-        Separator = getAtom((this as BoundGatherAlternativeEntry)?.Separator)
+        Separator = getAtom((this as BoundGatherAlternativeEntry)?.Separator),
+
+    };
+
+    internal string? GetTypeName() => this switch
+    {
+        BoundRuleAlternativeEntry r => r.Value.Type.Name,
+        BoundTokenAlternativeEntry or BoundStringAlternativeEntry => nameof(TokenNode),
+        _ => null,
     };
 
     private static AtomIr? getAtom(BoundAlternativeEntry? alternativeEntry) => alternativeEntry switch
     {
-        BoundTokenAlternativeEntry token => new AtomIr(token.Value.ToString(), false, true),
-        BoundStringAlternativeEntry str => new AtomIr(str.Value, true, false),
-        BoundRuleAlternativeEntry rule => new AtomIr(rule.Value.Name, false, false),
+        BoundTokenAlternativeEntry token => new AtomIr(token.Value.ToString(), false, true, false),
+        BoundStringAlternativeEntry str => new AtomIr(str.Value, true, false, false),
+        BoundRuleAlternativeEntry rule => new AtomIr(rule.Value.Name, false, false, rule.Value.Type is BoundUnionType),
         BoundGatherAlternativeEntry gath => getAtom(gath.Value),
         BoundCutAlternativeEntry => null,
         null => null,

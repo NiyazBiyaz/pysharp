@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
 
@@ -51,72 +52,43 @@ internal class CsGenerator
 
     internal void AddPassAction(ActionIr action)
     {
-        AddLine($"_res = {action.Variables.First()};");
+        var variable = action.Variables.First();
+        AddLine($"_res = ({variable.TypeName}?){variable.Name};");
         AddLine("goto _Return;");
     }
 
-    internal void AddCondition(ConditionIr conditionIr)
+    internal void AddCondition(ConditionIr ir)
     {
-        switch (conditionIr.Kind)
+        switch (ir.Kind)
         {
             case QuantifierKind.Expect:
-                if (conditionIr.Atom.IsString)
-                    add(wrapNull($@"{conditionIr.AssignedVar} = Expect(""{conditionIr.Atom.CallData}"")"));
-                else if (conditionIr.Atom.IsToken)
-                    add(wrapNull($"{conditionIr.AssignedVar} = Expect(TokenType.{conditionIr.Atom.CallData})"));
+                if (ir.Atom.IsString)
+                    add(wrapNull($@"{ir.AssignedVar!.Name} = Expect(""{ir.Atom.CallData}"")"));
+                else if (ir.Atom.IsToken)
+                    add(wrapNull($"{ir.AssignedVar!.Name} = Expect(TokenType.{ir.Atom.CallData})"));
                 else
-                    add(wrapNull($"{conditionIr.AssignedVar} = rule_{conditionIr.Atom.CallData}()"));
-                break;
-
-            case QuantifierKind.Lookahead:
-                string positive = conditionIr.Positive!.Value ? "true" : "false";
-                if (conditionIr.Atom.IsString)
-                    add($@"Lookahead(""{conditionIr.Atom.CallData}"", {positive})");
-                else if (conditionIr.Atom.IsToken)
-                    add($"Lookahead({conditionIr.Atom.CallData}, {positive})");
-                else
-                    add($"Lookahead(rule_{conditionIr.Atom.CallData}, {positive})");
-                break;
-
-            case QuantifierKind.Repeat:
-                if (conditionIr.Atom.IsString)
-                    add(wrapNull($@"{conditionIr.AssignedVar} = base.Repeat(""{conditionIr.Atom.CallData}"", {conditionIr.MinCount})"));
-                else if (conditionIr.Atom.IsToken)
-                    add(wrapNull($"{conditionIr.AssignedVar} = base.Repeat(TokenType.{conditionIr.Atom.CallData}, {conditionIr.MinCount})"));
-                else
-                    add(wrapNull($"{conditionIr.AssignedVar} = base.Repeat(rule_{conditionIr.Atom.CallData}, {conditionIr.MinCount})"));
+                    add(wrapNull($"{ir.AssignedVar!.Name} = rule_{ir.Atom.CallData}()"));
                 break;
 
             case QuantifierKind.Optional:
-                if (conditionIr.Atom.IsString)
-                    add(wrapOpt($@"{conditionIr.AssignedVar} = Expect(""{conditionIr.Atom.CallData}"")"));
-                else if (conditionIr.Atom.IsToken)
-                    add(wrapOpt($"{conditionIr.AssignedVar} = Expect(TokenType.{conditionIr.Atom.CallData})"));
+                if (ir.Atom.IsString)
+                    add(wrapOpt($@"{ir.AssignedVar!.Name} = Expect(""{ir.Atom.CallData}"")"));
+                else if (ir.Atom.IsToken)
+                    add(wrapOpt($"{ir.AssignedVar!.Name} = Expect(TokenType.{ir.Atom.CallData})"));
                 else
-                    add(wrapOpt($"{conditionIr.AssignedVar} = rule_{conditionIr.Atom.CallData}()"));
+                    add(wrapOpt($"{ir.AssignedVar!.Name} = rule_{ir.Atom.CallData}()"));
+                break;
+
+            case QuantifierKind.Lookahead:
+                add($"_LookaheadHelper_{ir.Identifier}()");
+                break;
+
+            case QuantifierKind.Repeat:
+                add(wrapNull($"{ir.AssignedVar!.Name} = _RepeatHelper_{ir.Identifier}()"));
                 break;
 
             case QuantifierKind.Gather:
-                string atom = (conditionIr.Atom.IsString, conditionIr.Atom.IsToken) switch
-                {
-                    (false, false) => $"rule_{conditionIr.Atom.CallData}",
-                    (true, false) => $@"""{conditionIr.Atom.CallData}""",
-                    (false, true) => $"TokenType.{conditionIr.Atom.CallData}",
-                    (true, true) => throw new UnreachableException("Invalid atom flags state: Token can't be both string and TokenType"),
-                };
-
-                if (conditionIr.Separator is null)
-                    throw new UnreachableException("condition.Separator should not be null here.");
-
-                string separator = (conditionIr.Separator.IsString, conditionIr.Separator.IsToken) switch
-                {
-                    (false, false) => $"rule_{conditionIr.Separator.CallData}",
-                    (true, false) => $@"""{conditionIr.Separator.CallData}""",
-                    (false, true) => $"TokenType.{conditionIr.Separator.CallData}",
-                    (true, true) => throw new UnreachableException("Invalid atom flags state: Token can't be both string and TokenType"),
-                };
-
-                add(wrapNull($"{conditionIr.AssignedVar} = base.Gather({atom}, {separator})"));
+                add(wrapNull($"{ir.AssignedVar!.Name} = _GatherHelper_{ir.Identifier}()"));
                 break;
 
             case QuantifierKind.Cut:
@@ -124,7 +96,7 @@ internal class CsGenerator
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException(nameof(conditionIr), $"Unexpected ConditionKind: {conditionIr.Kind}");
+                throw new ArgumentOutOfRangeException(nameof(ir), $"Unexpected ConditionKind: {ir.Kind}");
         }
 
         static string wrapOpt(ReadOnlySpan<char> value) => $"(({value}) is not null || true) // Optional";
@@ -141,7 +113,7 @@ internal class CsGenerator
         foreach (var varEmit in ir.Variables)
         {
             if (varEmit.IsArray)
-                AddLine($"INodeArray<IGreenNode>? {varEmit.Name};");
+                AddLine($"INodeArray<{varEmit.TypeName ?? nameof(GreenNode)}>? {varEmit.Name};");
             else
                 AddLine($"IGreenNode? {varEmit.Name};");
         }
@@ -178,6 +150,90 @@ internal class CsGenerator
             AddPassAction(ir.Action);
 
         close();
+
+        // Add gather helpers.
+        foreach (var gather in ir.Conditions.Where(c => c.Kind == QuantifierKind.Gather))
+        {
+            Debug.Assert(gather.Separator != null);
+
+            string valGreenNode = gather.Atom.IsUnion ? nameof(IGreenNode) : nameof(GreenNode);
+            string sepGreenNode = gather.Separator.IsUnion ? nameof(IGreenNode) : nameof(GreenNode);
+
+            string greenNode = nameof(GreenNode);
+
+            addLines($$"""
+            NodeArray<GreenNode>? _GatherHelper_{{gather.Identifier}}()
+            {
+                {{valGreenNode}}? _node = {{gather.Atom.Usage}};
+                {{sepGreenNode}}? _separator;
+                if (_node == null) return null;
+                global::System.Collections.Generic.List<GreenNode> _gathered = [({{greenNode}})_node];
+                while (true)
+                {
+                    int _mark = base.Mark();
+                    _separator = {{gather.Separator.Usage}};
+                    if (_separator == null) break;
+                    _node = {{gather.Atom.Usage}};
+                    if (_node == null)
+                    {
+                        base.Reset(_mark);
+                        break;
+                    }
+                    _gathered.Add(({{greenNode}})_separator);
+                    _gathered.Add(({{greenNode}})_node);
+                }
+                return [.. _gathered];
+            }
+            """);
+        }
+
+        // Add repeat helpers.
+        foreach (var repeat in ir.Conditions.Where(c => c.Kind == QuantifierKind.Repeat))
+        {
+            Debug.Assert(repeat.MinCount != null);
+
+            string resultWhenFirstIsNull = repeat.MinCount switch
+            {
+                0 => "[]",
+                1 => "null",
+                _ => throw new ArgumentOutOfRangeException(nameof(repeat.MinCount)),
+            };
+
+            string typeName = repeat.AssignedVar!.TypeName!;
+
+            addLines($$"""
+            NodeArray<{{typeName}}>? _RepeatHelper_{{repeat.Identifier}}()
+            {
+                {{typeName}}? _node = {{repeat.Atom.Usage}};
+                if (_node == null) return {{resultWhenFirstIsNull}};
+                global::System.Collections.Generic.List<{{typeName}}> _result = [_node];
+                while ((_node = {{repeat.Atom.Usage}}) != null)
+                {
+                    _result.Add(_node);
+                }
+                return [.. _result];
+            }
+            """);
+        }
+
+        // Add lookahead helpers.
+        foreach (var lookahead in ir.Conditions.Where(c => c.Kind == QuantifierKind.Lookahead))
+        {
+            Debug.Assert(lookahead.Positiveness != null);
+
+            // .NET decided to convert it to the 'True' and 'False'.
+            string positivenessString = lookahead.Positiveness.Value ? "true" : "false";
+
+            addLines($$"""
+            bool _LookaheadHelper_{{lookahead.Identifier}}()
+            {
+                int _mark = base.Mark();
+                bool _wasParsed = {{lookahead.Atom.Usage}} != null;
+                base.Reset(_mark);
+                return _wasParsed == {{positivenessString}};
+            }
+            """);
+        }
     }
 
     internal void AddRule(RuleIr ir)
@@ -295,7 +351,7 @@ internal class CsGenerator
         }
         else
         {
-            AddLine("""
+            addLines("""
             _Return:
                 return _res;
             """);
@@ -446,7 +502,6 @@ internal class CsGenerator
         close();
     }
 
-    // internal void AddTypeSignature(, , , , )
     internal void AddTypeSignature(TypeIr ir)
     {
         string modifierName = ir.AccessModifier.CodeRepresentation();

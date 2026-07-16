@@ -4,6 +4,8 @@ public sealed record NodeList : GreenNode
 {
     public override INodeArray<IGreenNode>? Children => nodes;
 
+    public override string RecoverText() => nodes.RecoverText();
+
     private readonly INodeArray<IGreenNode> nodes;
 
     public NodeList(INodeArray<IGreenNode> nodes)

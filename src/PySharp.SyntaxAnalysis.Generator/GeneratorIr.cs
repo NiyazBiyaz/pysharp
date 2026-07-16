@@ -11,16 +11,24 @@ internal record RuleIr(
     IEnumerable<AlternativeIr> Alternatives);
 
 
-internal record VariableIr(string Name, bool IsArray, bool IsOptional)
+internal record VariableIr(string Name, bool IsArray, bool IsOptional, string? TypeName)
 {
-    internal string? TypeName { get; init; }
+    internal VariableIr(BoundAlternativeEntry entry)
+        : this(
+            entry.Name,
+            entry.Quantifier.IsArray,
+            entry.Quantifier == QuantifierKind.Optional,
+            entry.GetTypeName())
+    {
+    }
 }
 
 internal record ConditionIr
 {
     public required QuantifierKind Kind { get; init; }
-    public required string? AssignedVar { get; init; }
-    public required bool? Positive { get; init; }
+    public required VariableIr? AssignedVar { get; init; }
+    public required string Identifier { get; init; }
+    public required bool? Positiveness { get; init; }
     public required int? MinCount { get; init; }
     public required AtomIr Atom { get; init; } = null!;
     public required AtomIr? Separator { get; init; }
@@ -41,7 +49,16 @@ internal record AlternativeIr(
     IEnumerable<ConditionIr> Conditions,
     ActionIr Action);
 
-internal record AtomIr(string CallData, bool IsString, bool IsToken);
+internal record AtomIr(string CallData, bool IsString, bool IsToken, bool IsUnion)
+{
+    internal string Usage => this switch
+    {
+        { IsString: true, IsToken: false } => $@"Expect(""{CallData}"")",
+        { IsString: false, IsToken: true } => $"Expect(TokenType.{CallData})",
+        { IsString: false, IsToken: false } => $"rule_{CallData}()",
+        _ => throw new ArgumentException(nameof(IsString) + "&" + nameof(IsToken)),
+    };
+}
 
 internal enum TypeKind
 {
