@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../PySharp.SyntaxAnalysis.Tokens/PySharp.SyntaxAnalysis.Tokens.csproj" />
+    <ProjectReference Include="..\PySharp.SyntaxAnalysis.Tokens\PySharp.SyntaxAnalysis.Tokens.csproj" />
+    <ProjectReference Include="..\PySharp.SyntaxAnalysis.Common\PySharp.SyntaxAnalysis.Common.csproj" />
   </ItemGroup>
 
 </Project>

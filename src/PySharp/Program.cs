@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using PySharp.SyntaxAnalysis;
+using PySharp.SyntaxAnalysis.Common;
 using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp;
@@ -20,36 +22,41 @@ public static class Program
             if (!File.Exists(arg))
             {
                 Console.WriteLine($"File {arg} does not exists.");
-                Environment.Exit(2);
+                Environment.Exit(1);
             }
 
             string source = File.ReadAllText(arg);
 
-            string outPath = arg + ".tokens";
+            string outPath = arg + ".ptree";
 
             var sync = SynchronizationPoint.ClearPoint(new StringBuffer(source));
 
             var tokenizer = new Tokenizer(sync, true);
-            List<Token> tokens = [];
+            var parser = new PythonParser(new TokenNodeStream(tokenizer));
 
             var startTime = DateTime.UtcNow;
 
-            while (!tokenizer.ShouldStop)
-                tokens.Add(tokenizer.ReadNext());
+            var tree = parser.Parse();
 
             var endTime = DateTime.UtcNow;
 
-            var file = File.CreateText(outPath);
-            file.NewLine = "\n";
-            foreach (var token in tokens)
-                file.WriteLine(token.MakeItNoice(120));
+            if (tree != null)
+            {
+                var file = File.CreateText(outPath);
+                file.NewLine = "\n";
+                file.WriteLine(tree.ToString());
 
-            file.Flush();
-            file.Close();
+                file.Flush();
+                file.Close();
 
-            Console.WriteLine($"File {arg} was parsed to tokens.");
-            Console.WriteLine($"Time elapsed: {(endTime - startTime).TotalMicroseconds}μs.");
-            Console.WriteLine($"Result was saved to {outPath}.");
+                Console.WriteLine($"File {arg} was parsed.");
+                Console.WriteLine($"Time elapsed: {(endTime - startTime).TotalMicroseconds}μs.");
+                Console.WriteLine($"Result was saved to {outPath}.");
+            }
+            else
+            {
+                Console.WriteLine($"Parsing error in file {arg}");
+            }
         }
     }
 
