@@ -15,7 +15,7 @@ In the second i have goal to make good alternative for the [Python.NET](https://
 ## State of the project
 
 ### Here is the my current goals:
-- [ ] Run "Hello BauBau"
+- [ ] Run `print("Bau Bau!")`
 - [ ] Turing complete
 - [ ] Basic classes, functions, simple object semantics
 - [ ] Bytecode VM (on top of the CLR)
@@ -28,10 +28,11 @@ In the second i have goal to make good alternative for the [Python.NET](https://
 
 ### Already implemented:
 - Tokenizer supporting full Python spec.
+- PEG-parser generator (inspired by CPython's [pegen](https://github.com/we-like-parsers/pegen/)).
 
 ### Currently working on:
 
-PEG-parser generator (inspired by CPython's [pegen](https://github.com/we-like-parsers/pegen/)).
+Python parser & improving parser generator.
 
 ## Getting started
 
