@@ -105,10 +105,7 @@ internal class CsGenerator
 
     internal void AddAlternative(AlternativeIr ir)
     {
-        foreach (var line in ir.SourceText.Trim().EnumerateLines())
-        {
-            AddLine($"// {line}");
-        }
+        addClearedComment(ir.SourceText);
 
         foreach (var varEmit in ir.Variables)
         {
@@ -257,8 +254,7 @@ internal class CsGenerator
             addLeftRecursionWrapper(ir);
         }
 
-        foreach (var line in ir.OriginalText.Trim('\n', '\r', ' ', '\t').EnumerateLines())
-            AddLine($"// {line}");
+        addClearedComment(ir.SourceText);
 
         string rawPrefix = ir.IsLeftRecursive ? "raw_" : "";
 
@@ -570,4 +566,50 @@ internal class CsGenerator
     }
 
     private void add(ReadOnlySpan<char> value) => builder.Append(value);
+
+    private void addClearedComment(ReadOnlySpan<char> value)
+    {
+        bool wasNonComment = false;
+
+        foreach (var line in value.Trim().EnumerateLines())
+        {
+            if (wasNonComment)
+            {
+                beginLine();
+                add("//");
+            }
+
+            int current = 0;
+            while (current < line.Length && char.IsWhiteSpace(line[current]))
+                current++;
+
+            if (current == line.Length || line[current] == '#')
+            {
+                if (wasNonComment)
+                    endLine();
+
+                continue;
+            }
+
+            if (!wasNonComment)
+            {
+                beginLine();
+                add("//");
+            }
+
+            wasNonComment = true;
+
+            add(" ");
+            add(line[..current]);
+
+            // Now it will stop on whatever char that '#' and even in strings, but it's okay for Python.
+            while (current < line.Length && line[current] != '#')
+            {
+                add(line.Slice(current, 1));
+                current++;
+            }
+
+            endLine();
+        }
+    }
 }

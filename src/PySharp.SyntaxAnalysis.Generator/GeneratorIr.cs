@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace PySharp.SyntaxAnalysis.Generator;
 
 internal record RuleIr(
-    string OriginalText,
+    string SourceText,
     string Name,
     string ReturnTypeName,
     bool IsMemoEnabled,
