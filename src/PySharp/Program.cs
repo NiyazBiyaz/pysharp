@@ -44,7 +44,7 @@ public static class Program
             {
                 var file = File.CreateText(outPath);
                 file.NewLine = "\n";
-                file.WriteLine(tree.ToString());
+                file.WriteLine(tree.PrettyPrint());
 
                 file.Flush();
                 file.Close();

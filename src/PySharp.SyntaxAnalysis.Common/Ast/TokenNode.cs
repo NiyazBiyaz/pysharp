@@ -39,11 +39,18 @@ public record TokenNode : GreenNode
         return builder.ToString();
     }
 
-    public override void AppendToBuilder(StringBuilder builder)
+    public override void AcceptRecoverText(StringBuilder builder)
     {
         foreach (var trivia in Leading)
             builder.Append(trivia.RawString);
 
         builder.Append(RawString);
+    }
+
+    public override void AcceptPrettyPrint(StringBuilder builder, int indentation)
+    {
+        builder.Append("Token(");
+        builder.Append($"Type: {Type}, RawString: `{RawString.ReplaceLineEndings("\\n")}`");
+        builder.Append(')');
     }
 }

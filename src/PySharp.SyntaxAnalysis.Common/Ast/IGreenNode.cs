@@ -8,7 +8,9 @@ public interface IGreenNode
     TokenPosition FullOffset2D { get; }
     INodeArray<IGreenNode>? Children { get; init; }
 
-    void AppendToBuilder(StringBuilder builder);
+    void AcceptRecoverText(StringBuilder builder);
 
-    public string RecoverText();
+    string RecoverText();
+
+    void AcceptPrettyPrint(StringBuilder builder, int indentation);
 }
