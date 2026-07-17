@@ -50,7 +50,7 @@ public static class Program
                 file.Close();
 
                 Console.WriteLine($"File {arg} was parsed.");
-                Console.WriteLine($"Time elapsed: {(endTime - startTime).TotalMicroseconds}μs.");
+                Console.WriteLine($"Time elapsed: {(endTime - startTime).TotalMilliseconds}ms.");
                 Console.WriteLine($"Result was saved to {outPath}.");
             }
             else

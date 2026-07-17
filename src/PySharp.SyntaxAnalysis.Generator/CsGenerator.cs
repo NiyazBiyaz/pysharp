@@ -107,6 +107,10 @@ internal class CsGenerator
     {
         addClearedComment(ir.SourceText);
 
+        string entriesText = ir.EntriesText.Trim().Replace("\"", "\\\"");
+
+        AddLine($@"base.LogAlternativeEntered(""{entriesText}"");");
+
         foreach (var varEmit in ir.Variables)
         {
             if (varEmit.IsArray)
@@ -140,6 +144,8 @@ internal class CsGenerator
 
         open();
 
+        AddLine($@"base.LogAlternativeSucceed(""{entriesText}"");");
+
         if (ir.Action.Kind == ActionKind.Generative)
             AddGenerativeAction(ir.Action);
 
@@ -147,6 +153,8 @@ internal class CsGenerator
             AddPassAction(ir.Action);
 
         close();
+
+        AddLine($@"base.LogAlternativeFailed(""{entriesText}"");");
 
         // Add gather helpers.
         foreach (var gather in ir.Conditions.Where(c => c.Kind == QuantifierKind.Gather))
@@ -268,17 +276,24 @@ internal class CsGenerator
         open();
 
         addLines($$"""
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("{{ir.Name}}");
         {{ir.ReturnTypeName}}? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_{{ir.Name}}.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("{{ir.Name}}", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("{{ir.Name}}");
         while (true)
         {
-            _memo_{{ir.Name}}.UpdateCache(_mark, _res);
+            _memo_{{ir.Name}}.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("{{ir.Name}}");
             var _rawResult = raw_rule_{{ir.Name}}();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -288,6 +303,8 @@ internal class CsGenerator
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("{{ir.Name}}", _res == null);
+        base.LogDecreaseLevel();
         return _res;
         """);
 
@@ -298,14 +315,21 @@ internal class CsGenerator
     {
         open();
 
+        AddLine("base.LogIncreaseLevel();");
+
+        AddLine($@"base.LogRuleEntered(""{ir.Name}"");");
+
         AddLine("int _mark = base.Mark();");
 
         if (ir.IsMemoEnabled && !ir.IsLeftRecursive)
         {
             addLines($$"""
-            if (_memo_{{ir.Name}}.TryGetCache(_mark, out {{ir.ReturnTypeName}}? _memoized))
+            if (_memo_{{ir.Name}}.TryGetCache(_mark, out var _memoized))
             {
-                return _memoized;
+                base.LogRuleMemoUsed("{{ir.Name}}", _mark, _memoized);
+                base.LogDecreaseLevel();
+                base.Reset(_memoized.EndPosition);
+                return _memoized.Cache;
             }
             """);
         }
@@ -336,19 +360,26 @@ internal class CsGenerator
             }
         }
 
+        AddLine($@"base.LogRuleFailed(""{ir.Name}"");");
+
         indentation--;
         if (ir.IsMemoEnabled && !ir.IsLeftRecursive)
         {
             addLines($"""
             _Return:
-                _memo_{ir.Name}.AddCache(_mark, _res);
+                base.LogRuleMemoCreated("{ir.Name}", _mark, _res == null);
+                base.LogRuleExiting("{ir.Name}");
+                base.LogDecreaseLevel();
+                _memo_{ir.Name}.AddCache(_mark, base.Mark(), _res);
                 return _res;
             """);
         }
         else
         {
-            addLines("""
+            addLines($"""
             _Return:
+                base.LogRuleExiting("{ir.Name}");
+                base.LogDecreaseLevel();
                 return _res;
             """);
         }

@@ -224,7 +224,11 @@ internal class Binder
         {
             foreach (var astAlt in rule.AstAlternatives)
             {
-                var alt = new BoundAlternative { SourceText = astAlt.RecoverText() };
+                var alt = new BoundAlternative
+                {
+                    SourceText = astAlt.RecoverText(),
+                    EntriesText = astAlt.Molecules.RecoverText()
+                };
 
                 foreach (var entry in createEntries(astAlt))
                 {

@@ -21,10 +21,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // Grammar: Metadata* Rule* EndOfFile -> new(Metadata=metadata_Star, Rules=rule_Star)
     GrammarNode? rule_Grammar()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Grammar");
         int _mark = base.Mark();
         GrammarNode? _res = null;
         {
             // Metadata* Rule* EndOfFile -> new(Metadata=metadata_Star, Rules=rule_Star)
+            base.LogAlternativeEntered("Metadata* Rule* EndOfFile");
             INodeArray<MetadataNode>? metadata_Star;
             INodeArray<RuleNode>? rule_Star;
             IGreenNode? end_of_file;
@@ -35,6 +38,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (end_of_file = Expect(TokenType.EndOfFile)) is not null
             )
             {
+                base.LogAlternativeSucceed("Metadata* Rule* EndOfFile");
                 _res = new GrammarNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -45,6 +49,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Metadata* Rule* EndOfFile");
             NodeArray<MetadataNode>? _RepeatHelper_metadata_Star()
             {
                 MetadataNode? _node = rule_Metadata();
@@ -69,7 +74,10 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Grammar");
     _Return:
+        base.LogRuleExiting("Grammar");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Grammar
@@ -78,10 +86,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // Metadata: "@" Name StringLiteral NewLine -> new(Key=name, Value=string_literal)
     MetadataNode? rule_Metadata()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Metadata");
         int _mark = base.Mark();
         MetadataNode? _res = null;
         {
             // "@" Name StringLiteral NewLine -> new(Key=name, Value=string_literal)
+            base.LogAlternativeEntered("\"@\" Name StringLiteral NewLine");
             IGreenNode? at;
             IGreenNode? name;
             IGreenNode? string_literal;
@@ -95,6 +106,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"@\" Name StringLiteral NewLine");
                 _res = new MetadataNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -106,9 +118,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"@\" Name StringLiteral NewLine");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Metadata");
     _Return:
+        base.LogRuleExiting("Metadata");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Metadata
@@ -120,12 +136,15 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     //     | Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decorator_Star, Name=name, Alternative=alternative)
     RuleNode? rule_Rule()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Rule");
         int _mark = base.Mark();
         RuleNode? _res = null;
         bool _cut = false;
         {
             // Decorator* Name ":" NewLine ~ Indent ("|" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent \
             //         -> ArmedRule(Decorators=decorator_Star, Name=name, Arms=arm_Plus)
+            base.LogAlternativeEntered("Decorator* Name \":\" NewLine ~ Indent (\"|\" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent");
             INodeArray<DecoratorNode>? decorator_Star;
             IGreenNode? name;
             IGreenNode? colon;
@@ -150,6 +169,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
+                base.LogAlternativeSucceed("Decorator* Name \":\" NewLine ~ Indent (\"|\" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent");
                 _res = new ArmedRuleNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -164,6 +184,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Decorator* Name \":\" NewLine ~ Indent (\"|\" Alternative NewLine -> Arm(Alternative=alternative))+ Dedent");
             NodeArray<DecoratorNode>? _RepeatHelper_decorator_Star()
             {
                 DecoratorNode? _node = rule_Decorator();
@@ -195,6 +216,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // Decorator* Name ":" Alternative NewLine -> SingleAlternativeRule(Decorators=decorator_Star, Name=name, Alternative=alternative)
+            base.LogAlternativeEntered("Decorator* Name \":\" Alternative NewLine");
             INodeArray<DecoratorNode>? decorator_Star;
             IGreenNode? name;
             IGreenNode? colon;
@@ -211,6 +233,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("Decorator* Name \":\" Alternative NewLine");
                 _res = new SingleAlternativeRuleNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -223,6 +246,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Decorator* Name \":\" Alternative NewLine");
             NodeArray<DecoratorNode>? _RepeatHelper_decorator_Star()
             {
                 DecoratorNode? _node = rule_Decorator();
@@ -236,7 +260,10 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Rule");
     _Return:
+        base.LogRuleExiting("Rule");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Rule
@@ -245,10 +272,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // ("|" Alternative NewLine -> Arm(Alternative=alternative))
     ArmNode? rule_Arm()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Arm");
         int _mark = base.Mark();
         ArmNode? _res = null;
         {
             // "|" Alternative NewLine -> Arm(Alternative=alternative)
+            base.LogAlternativeEntered("\"|\" Alternative NewLine");
             IGreenNode? vert_bar;
             IGreenNode? alternative;
             IGreenNode? new_line;
@@ -259,6 +289,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"|\" Alternative NewLine");
                 _res = new ArmNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -269,9 +300,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"|\" Alternative NewLine");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Arm");
     _Return:
+        base.LogRuleExiting("Arm");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Arm
@@ -280,10 +315,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // Decorator: "@" Name NewLine -> new(Value=name)
     DecoratorNode? rule_Decorator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Decorator");
         int _mark = base.Mark();
         DecoratorNode? _res = null;
         {
             // "@" Name NewLine -> new(Value=name)
+            base.LogAlternativeEntered("\"@\" Name NewLine");
             IGreenNode? at;
             IGreenNode? name;
             IGreenNode? new_line;
@@ -294,6 +332,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"@\" Name NewLine");
                 _res = new DecoratorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -304,9 +343,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"@\" Name NewLine");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Decorator");
     _Return:
+        base.LogRuleExiting("Decorator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Decorator
@@ -315,10 +358,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // Alternative: Molecule+ -Action -> new(Molecules=molecule_Plus, Action=action)
     AlternativeNode? rule_Alternative()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Alternative");
         int _mark = base.Mark();
         AlternativeNode? _res = null;
         {
             // Molecule+ -Action -> new(Molecules=molecule_Plus, Action=action)
+            base.LogAlternativeEntered("Molecule+ -Action");
             INodeArray<MoleculeNode>? molecule_Plus;
             IGreenNode? action;
             if ((molecule_Plus = _RepeatHelper_molecule_Plus()) is not null
@@ -326,6 +372,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 ((action = rule_Action()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Molecule+ -Action");
                 _res = new AlternativeNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -335,6 +382,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Molecule+ -Action");
             NodeArray<MoleculeNode>? _RepeatHelper_molecule_Plus()
             {
                 MoleculeNode? _node = rule_Molecule();
@@ -348,7 +396,10 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Alternative");
     _Return:
+        base.LogRuleExiting("Alternative");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Alternative
@@ -357,10 +408,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // GroupDecorator: "@" Name -> new(Value=name)
     GroupDecoratorNode? rule_GroupDecorator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("GroupDecorator");
         int _mark = base.Mark();
         GroupDecoratorNode? _res = null;
         {
             // "@" Name -> new(Value=name)
+            base.LogAlternativeEntered("\"@\" Name");
             IGreenNode? at;
             IGreenNode? name;
             if ((at = Expect(TokenType.At)) is not null
@@ -368,6 +422,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (name = Expect(TokenType.Name)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"@\" Name");
                 _res = new GroupDecoratorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -377,9 +432,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"@\" Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("GroupDecorator");
     _Return:
+        base.LogRuleExiting("GroupDecorator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // GroupDecorator
@@ -397,11 +456,14 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     //     | "~" -> Cut()
     MoleculeNode? rule_Molecule()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Molecule");
         int _mark = base.Mark();
         MoleculeNode? _res = null;
         bool _cut = false;
         {
             // "[" ~ -GroupDecorator Alternative+."|" "]" -> OptionalGroup(Alternatives=alternative_Gather, Decorator=group_decorator)
+            base.LogAlternativeEntered("\"[\" ~ -GroupDecorator Alternative+.\"|\" \"]\"");
             IGreenNode? left_square_bracket;
             IGreenNode? group_decorator;
             INodeArray<GreenNode>? alternative_Gather;
@@ -417,6 +479,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"[\" ~ -GroupDecorator Alternative+.\"|\" \"]\"");
                 _res = new OptionalGroupNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -428,6 +491,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"[\" ~ -GroupDecorator Alternative+.\"|\" \"]\"");
             NodeArray<GreenNode>? _GatherHelper_alternative_Gather()
             {
                 GreenNode? _node = rule_Alternative();
@@ -459,6 +523,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // "&" ~ Atom -> PositiveLookahead(Atom=atom)
+            base.LogAlternativeEntered("\"&\" ~ Atom");
             IGreenNode? ampersand;
             IGreenNode? atom;
             if ((ampersand = Expect(TokenType.Ampersand)) is not null
@@ -468,6 +533,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (atom = rule_Atom()) is not null
             )
             {
+                base.LogAlternativeSucceed("\"&\" ~ Atom");
                 _res = new PositiveLookaheadNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -477,6 +543,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"&\" ~ Atom");
         }
         base.Reset(_mark);
         if (_cut)
@@ -486,6 +553,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // "!" ~ Atom -> NegativeLookahead(Atom=atom)
+            base.LogAlternativeEntered("\"!\" ~ Atom");
             IGreenNode? exclamation;
             IGreenNode? atom;
             if ((exclamation = Expect(TokenType.Exclamation)) is not null
@@ -495,6 +563,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (atom = rule_Atom()) is not null
             )
             {
+                base.LogAlternativeSucceed("\"!\" ~ Atom");
                 _res = new NegativeLookaheadNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -504,6 +573,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"!\" ~ Atom");
         }
         base.Reset(_mark);
         if (_cut)
@@ -513,6 +583,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // "-" ~ Atom -> Optional(Atom=atom)
+            base.LogAlternativeEntered("\"-\" ~ Atom");
             IGreenNode? minus;
             IGreenNode? atom;
             if ((minus = Expect(TokenType.Minus)) is not null
@@ -522,6 +593,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (atom = rule_Atom()) is not null
             )
             {
+                base.LogAlternativeSucceed("\"-\" ~ Atom");
                 _res = new OptionalNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -531,6 +603,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"-\" ~ Atom");
         }
         base.Reset(_mark);
         if (_cut)
@@ -540,6 +613,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // Atom "+" "." ~ Atom -> Gather(ValueAtom=atom, Separator=atom1)
+            base.LogAlternativeEntered("Atom \"+\" \".\" ~ Atom");
             IGreenNode? atom;
             IGreenNode? plus;
             IGreenNode? dot;
@@ -555,6 +629,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (atom1 = rule_Atom()) is not null
             )
             {
+                base.LogAlternativeSucceed("Atom \"+\" \".\" ~ Atom");
                 _res = new GatherNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -566,6 +641,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Atom \"+\" \".\" ~ Atom");
         }
         base.Reset(_mark);
         if (_cut)
@@ -575,6 +651,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // Atom "+" -> RepeatOneMore(Atom=atom)
+            base.LogAlternativeEntered("Atom \"+\"");
             IGreenNode? atom;
             IGreenNode? plus;
             if ((atom = rule_Atom()) is not null
@@ -582,6 +659,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (plus = Expect(TokenType.Plus)) is not null
             )
             {
+                base.LogAlternativeSucceed("Atom \"+\"");
                 _res = new RepeatOneMoreNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -591,10 +669,12 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Atom \"+\"");
         }
         base.Reset(_mark);
         {
             // Atom "*" -> RepeatZeroMore(Atom=atom)
+            base.LogAlternativeEntered("Atom \"*\"");
             IGreenNode? atom;
             IGreenNode? star;
             if ((atom = rule_Atom()) is not null
@@ -602,6 +682,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (star = Expect(TokenType.Star)) is not null
             )
             {
+                base.LogAlternativeSucceed("Atom \"*\"");
                 _res = new RepeatZeroMoreNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -611,13 +692,16 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Atom \"*\"");
         }
         base.Reset(_mark);
         {
             // Atom -> AtomMolecule(Atom=atom)
+            base.LogAlternativeEntered("Atom");
             IGreenNode? atom;
             if ((atom = rule_Atom()) is not null)
             {
+                base.LogAlternativeSucceed("Atom");
                 _res = new AtomMoleculeNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -626,13 +710,16 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Atom");
         }
         base.Reset(_mark);
         {
             // "~" -> Cut()
+            base.LogAlternativeEntered("\"~\"");
             IGreenNode? tilde;
             if ((tilde = Expect(TokenType.Tilde)) is not null)
             {
+                base.LogAlternativeSucceed("\"~\"");
                 _res = new CutNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -641,9 +728,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"~\"");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Molecule");
     _Return:
+        base.LogRuleExiting("Molecule");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Molecule
@@ -655,11 +746,14 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     //     | StringLiteral -> StringAtom(Value=string_literal)
     AtomNode? rule_Atom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Atom");
         int _mark = base.Mark();
         AtomNode? _res = null;
         bool _cut = false;
         {
             // "(" ~ -GroupDecorator Alternative+."|" ")" -> GroupAtom(Alternatives=alternative_Gather, Decorator=group_decorator)
+            base.LogAlternativeEntered("\"(\" ~ -GroupDecorator Alternative+.\"|\" \")\"");
             IGreenNode? left_paren;
             IGreenNode? group_decorator;
             INodeArray<GreenNode>? alternative_Gather;
@@ -675,6 +769,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"(\" ~ -GroupDecorator Alternative+.\"|\" \")\"");
                 _res = new GroupAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -686,6 +781,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"(\" ~ -GroupDecorator Alternative+.\"|\" \")\"");
             NodeArray<GreenNode>? _GatherHelper_alternative_Gather()
             {
                 GreenNode? _node = rule_Alternative();
@@ -717,9 +813,11 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // Name -> NameAtom(Value=name)
+            base.LogAlternativeEntered("Name");
             IGreenNode? name;
             if ((name = Expect(TokenType.Name)) is not null)
             {
+                base.LogAlternativeSucceed("Name");
                 _res = new NameAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -728,13 +826,16 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name");
         }
         base.Reset(_mark);
         {
             // StringLiteral -> StringAtom(Value=string_literal)
+            base.LogAlternativeEntered("StringLiteral");
             IGreenNode? string_literal;
             if ((string_literal = Expect(TokenType.StringLiteral)) is not null)
             {
+                base.LogAlternativeSucceed("StringLiteral");
                 _res = new StringAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -743,9 +844,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StringLiteral");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Atom");
     _Return:
+        base.LogRuleExiting("Atom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Atom
@@ -756,11 +861,14 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     //     | "->" Name "(" [Target+."," -> Arguments(Value=target_Gather)] ")" -> NamedAction(Name=name, Arguments=arguments)
     ActionNode? rule_Action()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Action");
         int _mark = base.Mark();
         ActionNode? _res = null;
         bool _cut = false;
         {
             // "->" "new" ~ "(" [Target+."," -> Arguments(Value=target_Gather)] ")" -> InferredAction(Arguments=arguments)
+            base.LogAlternativeEntered("\"->\" \"new\" ~ \"(\" [Target+.\",\" -> Arguments(Value=target_Gather)] \")\"");
             IGreenNode? right_arrow;
             IGreenNode? _string_token;
             IGreenNode? left_paren;
@@ -779,6 +887,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"->\" \"new\" ~ \"(\" [Target+.\",\" -> Arguments(Value=target_Gather)] \")\"");
                 _res = new InferredActionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -791,6 +900,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"->\" \"new\" ~ \"(\" [Target+.\",\" -> Arguments(Value=target_Gather)] \")\"");
         }
         base.Reset(_mark);
         if (_cut)
@@ -800,6 +910,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
         }
         {
             // "->" Name "(" [Target+."," -> Arguments(Value=target_Gather)] ")" -> NamedAction(Name=name, Arguments=arguments)
+            base.LogAlternativeEntered("\"->\" Name \"(\" [Target+.\",\" -> Arguments(Value=target_Gather)] \")\"");
             IGreenNode? right_arrow;
             IGreenNode? name;
             IGreenNode? left_paren;
@@ -816,6 +927,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("\"->\" Name \"(\" [Target+.\",\" -> Arguments(Value=target_Gather)] \")\"");
                 _res = new NamedActionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -828,9 +940,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("\"->\" Name \"(\" [Target+.\",\" -> Arguments(Value=target_Gather)] \")\"");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Action");
     _Return:
+        base.LogRuleExiting("Action");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Action
@@ -839,13 +955,17 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // [Target+."," -> Arguments(Value=target_Gather)]
     ArgumentsNode? rule_Arguments()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Arguments");
         int _mark = base.Mark();
         ArgumentsNode? _res = null;
         {
             // Target+."," -> Arguments(Value=target_Gather)
+            base.LogAlternativeEntered("Target+.\",\"");
             INodeArray<GreenNode>? target_Gather;
             if ((target_Gather = _GatherHelper_target_Gather()) is not null)
             {
+                base.LogAlternativeSucceed("Target+.\",\"");
                 _res = new ArgumentsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -854,6 +974,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Target+.\",\"");
             NodeArray<GreenNode>? _GatherHelper_target_Gather()
             {
                 GreenNode? _node = rule_Target();
@@ -878,7 +999,10 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Arguments");
     _Return:
+        base.LogRuleExiting("Arguments");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Arguments
@@ -887,10 +1011,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
     // Target: Name "=" Name -> new(Field=name, Variable=name1)
     TargetNode? rule_Target()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Target");
         int _mark = base.Mark();
         TargetNode? _res = null;
         {
             // Name "=" Name -> new(Field=name, Variable=name1)
+            base.LogAlternativeEntered("Name \"=\" Name");
             IGreenNode? name;
             IGreenNode? equal;
             IGreenNode? name1;
@@ -901,6 +1028,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 (name1 = Expect(TokenType.Name)) is not null
             )
             {
+                base.LogAlternativeSucceed("Name \"=\" Name");
                 _res = new TargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -911,9 +1039,13 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name \"=\" Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Target");
     _Return:
+        base.LogRuleExiting("Target");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Target

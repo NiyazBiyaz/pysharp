@@ -45,6 +45,7 @@ internal record ActionIr(ActionKind Kind, string? TypeName, IEnumerable<Variable
 internal record AlternativeIr(
     bool HasCut,
     string SourceText,
+    string EntriesText,
     IEnumerable<VariableIr> Variables,
     IEnumerable<ConditionIr> Conditions,
     ActionIr Action);

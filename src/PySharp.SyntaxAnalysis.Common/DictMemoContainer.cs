@@ -6,30 +6,30 @@ namespace PySharp.SyntaxAnalysis.Common;
 public readonly struct DictMemoContainer<TNode> : IMemoContainer<TNode>
     where TNode : IGreenNode
 {
-    private readonly Dictionary<int, TNode?> cacheContainer = [];
+    private readonly Dictionary<int, MemoEntry<TNode>> cacheContainer = [];
 
     public DictMemoContainer()
     {
     }
 
-    public void AddCache(int tokenPosition, TNode? cache)
+    public void AddCache(int tokenPosition, int memoEndPosition, TNode? cache)
     {
         Debug.Assert(tokenPosition >= 0);
 
         if (cacheContainer.ContainsKey(tokenPosition))
             throw new InvalidOperationException("Cache already have this token. Rewriting cache is not allowed.");
 
-        cacheContainer[tokenPosition] = cache;
+        cacheContainer[tokenPosition] = new(memoEndPosition, cache);
     }
 
-    public void UpdateCache(int tokenPosition, TNode? cache)
+    public void UpdateCache(int tokenPosition, int memoEndPosition, TNode? cache)
     {
         Debug.Assert(tokenPosition >= 0);
 
-        cacheContainer[tokenPosition] = cache;
+        cacheContainer[tokenPosition] = new(memoEndPosition, cache);
     }
 
-    public bool TryGetCache(int tokenPosition, out TNode? cache)
+    public bool TryGetCache(int tokenPosition, out MemoEntry<TNode> cache)
     {
         Debug.Assert(tokenPosition >= 0);
 

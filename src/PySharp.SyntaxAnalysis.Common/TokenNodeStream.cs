@@ -38,7 +38,7 @@ public class TokenNodeStream(ITokenizer tokenizer) : ITokenNodeStream
             TokenNode node;
             do
             {
-                Debug.Assert(!tokenizer.ShouldStop);
+                Debug.Assert(!tokenizer.ShouldStop, $"Tokens count: {tokens.Count}, Index: {Index}");
 
                 var tok = tokenizer.ReadNext();
                 if (tok.Type.IsTrivia)

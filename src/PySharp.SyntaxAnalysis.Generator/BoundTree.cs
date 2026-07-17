@@ -104,6 +104,7 @@ internal enum BoundRuleKind
 internal class BoundAlternative
 {
     internal required string SourceText { get; init; }
+    internal required string EntriesText { get; init; }
     internal int LineCreated { get; init; }
     internal List<BoundAlternativeEntry> Entries { get; } = [];
     internal IEnumerable<BoundAlternativeEntry> Variables
@@ -119,7 +120,13 @@ internal class BoundAlternative
         var action = Action?.ToIr(variables) ??
             new ActionIr(isUnion ? ActionKind.Passive : ActionKind.Generative, Action?.Type.Name, variables);
 
-        return new AlternativeIr(conditions.Any(c => c.Kind == QuantifierKind.Cut), SourceText, variables, conditions, action);
+        return new AlternativeIr(
+            conditions.Any(c => c.Kind == QuantifierKind.Cut),
+            SourceText,
+            EntriesText,
+            variables,
+            conditions,
+            action);
     }
 
     internal IEnumerable<BoundRuleAlternativeEntry> GetPotentialLeftRecursive(List<CompilationWarning> warnings)

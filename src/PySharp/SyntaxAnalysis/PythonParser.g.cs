@@ -21,10 +21,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // File: Statement* EndOfFile -> new(Statements=statement_Star)
     FileNode? rule_File()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("File");
         int _mark = base.Mark();
         FileNode? _res = null;
         {
             // Statement* EndOfFile -> new(Statements=statement_Star)
+            base.LogAlternativeEntered("Statement* EndOfFile");
             INodeArray<StatementNode>? statement_Star;
             IGreenNode? end_of_file;
             if ((statement_Star = _RepeatHelper_statement_Star()) is not null
@@ -32,6 +35,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (end_of_file = Expect(TokenType.EndOfFile)) is not null
             )
             {
+                base.LogAlternativeSucceed("Statement* EndOfFile");
                 _res = new FileNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -41,6 +45,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Statement* EndOfFile");
             NodeArray<StatementNode>? _RepeatHelper_statement_Star()
             {
                 StatementNode? _node = rule_Statement();
@@ -54,7 +59,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("File");
     _Return:
+        base.LogRuleExiting("File");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // File
@@ -66,29 +74,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | SimpleStatements
     StatementNode? rule_Statement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Statement");
         int _mark = base.Mark();
         StatementNode? _res = null;
         {
             // CompoundStatement
+            base.LogAlternativeEntered("CompoundStatement");
             IGreenNode? compound_statement;
             if ((compound_statement = rule_CompoundStatement()) is not null)
             {
+                base.LogAlternativeSucceed("CompoundStatement");
                 _res = (CompoundStatementNode?)compound_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("CompoundStatement");
         }
         base.Reset(_mark);
         {
             // SimpleStatements
+            base.LogAlternativeEntered("SimpleStatements");
             IGreenNode? simple_statements;
             if ((simple_statements = rule_SimpleStatements()) is not null)
             {
+                base.LogAlternativeSucceed("SimpleStatements");
                 _res = (SimpleStatementsNode?)simple_statements;
                 goto _Return;
             }
+            base.LogAlternativeFailed("SimpleStatements");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Statement");
     _Return:
+        base.LogRuleExiting("Statement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Statement
@@ -99,10 +118,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | SimpleStatement+.';' -';' NewLine -> SeparatedSimpleStatements(Values=simple_statement_Gather)
     SimpleStatementsNode? rule_SimpleStatements()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SimpleStatements");
         int _mark = base.Mark();
         SimpleStatementsNode? _res = null;
         {
             // SimpleStatement !';' NewLine -> SingleSimpleStatement(Value=simple_statement)
+            base.LogAlternativeEntered("SimpleStatement !';' NewLine");
             IGreenNode? simple_statement;
             IGreenNode? new_line;
             if ((simple_statement = rule_SimpleStatement()) is not null
@@ -112,6 +134,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("SimpleStatement !';' NewLine");
                 _res = new SingleSimpleStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -121,6 +144,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SimpleStatement !';' NewLine");
             bool _LookaheadHelper_semicolon()
             {
                 int _mark = base.Mark();
@@ -132,6 +156,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // SimpleStatement+.';' -';' NewLine -> SeparatedSimpleStatements(Values=simple_statement_Gather)
+            base.LogAlternativeEntered("SimpleStatement+.';' -';' NewLine");
             INodeArray<GreenNode>? simple_statement_Gather;
             IGreenNode? semicolon;
             IGreenNode? new_line;
@@ -142,6 +167,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("SimpleStatement+.';' -';' NewLine");
                 _res = new SeparatedSimpleStatementsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -152,6 +178,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SimpleStatement+.';' -';' NewLine");
             NodeArray<GreenNode>? _GatherHelper_simple_statement_Gather()
             {
                 IGreenNode? _node = rule_SimpleStatement();
@@ -176,7 +203,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SimpleStatements");
     _Return:
+        base.LogRuleExiting("SimpleStatements");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SimpleStatements
@@ -200,39 +230,50 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | &'nonlocal'   NonlocalStatement
     SimpleStatementNode? rule_SimpleStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SimpleStatement");
         int _mark = base.Mark();
         SimpleStatementNode? _res = null;
         {
             // Assignment
+            base.LogAlternativeEntered("Assignment");
             IGreenNode? assignment;
             if ((assignment = rule_Assignment()) is not null)
             {
+                base.LogAlternativeSucceed("Assignment");
                 _res = (AssignmentNode?)assignment;
                 goto _Return;
             }
+            base.LogAlternativeFailed("Assignment");
         }
         base.Reset(_mark);
         {
             // StarExpressions
+            base.LogAlternativeEntered("StarExpressions");
             IGreenNode? star_expressions;
             if ((star_expressions = rule_StarExpressions()) is not null)
             {
+                base.LogAlternativeSucceed("StarExpressions");
                 _res = (StarExpressionsNode?)star_expressions;
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarExpressions");
         }
         base.Reset(_mark);
         {
             // &'type'       TypeAlias
+            base.LogAlternativeEntered("&'type'       TypeAlias");
             IGreenNode? type_alias;
             if (_LookaheadHelper__string_token()
                 &&
                 (type_alias = rule_TypeAlias()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'type'       TypeAlias");
                 _res = (TypeAliasNode?)type_alias;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'type'       TypeAlias");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -244,15 +285,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &ImportStart  ImportStatement
+            base.LogAlternativeEntered("&ImportStart  ImportStatement");
             IGreenNode? import_statement;
             if (_LookaheadHelper_import_start()
                 &&
                 (import_statement = rule_ImportStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&ImportStart  ImportStatement");
                 _res = (ImportStatementNode?)import_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&ImportStart  ImportStatement");
             bool _LookaheadHelper_import_start()
             {
                 int _mark = base.Mark();
@@ -264,15 +308,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'return'     ReturnStatement
+            base.LogAlternativeEntered("&'return'     ReturnStatement");
             IGreenNode? return_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (return_statement = rule_ReturnStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'return'     ReturnStatement");
                 _res = (ReturnStatementNode?)return_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'return'     ReturnStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -284,15 +331,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'raise'      RaiseStatement
+            base.LogAlternativeEntered("&'raise'      RaiseStatement");
             IGreenNode? raise_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (raise_statement = rule_RaiseStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'raise'      RaiseStatement");
                 _res = (RaiseStatementNode?)raise_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'raise'      RaiseStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -304,15 +354,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'pass'       PassStatement
+            base.LogAlternativeEntered("&'pass'       PassStatement");
             IGreenNode? pass_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (pass_statement = rule_PassStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'pass'       PassStatement");
                 _res = (PassStatementNode?)pass_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'pass'       PassStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -324,15 +377,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'del'        DeleteStatement
+            base.LogAlternativeEntered("&'del'        DeleteStatement");
             IGreenNode? delete_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (delete_statement = rule_DeleteStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'del'        DeleteStatement");
                 _res = (DeleteStatementNode?)delete_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'del'        DeleteStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -344,15 +400,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'yield'      YieldStatement
+            base.LogAlternativeEntered("&'yield'      YieldStatement");
             IGreenNode? yield_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (yield_statement = rule_YieldStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'yield'      YieldStatement");
                 _res = (YieldStatementNode?)yield_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'yield'      YieldStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -364,15 +423,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'assert'     AssertStatement
+            base.LogAlternativeEntered("&'assert'     AssertStatement");
             IGreenNode? assert_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (assert_statement = rule_AssertStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'assert'     AssertStatement");
                 _res = (AssertStatementNode?)assert_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'assert'     AssertStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -384,15 +446,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'break'      BreakStatement
+            base.LogAlternativeEntered("&'break'      BreakStatement");
             IGreenNode? break_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (break_statement = rule_BreakStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'break'      BreakStatement");
                 _res = (BreakStatementNode?)break_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'break'      BreakStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -404,15 +469,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'continue'   ContinueStatement
+            base.LogAlternativeEntered("&'continue'   ContinueStatement");
             IGreenNode? continue_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (continue_statement = rule_ContinueStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'continue'   ContinueStatement");
                 _res = (ContinueStatementNode?)continue_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'continue'   ContinueStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -424,15 +492,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'global'     GlobalStatement
+            base.LogAlternativeEntered("&'global'     GlobalStatement");
             IGreenNode? global_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (global_statement = rule_GlobalStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'global'     GlobalStatement");
                 _res = (GlobalStatementNode?)global_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'global'     GlobalStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -444,15 +515,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'nonlocal'   NonlocalStatement
+            base.LogAlternativeEntered("&'nonlocal'   NonlocalStatement");
             IGreenNode? nonlocal_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (nonlocal_statement = rule_NonlocalStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'nonlocal'   NonlocalStatement");
                 _res = (NonlocalStatementNode?)nonlocal_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'nonlocal'   NonlocalStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -462,7 +536,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SimpleStatement");
     _Return:
+        base.LogRuleExiting("SimpleStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SimpleStatement
@@ -475,39 +552,53 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'lazy'
     TokenNode? rule_ImportStart()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ImportStart");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // 'from'
+            base.LogAlternativeEntered("'from'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("from")) is not null)
             {
+                base.LogAlternativeSucceed("'from'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'from'");
         }
         base.Reset(_mark);
         {
             // 'import'
+            base.LogAlternativeEntered("'import'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("import")) is not null)
             {
+                base.LogAlternativeSucceed("'import'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'import'");
         }
         base.Reset(_mark);
         {
             // 'lazy'
+            base.LogAlternativeEntered("'lazy'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("lazy")) is not null)
             {
+                base.LogAlternativeSucceed("'lazy'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'lazy'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ImportStart");
     _Return:
+        base.LogRuleExiting("ImportStart");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ImportStart
@@ -535,19 +626,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     CompoundStatementNode? rule_CompoundStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("CompoundStatement");
         int _mark = base.Mark();
         CompoundStatementNode? _res = null;
         {
             // &(@inline 'def' | '@' | 'async') FunctionDef
+            base.LogAlternativeEntered("&(@inline 'def' | '@' | 'async') FunctionDef");
             IGreenNode? function_def;
             if (_LookaheadHelper__token_inline_group()
                 &&
                 (function_def = rule_FunctionDef()) is not null
             )
             {
+                base.LogAlternativeSucceed("&(@inline 'def' | '@' | 'async') FunctionDef");
                 _res = (FunctionDefNode?)function_def;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&(@inline 'def' | '@' | 'async') FunctionDef");
             bool _LookaheadHelper__token_inline_group()
             {
                 int _mark = base.Mark();
@@ -559,15 +655,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'if' IfStatement
+            base.LogAlternativeEntered("&'if' IfStatement");
             IGreenNode? if_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (if_statement = rule_IfStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'if' IfStatement");
                 _res = (IfStatementNode?)if_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'if' IfStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -579,15 +678,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &(@inline 'class' | '@') ClassDef
+            base.LogAlternativeEntered("&(@inline 'class' | '@') ClassDef");
             IGreenNode? class_def;
             if (_LookaheadHelper__token_inline_group1()
                 &&
                 (class_def = rule_ClassDef()) is not null
             )
             {
+                base.LogAlternativeSucceed("&(@inline 'class' | '@') ClassDef");
                 _res = (ClassDefNode?)class_def;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&(@inline 'class' | '@') ClassDef");
             bool _LookaheadHelper__token_inline_group1()
             {
                 int _mark = base.Mark();
@@ -599,15 +701,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &(@inline 'with' | 'async') WithStatement
+            base.LogAlternativeEntered("&(@inline 'with' | 'async') WithStatement");
             IGreenNode? with_statement;
             if (_LookaheadHelper__token_inline_group2()
                 &&
                 (with_statement = rule_WithStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&(@inline 'with' | 'async') WithStatement");
                 _res = (WithStatementNode?)with_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&(@inline 'with' | 'async') WithStatement");
             bool _LookaheadHelper__token_inline_group2()
             {
                 int _mark = base.Mark();
@@ -619,15 +724,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &(@inline 'for' | 'async') ForStatement
+            base.LogAlternativeEntered("&(@inline 'for' | 'async') ForStatement");
             IGreenNode? for_statement;
             if (_LookaheadHelper__token_inline_group3()
                 &&
                 (for_statement = rule_ForStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&(@inline 'for' | 'async') ForStatement");
                 _res = (ForStatementNode?)for_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&(@inline 'for' | 'async') ForStatement");
             bool _LookaheadHelper__token_inline_group3()
             {
                 int _mark = base.Mark();
@@ -639,15 +747,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'try' TryStatement
+            base.LogAlternativeEntered("&'try' TryStatement");
             IGreenNode? try_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (try_statement = rule_TryStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'try' TryStatement");
                 _res = (TryStatementNode?)try_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'try' TryStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -659,15 +770,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'while' WhileStatement
+            base.LogAlternativeEntered("&'while' WhileStatement");
             IGreenNode? while_statement;
             if (_LookaheadHelper__string_token()
                 &&
                 (while_statement = rule_WhileStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'while' WhileStatement");
                 _res = (WhileStatementNode?)while_statement;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'while' WhileStatement");
             bool _LookaheadHelper__string_token()
             {
                 int _mark = base.Mark();
@@ -677,7 +791,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("CompoundStatement");
     _Return:
+        base.LogRuleExiting("CompoundStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // CompoundStatement
@@ -686,39 +803,53 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline 'def' | '@' | 'async')
     TokenNode? rule__TokenInlineGroup()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // 'def'
+            base.LogAlternativeEntered("'def'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("def")) is not null)
             {
+                base.LogAlternativeSucceed("'def'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'def'");
         }
         base.Reset(_mark);
         {
             // '@'
+            base.LogAlternativeEntered("'@'");
             IGreenNode? at;
             if ((at = Expect(TokenType.At)) is not null)
             {
+                base.LogAlternativeSucceed("'@'");
                 _res = (TokenNode?)at;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'@'");
         }
         base.Reset(_mark);
         {
             // 'async'
+            base.LogAlternativeEntered("'async'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("async")) is not null)
             {
+                base.LogAlternativeSucceed("'async'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup
@@ -727,29 +858,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline 'class' | '@')
     TokenNode? rule__TokenInlineGroup1()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup1");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // 'class'
+            base.LogAlternativeEntered("'class'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("class")) is not null)
             {
+                base.LogAlternativeSucceed("'class'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'class'");
         }
         base.Reset(_mark);
         {
             // '@'
+            base.LogAlternativeEntered("'@'");
             IGreenNode? at;
             if ((at = Expect(TokenType.At)) is not null)
             {
+                base.LogAlternativeSucceed("'@'");
                 _res = (TokenNode?)at;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'@'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup1");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup1");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup1
@@ -758,29 +900,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline 'with' | 'async')
     TokenNode? rule__TokenInlineGroup2()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup2");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // 'with'
+            base.LogAlternativeEntered("'with'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("with")) is not null)
             {
+                base.LogAlternativeSucceed("'with'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'with'");
         }
         base.Reset(_mark);
         {
             // 'async'
+            base.LogAlternativeEntered("'async'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("async")) is not null)
             {
+                base.LogAlternativeSucceed("'async'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup2");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup2");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup2
@@ -789,29 +942,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline 'for' | 'async')
     TokenNode? rule__TokenInlineGroup3()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup3");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // 'for'
+            base.LogAlternativeEntered("'for'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("for")) is not null)
             {
+                base.LogAlternativeSucceed("'for'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'for'");
         }
         base.Reset(_mark);
         {
             // 'async'
+            base.LogAlternativeEntered("'async'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("async")) is not null)
             {
+                base.LogAlternativeSucceed("'async'");
                 _res = (TokenNode?)_string_token;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup3");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup3");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup3
@@ -831,11 +995,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | SingleTarget AugAssign ~ AnnotatedRhs -> AugmentedAssignment(Target=single_target, Operator=aug_assign, Rhs=annotated_rhs)
     AssignmentNode? rule_Assignment()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Assignment");
         int _mark = base.Mark();
         AssignmentNode? _res = null;
         bool _cut = false;
         {
             // Name ':' Expression -EqualAnnotatedRhs -> AnnotatedAssignment(Target=name, TypeHint=expression, Rhs=equal_annotated_rhs)
+            base.LogAlternativeEntered("Name ':' Expression -EqualAnnotatedRhs");
             IGreenNode? name;
             IGreenNode? colon;
             IGreenNode? expression;
@@ -849,6 +1016,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((equal_annotated_rhs = rule_EqualAnnotatedRhs()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Name ':' Expression -EqualAnnotatedRhs");
                 _res = new AnnotatedAssignmentNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -860,11 +1028,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name ':' Expression -EqualAnnotatedRhs");
         }
         base.Reset(_mark);
         {
             // '(' SingleTarget ')' ':' Expression -EqualAnnotatedRhs -> AnnotatedParenthesizedAssignment(
             //         Target=single_target, TypeHint=expression, Rhs=equal_annotated_rhs)
+            base.LogAlternativeEntered("'(' SingleTarget ')' ':' Expression -EqualAnnotatedRhs");
             IGreenNode? left_paren;
             IGreenNode? single_target;
             IGreenNode? right_paren;
@@ -884,6 +1054,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((equal_annotated_rhs = rule_EqualAnnotatedRhs()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'(' SingleTarget ')' ':' Expression -EqualAnnotatedRhs");
                 _res = new AnnotatedParenthesizedAssignmentNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -897,11 +1068,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' SingleTarget ')' ':' Expression -EqualAnnotatedRhs");
         }
         base.Reset(_mark);
         {
             // SingleSubscriptAttributeTarget ':' Expression -EqualAnnotatedRhs -> AnnotatedSubscriptAttributeAssignment(
             //         Target=single_subscript_attribute_target, TypeHint=expression, Rhs=equal_annotated_rhs)
+            base.LogAlternativeEntered("SingleSubscriptAttributeTarget ':' Expression -EqualAnnotatedRhs");
             IGreenNode? single_subscript_attribute_target;
             IGreenNode? colon;
             IGreenNode? expression;
@@ -915,6 +1088,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((equal_annotated_rhs = rule_EqualAnnotatedRhs()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("SingleSubscriptAttributeTarget ':' Expression -EqualAnnotatedRhs");
                 _res = new AnnotatedSubscriptAttributeAssignmentNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -926,10 +1100,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SingleSubscriptAttributeTarget ':' Expression -EqualAnnotatedRhs");
         }
         base.Reset(_mark);
         {
             // (StarTargets '=' -> AssignmentTarget(Value=star_targets))+ AnnotatedRhs !'=' -> CascadeAssignment(Targets=assignment_target_Plus, Rhs=annotated_rhs)
+            base.LogAlternativeEntered("(StarTargets '=' -> AssignmentTarget(Value=star_targets))+ AnnotatedRhs !'='");
             INodeArray<AssignmentTargetNode>? assignment_target_Plus;
             IGreenNode? annotated_rhs;
             if ((assignment_target_Plus = _RepeatHelper_assignment_target_Plus()) is not null
@@ -939,6 +1115,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_equal()
             )
             {
+                base.LogAlternativeSucceed("(StarTargets '=' -> AssignmentTarget(Value=star_targets))+ AnnotatedRhs !'='");
                 _res = new CascadeAssignmentNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -948,6 +1125,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("(StarTargets '=' -> AssignmentTarget(Value=star_targets))+ AnnotatedRhs !'='");
             NodeArray<AssignmentTargetNode>? _RepeatHelper_assignment_target_Plus()
             {
                 AssignmentTargetNode? _node = rule_AssignmentTarget();
@@ -970,6 +1148,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // SingleTarget AugAssign ~ AnnotatedRhs -> AugmentedAssignment(Target=single_target, Operator=aug_assign, Rhs=annotated_rhs)
+            base.LogAlternativeEntered("SingleTarget AugAssign ~ AnnotatedRhs");
             IGreenNode? single_target;
             IGreenNode? aug_assign;
             IGreenNode? annotated_rhs;
@@ -982,6 +1161,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (annotated_rhs = rule_AnnotatedRhs()) is not null
             )
             {
+                base.LogAlternativeSucceed("SingleTarget AugAssign ~ AnnotatedRhs");
                 _res = new AugmentedAssignmentNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -992,6 +1172,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SingleTarget AugAssign ~ AnnotatedRhs");
         }
         base.Reset(_mark);
         if (_cut)
@@ -999,7 +1180,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = null;
             goto _Return;
         }
+        base.LogRuleFailed("Assignment");
     _Return:
+        base.LogRuleExiting("Assignment");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Assignment
@@ -1008,10 +1192,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (StarTargets '=' -> AssignmentTarget(Value=star_targets))
     AssignmentTargetNode? rule_AssignmentTarget()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AssignmentTarget");
         int _mark = base.Mark();
         AssignmentTargetNode? _res = null;
         {
             // StarTargets '=' -> AssignmentTarget(Value=star_targets)
+            base.LogAlternativeEntered("StarTargets '='");
             IGreenNode? star_targets;
             IGreenNode? equal;
             if ((star_targets = rule_StarTargets()) is not null
@@ -1019,6 +1206,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (equal = Expect(TokenType.Equal)) is not null
             )
             {
+                base.LogAlternativeSucceed("StarTargets '='");
                 _res = new AssignmentTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1028,9 +1216,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarTargets '='");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AssignmentTarget");
     _Return:
+        base.LogRuleExiting("AssignmentTarget");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AssignmentTarget
@@ -1039,10 +1231,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // EqualAnnotatedRhs: '=' AnnotatedRhs -> new(Value=annotated_rhs)
     EqualAnnotatedRhsNode? rule_EqualAnnotatedRhs()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("EqualAnnotatedRhs");
         int _mark = base.Mark();
         EqualAnnotatedRhsNode? _res = null;
         {
             // '=' AnnotatedRhs -> new(Value=annotated_rhs)
+            base.LogAlternativeEntered("'=' AnnotatedRhs");
             IGreenNode? equal;
             IGreenNode? annotated_rhs;
             if ((equal = Expect(TokenType.Equal)) is not null
@@ -1050,6 +1245,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (annotated_rhs = rule_AnnotatedRhs()) is not null
             )
             {
+                base.LogAlternativeSucceed("'=' AnnotatedRhs");
                 _res = new EqualAnnotatedRhsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1059,9 +1255,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'=' AnnotatedRhs");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("EqualAnnotatedRhs");
     _Return:
+        base.LogRuleExiting("EqualAnnotatedRhs");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // EqualAnnotatedRhs
@@ -1084,139 +1284,183 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '|='
     TokenNode? rule_AugAssign()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AugAssign");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '+='
+            base.LogAlternativeEntered("'+='");
             IGreenNode? plus_equal;
             if ((plus_equal = Expect(TokenType.PlusEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'+='");
                 _res = (TokenNode?)plus_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'+='");
         }
         base.Reset(_mark);
         {
             // '-='
+            base.LogAlternativeEntered("'-='");
             IGreenNode? minus_equal;
             if ((minus_equal = Expect(TokenType.MinusEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'-='");
                 _res = (TokenNode?)minus_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'-='");
         }
         base.Reset(_mark);
         {
             // '*='
+            base.LogAlternativeEntered("'*='");
             IGreenNode? star_equal;
             if ((star_equal = Expect(TokenType.StarEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'*='");
                 _res = (TokenNode?)star_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*='");
         }
         base.Reset(_mark);
         {
             // '@='
+            base.LogAlternativeEntered("'@='");
             IGreenNode? at_equal;
             if ((at_equal = Expect(TokenType.AtEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'@='");
                 _res = (TokenNode?)at_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'@='");
         }
         base.Reset(_mark);
         {
             // '|='
+            base.LogAlternativeEntered("'|='");
             IGreenNode? vert_bar_equal;
             if ((vert_bar_equal = Expect(TokenType.VertBarEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'|='");
                 _res = (TokenNode?)vert_bar_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'|='");
         }
         base.Reset(_mark);
         {
             // '%='
+            base.LogAlternativeEntered("'%='");
             IGreenNode? percent_equal;
             if ((percent_equal = Expect(TokenType.PercentEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'%='");
                 _res = (TokenNode?)percent_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'%='");
         }
         base.Reset(_mark);
         {
             // '&='
+            base.LogAlternativeEntered("'&='");
             IGreenNode? ampersand_equal;
             if ((ampersand_equal = Expect(TokenType.AmpersandEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'&='");
                 _res = (TokenNode?)ampersand_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'&='");
         }
         base.Reset(_mark);
         {
             // '|='
+            base.LogAlternativeEntered("'|='");
             IGreenNode? vert_bar_equal;
             if ((vert_bar_equal = Expect(TokenType.VertBarEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'|='");
                 _res = (TokenNode?)vert_bar_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'|='");
         }
         base.Reset(_mark);
         {
             // '^='
+            base.LogAlternativeEntered("'^='");
             IGreenNode? circumflex_equal;
             if ((circumflex_equal = Expect(TokenType.CircumflexEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'^='");
                 _res = (TokenNode?)circumflex_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'^='");
         }
         base.Reset(_mark);
         {
             // '<<='
+            base.LogAlternativeEntered("'<<='");
             IGreenNode? left_shift_equal;
             if ((left_shift_equal = Expect(TokenType.LeftShiftEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'<<='");
                 _res = (TokenNode?)left_shift_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'<<='");
         }
         base.Reset(_mark);
         {
             // '>>='
+            base.LogAlternativeEntered("'>>='");
             IGreenNode? right_shift_equal;
             if ((right_shift_equal = Expect(TokenType.RightShiftEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'>>='");
                 _res = (TokenNode?)right_shift_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'>>='");
         }
         base.Reset(_mark);
         {
             // '**='
+            base.LogAlternativeEntered("'**='");
             IGreenNode? double_star_equal;
             if ((double_star_equal = Expect(TokenType.DoubleStarEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'**='");
                 _res = (TokenNode?)double_star_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'**='");
         }
         base.Reset(_mark);
         {
             // '|='
+            base.LogAlternativeEntered("'|='");
             IGreenNode? vert_bar_equal;
             if ((vert_bar_equal = Expect(TokenType.VertBarEqual)) is not null)
             {
+                base.LogAlternativeSucceed("'|='");
                 _res = (TokenNode?)vert_bar_equal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'|='");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AugAssign");
     _Return:
+        base.LogRuleExiting("AugAssign");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AugAssign
@@ -1228,29 +1472,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | StarExpressions
     AnnotatedRhsNode? rule_AnnotatedRhs()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AnnotatedRhs");
         int _mark = base.Mark();
         AnnotatedRhsNode? _res = null;
         {
             // YieldExpression
+            base.LogAlternativeEntered("YieldExpression");
             IGreenNode? yield_expression;
             if ((yield_expression = rule_YieldExpression()) is not null)
             {
+                base.LogAlternativeSucceed("YieldExpression");
                 _res = (YieldExpressionNode?)yield_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("YieldExpression");
         }
         base.Reset(_mark);
         {
             // StarExpressions
+            base.LogAlternativeEntered("StarExpressions");
             IGreenNode? star_expressions;
             if ((star_expressions = rule_StarExpressions()) is not null)
             {
+                base.LogAlternativeSucceed("StarExpressions");
                 _res = (StarExpressionsNode?)star_expressions;
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarExpressions");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AnnotatedRhs");
     _Return:
+        base.LogRuleExiting("AnnotatedRhs");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AnnotatedRhs
@@ -1259,10 +1514,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ReturnStatement: 'return' -StarExpressions -> new(Expression=star_expressions)
     ReturnStatementNode? rule_ReturnStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ReturnStatement");
         int _mark = base.Mark();
         ReturnStatementNode? _res = null;
         {
             // 'return' -StarExpressions -> new(Expression=star_expressions)
+            base.LogAlternativeEntered("'return' -StarExpressions");
             IGreenNode? _string_token;
             IGreenNode? star_expressions;
             if ((_string_token = Expect("return")) is not null
@@ -1270,6 +1528,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((star_expressions = rule_StarExpressions()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'return' -StarExpressions");
                 _res = new ReturnStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1279,9 +1538,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'return' -StarExpressions");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ReturnStatement");
     _Return:
+        base.LogRuleExiting("ReturnStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ReturnStatement
@@ -1293,10 +1556,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'raise' -> PassedRaiseStatement()
     RaiseStatementNode? rule_RaiseStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("RaiseStatement");
         int _mark = base.Mark();
         RaiseStatementNode? _res = null;
         {
             // 'raise' Expression 'from' Expression -> RaiseFromStatement(NewException=expression, OldExpression=expression1)
+            base.LogAlternativeEntered("'raise' Expression 'from' Expression");
             IGreenNode? _string_token;
             IGreenNode? expression;
             IGreenNode? _string_token1;
@@ -1310,6 +1576,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression1 = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'raise' Expression 'from' Expression");
                 _res = new RaiseFromStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1321,10 +1588,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'raise' Expression 'from' Expression");
         }
         base.Reset(_mark);
         {
             // 'raise' Expression -> RaiseFromScratchStatement(Exception=expression)
+            base.LogAlternativeEntered("'raise' Expression");
             IGreenNode? _string_token;
             IGreenNode? expression;
             if ((_string_token = Expect("raise")) is not null
@@ -1332,6 +1601,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'raise' Expression");
                 _res = new RaiseFromScratchStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1341,13 +1611,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'raise' Expression");
         }
         base.Reset(_mark);
         {
             // 'raise' -> PassedRaiseStatement()
+            base.LogAlternativeEntered("'raise'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("raise")) is not null)
             {
+                base.LogAlternativeSucceed("'raise'");
                 _res = new PassedRaiseStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1356,9 +1629,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'raise'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("RaiseStatement");
     _Return:
+        base.LogRuleExiting("RaiseStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // RaiseStatement
@@ -1367,13 +1644,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // PassStatement: 'pass' -> new()
     PassStatementNode? rule_PassStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("PassStatement");
         int _mark = base.Mark();
         PassStatementNode? _res = null;
         {
             // 'pass' -> new()
+            base.LogAlternativeEntered("'pass'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("pass")) is not null)
             {
+                base.LogAlternativeSucceed("'pass'");
                 _res = new PassStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1382,9 +1663,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'pass'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("PassStatement");
     _Return:
+        base.LogRuleExiting("PassStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // PassStatement
@@ -1393,13 +1678,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // BreakStatement: 'break' -> new()
     BreakStatementNode? rule_BreakStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BreakStatement");
         int _mark = base.Mark();
         BreakStatementNode? _res = null;
         {
             // 'break' -> new()
+            base.LogAlternativeEntered("'break'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("break")) is not null)
             {
+                base.LogAlternativeSucceed("'break'");
                 _res = new BreakStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1408,9 +1697,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'break'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("BreakStatement");
     _Return:
+        base.LogRuleExiting("BreakStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // BreakStatement
@@ -1419,13 +1712,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ContinueStatement: 'continue' -> new()
     ContinueStatementNode? rule_ContinueStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ContinueStatement");
         int _mark = base.Mark();
         ContinueStatementNode? _res = null;
         {
             // 'continue' -> new()
+            base.LogAlternativeEntered("'continue'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("continue")) is not null)
             {
+                base.LogAlternativeSucceed("'continue'");
                 _res = new ContinueStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1434,9 +1731,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'continue'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ContinueStatement");
     _Return:
+        base.LogRuleExiting("ContinueStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ContinueStatement
@@ -1445,10 +1746,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // GlobalStatement: 'global' Name+.',' -> new(Variables=name_Gather)
     GlobalStatementNode? rule_GlobalStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("GlobalStatement");
         int _mark = base.Mark();
         GlobalStatementNode? _res = null;
         {
             // 'global' Name+.',' -> new(Variables=name_Gather)
+            base.LogAlternativeEntered("'global' Name+.','");
             IGreenNode? _string_token;
             INodeArray<GreenNode>? name_Gather;
             if ((_string_token = Expect("global")) is not null
@@ -1456,6 +1760,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (name_Gather = _GatherHelper_name_Gather()) is not null
             )
             {
+                base.LogAlternativeSucceed("'global' Name+.','");
                 _res = new GlobalStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1465,6 +1770,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'global' Name+.','");
             NodeArray<GreenNode>? _GatherHelper_name_Gather()
             {
                 GreenNode? _node = Expect(TokenType.Name);
@@ -1489,7 +1795,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("GlobalStatement");
     _Return:
+        base.LogRuleExiting("GlobalStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // GlobalStatement
@@ -1498,10 +1807,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // NonlocalStatement: 'nonlocal' Name+.',' -> new(Variables=name_Gather)
     NonlocalStatementNode? rule_NonlocalStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("NonlocalStatement");
         int _mark = base.Mark();
         NonlocalStatementNode? _res = null;
         {
             // 'nonlocal' Name+.',' -> new(Variables=name_Gather)
+            base.LogAlternativeEntered("'nonlocal' Name+.','");
             IGreenNode? _string_token;
             INodeArray<GreenNode>? name_Gather;
             if ((_string_token = Expect("nonlocal")) is not null
@@ -1509,6 +1821,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (name_Gather = _GatherHelper_name_Gather()) is not null
             )
             {
+                base.LogAlternativeSucceed("'nonlocal' Name+.','");
                 _res = new NonlocalStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1518,6 +1831,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'nonlocal' Name+.','");
             NodeArray<GreenNode>? _GatherHelper_name_Gather()
             {
                 GreenNode? _node = Expect(TokenType.Name);
@@ -1542,7 +1856,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("NonlocalStatement");
     _Return:
+        base.LogRuleExiting("NonlocalStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // NonlocalStatement
@@ -1551,10 +1868,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // DeleteStatement: 'del' DeleteTarget+.',' -',' &(@inline ';' | NewLine) -> new(Targets=delete_target_Gather)
     DeleteStatementNode? rule_DeleteStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DeleteStatement");
         int _mark = base.Mark();
         DeleteStatementNode? _res = null;
         {
             // 'del' DeleteTarget+.',' -',' &(@inline ';' | NewLine) -> new(Targets=delete_target_Gather)
+            base.LogAlternativeEntered("'del' DeleteTarget+.',' -',' &(@inline ';' | NewLine)");
             IGreenNode? _string_token;
             INodeArray<GreenNode>? delete_target_Gather;
             IGreenNode? comma;
@@ -1567,6 +1887,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper__token_inline_group4()
             )
             {
+                base.LogAlternativeSucceed("'del' DeleteTarget+.',' -',' &(@inline ';' | NewLine)");
                 _res = new DeleteStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1577,6 +1898,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'del' DeleteTarget+.',' -',' &(@inline ';' | NewLine)");
             NodeArray<GreenNode>? _GatherHelper_delete_target_Gather()
             {
                 GreenNode? _node = rule_DeleteTarget();
@@ -1608,7 +1930,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DeleteStatement");
     _Return:
+        base.LogRuleExiting("DeleteStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DeleteStatement
@@ -1617,29 +1942,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline ';' | NewLine)
     TokenNode? rule__TokenInlineGroup4()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup4");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // ';'
+            base.LogAlternativeEntered("';'");
             IGreenNode? semicolon;
             if ((semicolon = Expect(TokenType.Semicolon)) is not null)
             {
+                base.LogAlternativeSucceed("';'");
                 _res = (TokenNode?)semicolon;
                 goto _Return;
             }
+            base.LogAlternativeFailed("';'");
         }
         base.Reset(_mark);
         {
             // NewLine
+            base.LogAlternativeEntered("NewLine");
             IGreenNode? new_line;
             if ((new_line = Expect(TokenType.NewLine)) is not null)
             {
+                base.LogAlternativeSucceed("NewLine");
                 _res = (TokenNode?)new_line;
                 goto _Return;
             }
+            base.LogAlternativeFailed("NewLine");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup4");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup4");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup4
@@ -1648,13 +1984,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // YieldStatement: YieldExpression -> new(Expression=yield_expression)
     YieldStatementNode? rule_YieldStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("YieldStatement");
         int _mark = base.Mark();
         YieldStatementNode? _res = null;
         {
             // YieldExpression -> new(Expression=yield_expression)
+            base.LogAlternativeEntered("YieldExpression");
             IGreenNode? yield_expression;
             if ((yield_expression = rule_YieldExpression()) is not null)
             {
+                base.LogAlternativeSucceed("YieldExpression");
                 _res = new YieldStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1663,9 +2003,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("YieldExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("YieldStatement");
     _Return:
+        base.LogRuleExiting("YieldStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // YieldStatement
@@ -1674,10 +2018,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // AssertStatement: 'assert' Expression [',' Expression -> AssertMessage(Value=expression)] -> new(Guard=expression, Message=assert_message)
     AssertStatementNode? rule_AssertStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AssertStatement");
         int _mark = base.Mark();
         AssertStatementNode? _res = null;
         {
             // 'assert' Expression [',' Expression -> AssertMessage(Value=expression)] -> new(Guard=expression, Message=assert_message)
+            base.LogAlternativeEntered("'assert' Expression [',' Expression -> AssertMessage(Value=expression)]");
             IGreenNode? _string_token;
             IGreenNode? expression;
             IGreenNode? assert_message;
@@ -1688,6 +2035,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((assert_message = rule_AssertMessage()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'assert' Expression [',' Expression -> AssertMessage(Value=expression)]");
                 _res = new AssertStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1698,9 +2046,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'assert' Expression [',' Expression -> AssertMessage(Value=expression)]");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AssertStatement");
     _Return:
+        base.LogRuleExiting("AssertStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AssertStatement
@@ -1709,10 +2061,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // [',' Expression -> AssertMessage(Value=expression)]
     AssertMessageNode? rule_AssertMessage()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AssertMessage");
         int _mark = base.Mark();
         AssertMessageNode? _res = null;
         {
             // ',' Expression -> AssertMessage(Value=expression)
+            base.LogAlternativeEntered("',' Expression");
             IGreenNode? comma;
             IGreenNode? expression;
             if ((comma = Expect(TokenType.Comma)) is not null
@@ -1720,6 +2075,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("',' Expression");
                 _res = new AssertMessageNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1729,9 +2085,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("',' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AssertMessage");
     _Return:
+        base.LogRuleExiting("AssertMessage");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AssertMessage
@@ -1753,54 +2113,75 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     ImportStatementNode? rule_ImportStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ImportStatement");
         int _mark = base.Mark();
-        if (_memo_ImportStatement.TryGetCache(_mark, out ImportStatementNode? _memoized))
+        if (_memo_ImportStatement.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("ImportStatement", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         ImportStatementNode? _res = null;
         {
             // ImportName
+            base.LogAlternativeEntered("ImportName");
             IGreenNode? import_name;
             if ((import_name = rule_ImportName()) is not null)
             {
+                base.LogAlternativeSucceed("ImportName");
                 _res = (ImportNameNode?)import_name;
                 goto _Return;
             }
+            base.LogAlternativeFailed("ImportName");
         }
         base.Reset(_mark);
         {
             // LazyImportName
+            base.LogAlternativeEntered("LazyImportName");
             IGreenNode? lazy_import_name;
             if ((lazy_import_name = rule_LazyImportName()) is not null)
             {
+                base.LogAlternativeSucceed("LazyImportName");
                 _res = (LazyImportNameNode?)lazy_import_name;
                 goto _Return;
             }
+            base.LogAlternativeFailed("LazyImportName");
         }
         base.Reset(_mark);
         {
             // ImportFrom
+            base.LogAlternativeEntered("ImportFrom");
             IGreenNode? import_from;
             if ((import_from = rule_ImportFrom()) is not null)
             {
+                base.LogAlternativeSucceed("ImportFrom");
                 _res = (ImportFromNode?)import_from;
                 goto _Return;
             }
+            base.LogAlternativeFailed("ImportFrom");
         }
         base.Reset(_mark);
         {
             // LazyImportFrom
+            base.LogAlternativeEntered("LazyImportFrom");
             IGreenNode? lazy_import_from;
             if ((lazy_import_from = rule_LazyImportFrom()) is not null)
             {
+                base.LogAlternativeSucceed("LazyImportFrom");
                 _res = (LazyImportFromNode?)lazy_import_from;
                 goto _Return;
             }
+            base.LogAlternativeFailed("LazyImportFrom");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ImportStatement");
     _Return:
-        _memo_ImportStatement.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("ImportStatement", _mark, _res == null);
+        base.LogRuleExiting("ImportStatement");
+        base.LogDecreaseLevel();
+        _memo_ImportStatement.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // ImportStatement
@@ -1809,10 +2190,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ImportName: 'import' DottedAsName+.',' -> new(Import=dotted_as_name_Gather)
     ImportNameNode? rule_ImportName()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ImportName");
         int _mark = base.Mark();
         ImportNameNode? _res = null;
         {
             // 'import' DottedAsName+.',' -> new(Import=dotted_as_name_Gather)
+            base.LogAlternativeEntered("'import' DottedAsName+.','");
             IGreenNode? _string_token;
             INodeArray<GreenNode>? dotted_as_name_Gather;
             if ((_string_token = Expect("import")) is not null
@@ -1820,6 +2204,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (dotted_as_name_Gather = _GatherHelper_dotted_as_name_Gather()) is not null
             )
             {
+                base.LogAlternativeSucceed("'import' DottedAsName+.','");
                 _res = new ImportNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1829,6 +2214,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'import' DottedAsName+.','");
             NodeArray<GreenNode>? _GatherHelper_dotted_as_name_Gather()
             {
                 GreenNode? _node = rule_DottedAsName();
@@ -1853,7 +2239,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ImportName");
     _Return:
+        base.LogRuleExiting("ImportName");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ImportName
@@ -1862,10 +2251,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // LazyImportName: 'lazy' 'import' DottedAsName+.',' -> new(Import=dotted_as_name_Gather)
     LazyImportNameNode? rule_LazyImportName()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("LazyImportName");
         int _mark = base.Mark();
         LazyImportNameNode? _res = null;
         {
             // 'lazy' 'import' DottedAsName+.',' -> new(Import=dotted_as_name_Gather)
+            base.LogAlternativeEntered("'lazy' 'import' DottedAsName+.','");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             INodeArray<GreenNode>? dotted_as_name_Gather;
@@ -1876,6 +2268,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (dotted_as_name_Gather = _GatherHelper_dotted_as_name_Gather()) is not null
             )
             {
+                base.LogAlternativeSucceed("'lazy' 'import' DottedAsName+.','");
                 _res = new LazyImportNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1886,6 +2279,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'lazy' 'import' DottedAsName+.','");
             NodeArray<GreenNode>? _GatherHelper_dotted_as_name_Gather()
             {
                 GreenNode? _node = rule_DottedAsName();
@@ -1910,7 +2304,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("LazyImportName");
     _Return:
+        base.LogRuleExiting("LazyImportName");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // LazyImportName
@@ -1924,11 +2321,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         RelativePath=relative_import_dots_Plus, Targets=import_from_targets)
     ImportFromNode? rule_ImportFrom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ImportFrom");
         int _mark = base.Mark();
         ImportFromNode? _res = null;
         {
             // 'from' RelativeImportDots* DottedName 'import' ImportFromTargets -> ImportFromNames(
             //         RelativePath=relative_import_dots_Star, Path=dotted_name, Targets=import_from_targets)
+            base.LogAlternativeEntered("'from' RelativeImportDots* DottedName 'import' ImportFromTargets");
             IGreenNode? _string_token;
             INodeArray<TokenNode>? relative_import_dots_Star;
             IGreenNode? dotted_name;
@@ -1945,6 +2345,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (import_from_targets = rule_ImportFromTargets()) is not null
             )
             {
+                base.LogAlternativeSucceed("'from' RelativeImportDots* DottedName 'import' ImportFromTargets");
                 _res = new ImportFromNamesNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1957,6 +2358,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'from' RelativeImportDots* DottedName 'import' ImportFromTargets");
             NodeArray<TokenNode>? _RepeatHelper_relative_import_dots_Star()
             {
                 TokenNode? _node = rule_RelativeImportDots();
@@ -1973,6 +2375,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // 'from' RelativeImportDots+ 'import' ImportFromTargets -> ImportFromRelative(
             //         RelativePath=relative_import_dots_Plus, Targets=import_from_targets)
+            base.LogAlternativeEntered("'from' RelativeImportDots+ 'import' ImportFromTargets");
             IGreenNode? _string_token;
             INodeArray<TokenNode>? relative_import_dots_Plus;
             IGreenNode? _string_token1;
@@ -1986,6 +2389,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (import_from_targets = rule_ImportFromTargets()) is not null
             )
             {
+                base.LogAlternativeSucceed("'from' RelativeImportDots+ 'import' ImportFromTargets");
                 _res = new ImportFromRelativeNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -1997,6 +2401,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'from' RelativeImportDots+ 'import' ImportFromTargets");
             NodeArray<TokenNode>? _RepeatHelper_relative_import_dots_Plus()
             {
                 TokenNode? _node = rule_RelativeImportDots();
@@ -2010,7 +2415,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ImportFrom");
     _Return:
+        base.LogRuleExiting("ImportFrom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ImportFrom
@@ -2024,11 +2432,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         RelativePath=relative_import_dots_Plus, Targets=import_from_targets)
     LazyImportFromNode? rule_LazyImportFrom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("LazyImportFrom");
         int _mark = base.Mark();
         LazyImportFromNode? _res = null;
         {
             // 'lazy' 'from' RelativeImportDots* DottedAsName+.',' 'import' ImportFromTargets -> LazyImportFromNames(
             //         RelativePath=relative_import_dots_Star, Path=dotted_as_name_Gather, Targets=import_from_targets)
+            base.LogAlternativeEntered("'lazy' 'from' RelativeImportDots* DottedAsName+.',' 'import' ImportFromTargets");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             INodeArray<TokenNode>? relative_import_dots_Star;
@@ -2048,6 +2459,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (import_from_targets = rule_ImportFromTargets()) is not null
             )
             {
+                base.LogAlternativeSucceed("'lazy' 'from' RelativeImportDots* DottedAsName+.',' 'import' ImportFromTargets");
                 _res = new LazyImportFromNamesNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2061,6 +2473,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'lazy' 'from' RelativeImportDots* DottedAsName+.',' 'import' ImportFromTargets");
             NodeArray<GreenNode>? _GatherHelper_dotted_as_name_Gather()
             {
                 GreenNode? _node = rule_DottedAsName();
@@ -2099,6 +2512,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // 'lazy' 'from' RelativeImportDots+ 'import' ImportFromTargets -> LazyImportFromRelative(
             //         RelativePath=relative_import_dots_Plus, Targets=import_from_targets)
+            base.LogAlternativeEntered("'lazy' 'from' RelativeImportDots+ 'import' ImportFromTargets");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             INodeArray<TokenNode>? relative_import_dots_Plus;
@@ -2115,6 +2529,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (import_from_targets = rule_ImportFromTargets()) is not null
             )
             {
+                base.LogAlternativeSucceed("'lazy' 'from' RelativeImportDots+ 'import' ImportFromTargets");
                 _res = new LazyImportFromRelativeNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2127,6 +2542,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'lazy' 'from' RelativeImportDots+ 'import' ImportFromTargets");
             NodeArray<TokenNode>? _RepeatHelper_relative_import_dots_Plus()
             {
                 TokenNode? _node = rule_RelativeImportDots();
@@ -2140,7 +2556,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("LazyImportFrom");
     _Return:
+        base.LogRuleExiting("LazyImportFrom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // LazyImportFrom
@@ -2152,29 +2571,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '...'  
     TokenNode? rule_RelativeImportDots()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("RelativeImportDots");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '.'
+            base.LogAlternativeEntered("'.'");
             IGreenNode? dot;
             if ((dot = Expect(TokenType.Dot)) is not null)
             {
+                base.LogAlternativeSucceed("'.'");
                 _res = (TokenNode?)dot;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'.'");
         }
         base.Reset(_mark);
         {
             // '...'
+            base.LogAlternativeEntered("'...'");
             IGreenNode? ellipsis;
             if ((ellipsis = Expect(TokenType.Ellipsis)) is not null)
             {
+                base.LogAlternativeSucceed("'...'");
                 _res = (TokenNode?)ellipsis;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'...'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("RelativeImportDots");
     _Return:
+        base.LogRuleExiting("RelativeImportDots");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // RelativeImportDots
@@ -2186,10 +2616,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '*' -> ImportFromAllTargets()
     ImportFromTargetsNode? rule_ImportFromTargets()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ImportFromTargets");
         int _mark = base.Mark();
         ImportFromTargetsNode? _res = null;
         {
             // '(' ImportFromAsName+.',' -',' ')' -> ImportFromParenthesizedTargets(Value=import_from_as_name_Gather)
+            base.LogAlternativeEntered("'(' ImportFromAsName+.',' -',' ')'");
             IGreenNode? left_paren;
             INodeArray<GreenNode>? import_from_as_name_Gather;
             IGreenNode? comma;
@@ -2203,6 +2636,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' ImportFromAsName+.',' -',' ')'");
                 _res = new ImportFromParenthesizedTargetsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2214,6 +2648,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' ImportFromAsName+.',' -',' ')'");
             NodeArray<GreenNode>? _GatherHelper_import_from_as_name_Gather()
             {
                 GreenNode? _node = rule_ImportFromAsName();
@@ -2240,12 +2675,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // ImportFromAsName+.',' !',' -> ImportFromFlatTargets(Value=import_from_as_name_Gather)
+            base.LogAlternativeEntered("ImportFromAsName+.',' !','");
             INodeArray<GreenNode>? import_from_as_name_Gather;
             if ((import_from_as_name_Gather = _GatherHelper_import_from_as_name_Gather()) is not null
                 &&
                 _LookaheadHelper_comma()
             )
             {
+                base.LogAlternativeSucceed("ImportFromAsName+.',' !','");
                 _res = new ImportFromFlatTargetsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2254,6 +2691,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ImportFromAsName+.',' !','");
             NodeArray<GreenNode>? _GatherHelper_import_from_as_name_Gather()
             {
                 GreenNode? _node = rule_ImportFromAsName();
@@ -2287,9 +2725,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // '*' -> ImportFromAllTargets()
+            base.LogAlternativeEntered("'*'");
             IGreenNode? star;
             if ((star = Expect(TokenType.Star)) is not null)
             {
+                base.LogAlternativeSucceed("'*'");
                 _res = new ImportFromAllTargetsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2298,9 +2738,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ImportFromTargets");
     _Return:
+        base.LogRuleExiting("ImportFromTargets");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ImportFromTargets
@@ -2309,10 +2753,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ImportFromAsName: Name ['as' Name -> AsName(Value=name)] -> new(ToImport=name, Alias=as_name)
     ImportFromAsNameNode? rule_ImportFromAsName()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ImportFromAsName");
         int _mark = base.Mark();
         ImportFromAsNameNode? _res = null;
         {
             // Name ['as' Name -> AsName(Value=name)] -> new(ToImport=name, Alias=as_name)
+            base.LogAlternativeEntered("Name ['as' Name -> AsName(Value=name)]");
             IGreenNode? name;
             IGreenNode? as_name;
             if ((name = Expect(TokenType.Name)) is not null
@@ -2320,6 +2767,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((as_name = rule_AsName()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Name ['as' Name -> AsName(Value=name)]");
                 _res = new ImportFromAsNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2329,9 +2777,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name ['as' Name -> AsName(Value=name)]");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ImportFromAsName");
     _Return:
+        base.LogRuleExiting("ImportFromAsName");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ImportFromAsName
@@ -2340,10 +2792,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ['as' Name -> AsName(Value=name)]
     AsNameNode? rule_AsName()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AsName");
         int _mark = base.Mark();
         AsNameNode? _res = null;
         {
             // 'as' Name -> AsName(Value=name)
+            base.LogAlternativeEntered("'as' Name");
             IGreenNode? _string_token;
             IGreenNode? name;
             if ((_string_token = Expect("as")) is not null
@@ -2351,6 +2806,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (name = Expect(TokenType.Name)) is not null
             )
             {
+                base.LogAlternativeSucceed("'as' Name");
                 _res = new AsNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2360,9 +2816,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'as' Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AsName");
     _Return:
+        base.LogRuleExiting("AsName");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AsName
@@ -2371,10 +2831,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // DottedAsName: DottedName ['as' Name -> AsName(Value=name)] -> new(Name=dotted_name, Alias=as_name)
     DottedAsNameNode? rule_DottedAsName()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DottedAsName");
         int _mark = base.Mark();
         DottedAsNameNode? _res = null;
         {
             // DottedName ['as' Name -> AsName(Value=name)] -> new(Name=dotted_name, Alias=as_name)
+            base.LogAlternativeEntered("DottedName ['as' Name -> AsName(Value=name)]");
             IGreenNode? dotted_name;
             IGreenNode? as_name;
             if ((dotted_name = rule_DottedName()) is not null
@@ -2382,6 +2845,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((as_name = rule_AsName()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("DottedName ['as' Name -> AsName(Value=name)]");
                 _res = new DottedAsNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2391,9 +2855,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("DottedName ['as' Name -> AsName(Value=name)]");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DottedAsName");
     _Return:
+        base.LogRuleExiting("DottedAsName");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DottedAsName
@@ -2402,17 +2870,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<DottedNameNode> _memo_DottedName = CreateContainer<DottedNameNode>();
     DottedNameNode? rule_DottedName()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("DottedName");
         DottedNameNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_DottedName.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("DottedName", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("DottedName");
         while (true)
         {
-            _memo_DottedName.UpdateCache(_mark, _res);
+            _memo_DottedName.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("DottedName");
             var _rawResult = raw_rule_DottedName();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -2422,6 +2897,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("DottedName", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -2436,10 +2913,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     DottedNameNode? raw_rule_DottedName()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DottedName");
         int _mark = base.Mark();
         DottedNameNode? _res = null;
         {
             // DottedName '.' Name -> ManyDottedName(Left=dotted_name, Right=name)
+            base.LogAlternativeEntered("DottedName '.' Name");
             IGreenNode? dotted_name;
             IGreenNode? dot;
             IGreenNode? name;
@@ -2450,6 +2930,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (name = Expect(TokenType.Name)) is not null
             )
             {
+                base.LogAlternativeSucceed("DottedName '.' Name");
                 _res = new ManyDottedNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2460,13 +2941,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("DottedName '.' Name");
         }
         base.Reset(_mark);
         {
             // Name -> SingleDottedName(Value=name)
+            base.LogAlternativeEntered("Name");
             IGreenNode? name;
             if ((name = Expect(TokenType.Name)) is not null)
             {
+                base.LogAlternativeSucceed("Name");
                 _res = new SingleDottedNameNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2475,9 +2959,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DottedName");
     _Return:
+        base.LogRuleExiting("DottedName");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DottedName
@@ -2490,14 +2978,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | SimpleStatements -> OneLinedBlock(Statements=simple_statements)
     BlockNode? rule_Block()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Block");
         int _mark = base.Mark();
-        if (_memo_Block.TryGetCache(_mark, out BlockNode? _memoized))
+        if (_memo_Block.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Block", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         BlockNode? _res = null;
         {
             // NewLine Indent Statement+ Dedent -> IndentedBlock(Statements=statement_Plus)
+            base.LogAlternativeEntered("NewLine Indent Statement+ Dedent");
             IGreenNode? new_line;
             IGreenNode? indent;
             INodeArray<StatementNode>? statement_Plus;
@@ -2511,6 +3005,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (dedent = Expect(TokenType.Dedent)) is not null
             )
             {
+                base.LogAlternativeSucceed("NewLine Indent Statement+ Dedent");
                 _res = new IndentedBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2522,6 +3017,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("NewLine Indent Statement+ Dedent");
             NodeArray<StatementNode>? _RepeatHelper_statement_Plus()
             {
                 StatementNode? _node = rule_Statement();
@@ -2537,9 +3033,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // SimpleStatements -> OneLinedBlock(Statements=simple_statements)
+            base.LogAlternativeEntered("SimpleStatements");
             IGreenNode? simple_statements;
             if ((simple_statements = rule_SimpleStatements()) is not null)
             {
+                base.LogAlternativeSucceed("SimpleStatements");
                 _res = new OneLinedBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2548,10 +3046,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SimpleStatements");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Block");
     _Return:
-        _memo_Block.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Block", _mark, _res == null);
+        base.LogRuleExiting("Block");
+        base.LogDecreaseLevel();
+        _memo_Block.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Block
@@ -2560,10 +3063,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Decorator: '@' NamedExpression NewLine -> new(Value=named_expression)
     DecoratorNode? rule_Decorator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Decorator");
         int _mark = base.Mark();
         DecoratorNode? _res = null;
         {
             // '@' NamedExpression NewLine -> new(Value=named_expression)
+            base.LogAlternativeEntered("'@' NamedExpression NewLine");
             IGreenNode? at;
             IGreenNode? named_expression;
             IGreenNode? new_line;
@@ -2574,6 +3080,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (new_line = Expect(TokenType.NewLine)) is not null
             )
             {
+                base.LogAlternativeSucceed("'@' NamedExpression NewLine");
                 _res = new DecoratorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2584,9 +3091,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'@' NamedExpression NewLine");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Decorator");
     _Return:
+        base.LogRuleExiting("Decorator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Decorator
@@ -2597,10 +3108,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | ClassDefRaw -> RawClassDef(Value=class_def_raw)
     ClassDefNode? rule_ClassDef()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ClassDef");
         int _mark = base.Mark();
         ClassDefNode? _res = null;
         {
             // Decorator* ClassDefRaw -> DecoratedClassDef(Decorators=decorator_Star, ClassDef=class_def_raw)
+            base.LogAlternativeEntered("Decorator* ClassDefRaw");
             INodeArray<DecoratorNode>? decorator_Star;
             IGreenNode? class_def_raw;
             if ((decorator_Star = _RepeatHelper_decorator_Star()) is not null
@@ -2608,6 +3122,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (class_def_raw = rule_ClassDefRaw()) is not null
             )
             {
+                base.LogAlternativeSucceed("Decorator* ClassDefRaw");
                 _res = new DecoratedClassDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2617,6 +3132,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Decorator* ClassDefRaw");
             NodeArray<DecoratorNode>? _RepeatHelper_decorator_Star()
             {
                 DecoratorNode? _node = rule_Decorator();
@@ -2632,9 +3148,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // ClassDefRaw -> RawClassDef(Value=class_def_raw)
+            base.LogAlternativeEntered("ClassDefRaw");
             IGreenNode? class_def_raw;
             if ((class_def_raw = rule_ClassDefRaw()) is not null)
             {
+                base.LogAlternativeSucceed("ClassDefRaw");
                 _res = new RawClassDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2643,9 +3161,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ClassDefRaw");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ClassDef");
     _Return:
+        base.LogRuleExiting("ClassDef");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ClassDef
@@ -2658,6 +3180,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         Block=block)
     ClassDefRawNode? rule_ClassDefRaw()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ClassDefRaw");
         int _mark = base.Mark();
         ClassDefRawNode? _res = null;
         {
@@ -2666,6 +3190,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             //         TypeParameters=type_parameters, 
             //         Arguments=class_def_args, 
             //         Block=block)
+            base.LogAlternativeEntered("'class' Name -TypeParameters ['(' -Arguments ')' -> ClassDefArgs(Value=arguments)] ':' Block");
             IGreenNode? _string_token;
             IGreenNode? name;
             IGreenNode? type_parameters;
@@ -2685,6 +3210,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'class' Name -TypeParameters ['(' -Arguments ')' -> ClassDefArgs(Value=arguments)] ':' Block");
                 _res = new ClassDefRawNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2698,9 +3224,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'class' Name -TypeParameters ['(' -Arguments ')' -> ClassDefArgs(Value=arguments)] ':' Block");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ClassDefRaw");
     _Return:
+        base.LogRuleExiting("ClassDefRaw");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ClassDefRaw
@@ -2709,10 +3239,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ['(' -Arguments ')' -> ClassDefArgs(Value=arguments)]
     ClassDefArgsNode? rule_ClassDefArgs()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ClassDefArgs");
         int _mark = base.Mark();
         ClassDefArgsNode? _res = null;
         {
             // '(' -Arguments ')' -> ClassDefArgs(Value=arguments)
+            base.LogAlternativeEntered("'(' -Arguments ')'");
             IGreenNode? left_paren;
             IGreenNode? arguments;
             IGreenNode? right_paren;
@@ -2723,6 +3256,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' -Arguments ')'");
                 _res = new ClassDefArgsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2733,9 +3267,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' -Arguments ')'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ClassDefArgs");
     _Return:
+        base.LogRuleExiting("ClassDefArgs");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ClassDefArgs
@@ -2746,10 +3284,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | FunctionDefRaw -> RawFunctionDef(Value=function_def_raw)
     FunctionDefNode? rule_FunctionDef()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FunctionDef");
         int _mark = base.Mark();
         FunctionDefNode? _res = null;
         {
             // Decorator* FunctionDefRaw -> DecoratedFunctionDef(Decorators=decorator_Star, FunctionDef=function_def_raw)
+            base.LogAlternativeEntered("Decorator* FunctionDefRaw");
             INodeArray<DecoratorNode>? decorator_Star;
             IGreenNode? function_def_raw;
             if ((decorator_Star = _RepeatHelper_decorator_Star()) is not null
@@ -2757,6 +3298,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (function_def_raw = rule_FunctionDefRaw()) is not null
             )
             {
+                base.LogAlternativeSucceed("Decorator* FunctionDefRaw");
                 _res = new DecoratedFunctionDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2766,6 +3308,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Decorator* FunctionDefRaw");
             NodeArray<DecoratorNode>? _RepeatHelper_decorator_Star()
             {
                 DecoratorNode? _node = rule_Decorator();
@@ -2781,9 +3324,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // FunctionDefRaw -> RawFunctionDef(Value=function_def_raw)
+            base.LogAlternativeEntered("FunctionDefRaw");
             IGreenNode? function_def_raw;
             if ((function_def_raw = rule_FunctionDefRaw()) is not null)
             {
+                base.LogAlternativeSucceed("FunctionDefRaw");
                 _res = new RawFunctionDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2792,9 +3337,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FunctionDefRaw");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FunctionDef");
     _Return:
+        base.LogRuleExiting("FunctionDef");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FunctionDef
@@ -2813,11 +3362,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     FunctionDefRawNode? rule_FunctionDefRaw()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FunctionDefRaw");
         int _mark = base.Mark();
         FunctionDefRawNode? _res = null;
         {
             // 'def' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block -> \
             //         NormalFunctionDef(Name=name, TypeParameters=type_parameters, Parameters=parameters, ReturnHint=function_return_hint, Block=block)
+            base.LogAlternativeEntered("'def' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block");
             IGreenNode? _string_token;
             IGreenNode? name;
             IGreenNode? type_parameters;
@@ -2846,6 +3398,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'def' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block");
                 _res = new NormalFunctionDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2862,11 +3415,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'def' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block");
         }
         base.Reset(_mark);
         {
             // 'async' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block -> \
             //         AsyncFunctionDef(Name=name, TypeParameters=type_parameters, Parameters=parameters, ReturnHint=function_return_hint, Block=block)
+            base.LogAlternativeEntered("'async' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block");
             IGreenNode? _string_token;
             IGreenNode? name;
             IGreenNode? type_parameters;
@@ -2895,6 +3450,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'async' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block");
                 _res = new AsyncFunctionDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2911,9 +3467,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async' Name -TypeParameters '(' -Parameters ')' ['->' Expression -> FunctionReturnHint(Value=expression)] ':' Block");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FunctionDefRaw");
     _Return:
+        base.LogRuleExiting("FunctionDefRaw");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FunctionDefRaw
@@ -2922,10 +3482,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ['->' Expression -> FunctionReturnHint(Value=expression)]
     FunctionReturnHintNode? rule_FunctionReturnHint()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FunctionReturnHint");
         int _mark = base.Mark();
         FunctionReturnHintNode? _res = null;
         {
             // '->' Expression -> FunctionReturnHint(Value=expression)
+            base.LogAlternativeEntered("'->' Expression");
             IGreenNode? right_arrow;
             IGreenNode? expression;
             if ((right_arrow = Expect(TokenType.RightArrow)) is not null
@@ -2933,6 +3496,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'->' Expression");
                 _res = new FunctionReturnHintNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2942,9 +3506,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'->' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FunctionReturnHint");
     _Return:
+        base.LogRuleExiting("FunctionReturnHint");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FunctionReturnHint
@@ -2962,10 +3530,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     ParametersNode? rule_Parameters()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Parameters");
         int _mark = base.Mark();
         ParametersNode? _res = null;
         {
             // SlashNoDefault ParamNoDefault* ParamWithDefault* -StarEtc
+            base.LogAlternativeEntered("SlashNoDefault ParamNoDefault* ParamWithDefault* -StarEtc");
             IGreenNode? slash_no_default;
             INodeArray<ParamNoDefaultNode>? param_no_default_Star;
             INodeArray<ParamWithDefaultNode>? param_with_default_Star;
@@ -2979,6 +3550,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((star_etc = rule_StarEtc()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("SlashNoDefault ParamNoDefault* ParamWithDefault* -StarEtc");
                 _res = new ParametersNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -2990,6 +3562,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SlashNoDefault ParamNoDefault* ParamWithDefault* -StarEtc");
             NodeArray<ParamNoDefaultNode>? _RepeatHelper_param_no_default_Star()
             {
                 ParamNoDefaultNode? _node = rule_ParamNoDefault();
@@ -3016,6 +3589,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // SlashWithDefault ParamWithDefault* -StarEtc
+            base.LogAlternativeEntered("SlashWithDefault ParamWithDefault* -StarEtc");
             IGreenNode? slash_with_default;
             INodeArray<ParamWithDefaultNode>? param_with_default_Star;
             IGreenNode? star_etc;
@@ -3026,6 +3600,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((star_etc = rule_StarEtc()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("SlashWithDefault ParamWithDefault* -StarEtc");
                 _res = new ParametersNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3036,6 +3611,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SlashWithDefault ParamWithDefault* -StarEtc");
             NodeArray<ParamWithDefaultNode>? _RepeatHelper_param_with_default_Star()
             {
                 ParamWithDefaultNode? _node = rule_ParamWithDefault();
@@ -3051,6 +3627,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // ParamNoDefault+ ParamWithDefault* -StarEtc
+            base.LogAlternativeEntered("ParamNoDefault+ ParamWithDefault* -StarEtc");
             INodeArray<ParamNoDefaultNode>? param_no_default_Plus;
             INodeArray<ParamWithDefaultNode>? param_with_default_Star;
             IGreenNode? star_etc;
@@ -3061,6 +3638,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((star_etc = rule_StarEtc()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("ParamNoDefault+ ParamWithDefault* -StarEtc");
                 _res = new ParametersNode_Derived2()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3071,6 +3649,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamNoDefault+ ParamWithDefault* -StarEtc");
             NodeArray<ParamNoDefaultNode>? _RepeatHelper_param_no_default_Plus()
             {
                 ParamNoDefaultNode? _node = rule_ParamNoDefault();
@@ -3097,6 +3676,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // ParamWithDefault* -StarEtc
+            base.LogAlternativeEntered("ParamWithDefault* -StarEtc");
             INodeArray<ParamWithDefaultNode>? param_with_default_Star;
             IGreenNode? star_etc;
             if ((param_with_default_Star = _RepeatHelper_param_with_default_Star()) is not null
@@ -3104,6 +3684,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((star_etc = rule_StarEtc()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("ParamWithDefault* -StarEtc");
                 _res = new ParametersNode_Derived3()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3113,6 +3694,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamWithDefault* -StarEtc");
             NodeArray<ParamWithDefaultNode>? _RepeatHelper_param_with_default_Star()
             {
                 ParamWithDefaultNode? _node = rule_ParamWithDefault();
@@ -3128,9 +3710,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // StarEtc
+            base.LogAlternativeEntered("StarEtc");
             IGreenNode? star_etc;
             if ((star_etc = rule_StarEtc()) is not null)
             {
+                base.LogAlternativeSucceed("StarEtc");
                 _res = new ParametersNode_Derived4()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3139,9 +3723,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarEtc");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Parameters");
     _Return:
+        base.LogRuleExiting("Parameters");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Parameters
@@ -3152,10 +3740,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | ParamNoDefault+ '/' &')'
     SlashNoDefaultNode? rule_SlashNoDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SlashNoDefault");
         int _mark = base.Mark();
         SlashNoDefaultNode? _res = null;
         {
             // ParamNoDefault+ '/' ','
+            base.LogAlternativeEntered("ParamNoDefault+ '/' ','");
             INodeArray<ParamNoDefaultNode>? param_no_default_Plus;
             IGreenNode? slash;
             IGreenNode? comma;
@@ -3166,6 +3757,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (comma = Expect(TokenType.Comma)) is not null
             )
             {
+                base.LogAlternativeSucceed("ParamNoDefault+ '/' ','");
                 _res = new SlashNoDefaultNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3176,6 +3768,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamNoDefault+ '/' ','");
             NodeArray<ParamNoDefaultNode>? _RepeatHelper_param_no_default_Plus()
             {
                 ParamNoDefaultNode? _node = rule_ParamNoDefault();
@@ -3191,6 +3784,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // ParamNoDefault+ '/' &')'
+            base.LogAlternativeEntered("ParamNoDefault+ '/' &')'");
             INodeArray<ParamNoDefaultNode>? param_no_default_Plus;
             IGreenNode? slash;
             if ((param_no_default_Plus = _RepeatHelper_param_no_default_Plus()) is not null
@@ -3200,6 +3794,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_right_paren()
             )
             {
+                base.LogAlternativeSucceed("ParamNoDefault+ '/' &')'");
                 _res = new SlashNoDefaultNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3209,6 +3804,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamNoDefault+ '/' &')'");
             NodeArray<ParamNoDefaultNode>? _RepeatHelper_param_no_default_Plus()
             {
                 ParamNoDefaultNode? _node = rule_ParamNoDefault();
@@ -3229,7 +3825,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SlashNoDefault");
     _Return:
+        base.LogRuleExiting("SlashNoDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SlashNoDefault
@@ -3240,10 +3839,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | ParamNoDefault* ParamWithDefault+ '/' &')'
     SlashWithDefaultNode? rule_SlashWithDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SlashWithDefault");
         int _mark = base.Mark();
         SlashWithDefaultNode? _res = null;
         {
             // ParamNoDefault* ParamWithDefault+ '/' ','
+            base.LogAlternativeEntered("ParamNoDefault* ParamWithDefault+ '/' ','");
             INodeArray<ParamNoDefaultNode>? param_no_default_Star;
             INodeArray<ParamWithDefaultNode>? param_with_default_Plus;
             IGreenNode? slash;
@@ -3257,6 +3859,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (comma = Expect(TokenType.Comma)) is not null
             )
             {
+                base.LogAlternativeSucceed("ParamNoDefault* ParamWithDefault+ '/' ','");
                 _res = new SlashWithDefaultNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3268,6 +3871,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamNoDefault* ParamWithDefault+ '/' ','");
             NodeArray<ParamNoDefaultNode>? _RepeatHelper_param_no_default_Star()
             {
                 ParamNoDefaultNode? _node = rule_ParamNoDefault();
@@ -3294,6 +3898,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // ParamNoDefault* ParamWithDefault+ '/' &')'
+            base.LogAlternativeEntered("ParamNoDefault* ParamWithDefault+ '/' &')'");
             INodeArray<ParamNoDefaultNode>? param_no_default_Star;
             INodeArray<ParamWithDefaultNode>? param_with_default_Plus;
             IGreenNode? slash;
@@ -3306,6 +3911,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_right_paren()
             )
             {
+                base.LogAlternativeSucceed("ParamNoDefault* ParamWithDefault+ '/' &')'");
                 _res = new SlashWithDefaultNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3316,6 +3922,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamNoDefault* ParamWithDefault+ '/' &')'");
             NodeArray<ParamNoDefaultNode>? _RepeatHelper_param_no_default_Star()
             {
                 ParamNoDefaultNode? _node = rule_ParamNoDefault();
@@ -3347,7 +3954,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SlashWithDefault");
     _Return:
+        base.LogRuleExiting("SlashWithDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SlashWithDefault
@@ -3360,10 +3970,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Keywords
     StarEtcNode? rule_StarEtc()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarEtc");
         int _mark = base.Mark();
         StarEtcNode? _res = null;
         {
             // '*' ParamNoDefault ParamMaybeDefault* -Keywords
+            base.LogAlternativeEntered("'*' ParamNoDefault ParamMaybeDefault* -Keywords");
             IGreenNode? star;
             IGreenNode? param_no_default;
             INodeArray<ParamMaybeDefaultNode>? param_maybe_default_Star;
@@ -3377,6 +3990,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((keywords = rule_Keywords()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'*' ParamNoDefault ParamMaybeDefault* -Keywords");
                 _res = new StarEtcNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3388,6 +4002,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' ParamNoDefault ParamMaybeDefault* -Keywords");
             NodeArray<ParamMaybeDefaultNode>? _RepeatHelper_param_maybe_default_Star()
             {
                 ParamMaybeDefaultNode? _node = rule_ParamMaybeDefault();
@@ -3403,6 +4018,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // '*' ParamNoDefaultStarAnnotation ParamMaybeDefault* -Keywords
+            base.LogAlternativeEntered("'*' ParamNoDefaultStarAnnotation ParamMaybeDefault* -Keywords");
             IGreenNode? star;
             IGreenNode? param_no_default_star_annotation;
             INodeArray<ParamMaybeDefaultNode>? param_maybe_default_Star;
@@ -3416,6 +4032,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((keywords = rule_Keywords()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'*' ParamNoDefaultStarAnnotation ParamMaybeDefault* -Keywords");
                 _res = new StarEtcNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3427,6 +4044,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' ParamNoDefaultStarAnnotation ParamMaybeDefault* -Keywords");
             NodeArray<ParamMaybeDefaultNode>? _RepeatHelper_param_maybe_default_Star()
             {
                 ParamMaybeDefaultNode? _node = rule_ParamMaybeDefault();
@@ -3442,6 +4060,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // '*' ',' ParamMaybeDefault+ -Keywords
+            base.LogAlternativeEntered("'*' ',' ParamMaybeDefault+ -Keywords");
             IGreenNode? star;
             IGreenNode? comma;
             INodeArray<ParamMaybeDefaultNode>? param_maybe_default_Plus;
@@ -3455,6 +4074,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((keywords = rule_Keywords()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'*' ',' ParamMaybeDefault+ -Keywords");
                 _res = new StarEtcNode_Derived2()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3466,6 +4086,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' ',' ParamMaybeDefault+ -Keywords");
             NodeArray<ParamMaybeDefaultNode>? _RepeatHelper_param_maybe_default_Plus()
             {
                 ParamMaybeDefaultNode? _node = rule_ParamMaybeDefault();
@@ -3481,9 +4102,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // Keywords
+            base.LogAlternativeEntered("Keywords");
             IGreenNode? keywords;
             if ((keywords = rule_Keywords()) is not null)
             {
+                base.LogAlternativeSucceed("Keywords");
                 _res = new StarEtcNode_Derived3()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3492,9 +4115,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Keywords");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarEtc");
     _Return:
+        base.LogRuleExiting("StarEtc");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarEtc
@@ -3503,10 +4130,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Keywords: '**' ParamNoDefault -> new(Parameter=param_no_default)
     KeywordsNode? rule_Keywords()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Keywords");
         int _mark = base.Mark();
         KeywordsNode? _res = null;
         {
             // '**' ParamNoDefault -> new(Parameter=param_no_default)
+            base.LogAlternativeEntered("'**' ParamNoDefault");
             IGreenNode? double_star;
             IGreenNode? param_no_default;
             if ((double_star = Expect(TokenType.DoubleStar)) is not null
@@ -3514,6 +4144,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (param_no_default = rule_ParamNoDefault()) is not null
             )
             {
+                base.LogAlternativeSucceed("'**' ParamNoDefault");
                 _res = new KeywordsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3523,9 +4154,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'**' ParamNoDefault");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Keywords");
     _Return:
+        base.LogRuleExiting("Keywords");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Keywords
@@ -3536,10 +4171,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Param &')'
     ParamNoDefaultNode? rule_ParamNoDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ParamNoDefault");
         int _mark = base.Mark();
         ParamNoDefaultNode? _res = null;
         {
             // Param ','
+            base.LogAlternativeEntered("Param ','");
             IGreenNode? param;
             IGreenNode? comma;
             if ((param = rule_Param()) is not null
@@ -3547,6 +4185,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (comma = Expect(TokenType.Comma)) is not null
             )
             {
+                base.LogAlternativeSucceed("Param ','");
                 _res = new ParamNoDefaultNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3556,16 +4195,19 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Param ','");
         }
         base.Reset(_mark);
         {
             // Param &')'
+            base.LogAlternativeEntered("Param &')'");
             IGreenNode? param;
             if ((param = rule_Param()) is not null
                 &&
                 _LookaheadHelper_right_paren()
             )
             {
+                base.LogAlternativeSucceed("Param &')'");
                 _res = new ParamNoDefaultNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3574,6 +4216,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Param &')'");
             bool _LookaheadHelper_right_paren()
             {
                 int _mark = base.Mark();
@@ -3583,7 +4226,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ParamNoDefault");
     _Return:
+        base.LogRuleExiting("ParamNoDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ParamNoDefault
@@ -3594,10 +4240,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | ParamStarAnnotation &')'
     ParamNoDefaultStarAnnotationNode? rule_ParamNoDefaultStarAnnotation()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ParamNoDefaultStarAnnotation");
         int _mark = base.Mark();
         ParamNoDefaultStarAnnotationNode? _res = null;
         {
             // ParamStarAnnotation ','
+            base.LogAlternativeEntered("ParamStarAnnotation ','");
             IGreenNode? param_star_annotation;
             IGreenNode? comma;
             if ((param_star_annotation = rule_ParamStarAnnotation()) is not null
@@ -3605,6 +4254,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (comma = Expect(TokenType.Comma)) is not null
             )
             {
+                base.LogAlternativeSucceed("ParamStarAnnotation ','");
                 _res = new ParamNoDefaultStarAnnotationNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3614,16 +4264,19 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamStarAnnotation ','");
         }
         base.Reset(_mark);
         {
             // ParamStarAnnotation &')'
+            base.LogAlternativeEntered("ParamStarAnnotation &')'");
             IGreenNode? param_star_annotation;
             if ((param_star_annotation = rule_ParamStarAnnotation()) is not null
                 &&
                 _LookaheadHelper_right_paren()
             )
             {
+                base.LogAlternativeSucceed("ParamStarAnnotation &')'");
                 _res = new ParamNoDefaultStarAnnotationNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3632,6 +4285,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("ParamStarAnnotation &')'");
             bool _LookaheadHelper_right_paren()
             {
                 int _mark = base.Mark();
@@ -3641,7 +4295,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ParamNoDefaultStarAnnotation");
     _Return:
+        base.LogRuleExiting("ParamNoDefaultStarAnnotation");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ParamNoDefaultStarAnnotation
@@ -3652,10 +4309,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Param DefaultValue &')'
     ParamWithDefaultNode? rule_ParamWithDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ParamWithDefault");
         int _mark = base.Mark();
         ParamWithDefaultNode? _res = null;
         {
             // Param DefaultValue ','
+            base.LogAlternativeEntered("Param DefaultValue ','");
             IGreenNode? param;
             IGreenNode? default_value;
             IGreenNode? comma;
@@ -3666,6 +4326,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (comma = Expect(TokenType.Comma)) is not null
             )
             {
+                base.LogAlternativeSucceed("Param DefaultValue ','");
                 _res = new ParamWithDefaultNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3676,10 +4337,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Param DefaultValue ','");
         }
         base.Reset(_mark);
         {
             // Param DefaultValue &')'
+            base.LogAlternativeEntered("Param DefaultValue &')'");
             IGreenNode? param;
             IGreenNode? default_value;
             if ((param = rule_Param()) is not null
@@ -3689,6 +4352,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_right_paren()
             )
             {
+                base.LogAlternativeSucceed("Param DefaultValue &')'");
                 _res = new ParamWithDefaultNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3698,6 +4362,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Param DefaultValue &')'");
             bool _LookaheadHelper_right_paren()
             {
                 int _mark = base.Mark();
@@ -3707,7 +4372,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ParamWithDefault");
     _Return:
+        base.LogRuleExiting("ParamWithDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ParamWithDefault
@@ -3718,10 +4386,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Param -DefaultValue &')'
     ParamMaybeDefaultNode? rule_ParamMaybeDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ParamMaybeDefault");
         int _mark = base.Mark();
         ParamMaybeDefaultNode? _res = null;
         {
             // Param -DefaultValue ','
+            base.LogAlternativeEntered("Param -DefaultValue ','");
             IGreenNode? param;
             IGreenNode? default_value;
             IGreenNode? comma;
@@ -3732,6 +4403,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (comma = Expect(TokenType.Comma)) is not null
             )
             {
+                base.LogAlternativeSucceed("Param -DefaultValue ','");
                 _res = new ParamMaybeDefaultNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3742,10 +4414,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Param -DefaultValue ','");
         }
         base.Reset(_mark);
         {
             // Param -DefaultValue &')'
+            base.LogAlternativeEntered("Param -DefaultValue &')'");
             IGreenNode? param;
             IGreenNode? default_value;
             if ((param = rule_Param()) is not null
@@ -3755,6 +4429,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_right_paren()
             )
             {
+                base.LogAlternativeSucceed("Param -DefaultValue &')'");
                 _res = new ParamMaybeDefaultNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3764,6 +4439,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Param -DefaultValue &')'");
             bool _LookaheadHelper_right_paren()
             {
                 int _mark = base.Mark();
@@ -3773,7 +4449,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ParamMaybeDefault");
     _Return:
+        base.LogRuleExiting("ParamMaybeDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ParamMaybeDefault
@@ -3782,10 +4461,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Param: Name -Annotation -> new(Name=name, Annotation=annotation)
     ParamNode? rule_Param()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Param");
         int _mark = base.Mark();
         ParamNode? _res = null;
         {
             // Name -Annotation -> new(Name=name, Annotation=annotation)
+            base.LogAlternativeEntered("Name -Annotation");
             IGreenNode? name;
             IGreenNode? annotation;
             if ((name = Expect(TokenType.Name)) is not null
@@ -3793,6 +4475,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((annotation = rule_Annotation()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Name -Annotation");
                 _res = new ParamNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3802,9 +4485,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name -Annotation");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Param");
     _Return:
+        base.LogRuleExiting("Param");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Param
@@ -3813,10 +4500,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ParamStarAnnotation: Name StarAnnotation -> new(Name=name, Annotation=star_annotation)
     ParamStarAnnotationNode? rule_ParamStarAnnotation()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ParamStarAnnotation");
         int _mark = base.Mark();
         ParamStarAnnotationNode? _res = null;
         {
             // Name StarAnnotation -> new(Name=name, Annotation=star_annotation)
+            base.LogAlternativeEntered("Name StarAnnotation");
             IGreenNode? name;
             IGreenNode? star_annotation;
             if ((name = Expect(TokenType.Name)) is not null
@@ -3824,6 +4514,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (star_annotation = rule_StarAnnotation()) is not null
             )
             {
+                base.LogAlternativeSucceed("Name StarAnnotation");
                 _res = new ParamStarAnnotationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3833,9 +4524,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name StarAnnotation");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ParamStarAnnotation");
     _Return:
+        base.LogRuleExiting("ParamStarAnnotation");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ParamStarAnnotation
@@ -3844,10 +4539,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Annotation: ':' Expression -> new(Value=expression)
     AnnotationNode? rule_Annotation()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Annotation");
         int _mark = base.Mark();
         AnnotationNode? _res = null;
         {
             // ':' Expression -> new(Value=expression)
+            base.LogAlternativeEntered("':' Expression");
             IGreenNode? colon;
             IGreenNode? expression;
             if ((colon = Expect(TokenType.Colon)) is not null
@@ -3855,6 +4553,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("':' Expression");
                 _res = new AnnotationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3864,9 +4563,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("':' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Annotation");
     _Return:
+        base.LogRuleExiting("Annotation");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Annotation
@@ -3875,10 +4578,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StarAnnotation: ':' StarExpression -> new(Value=star_expression)
     StarAnnotationNode? rule_StarAnnotation()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarAnnotation");
         int _mark = base.Mark();
         StarAnnotationNode? _res = null;
         {
             // ':' StarExpression -> new(Value=star_expression)
+            base.LogAlternativeEntered("':' StarExpression");
             IGreenNode? colon;
             IGreenNode? star_expression;
             if ((colon = Expect(TokenType.Colon)) is not null
@@ -3886,6 +4592,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (star_expression = rule_StarExpression()) is not null
             )
             {
+                base.LogAlternativeSucceed("':' StarExpression");
                 _res = new StarAnnotationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3895,9 +4602,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("':' StarExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarAnnotation");
     _Return:
+        base.LogRuleExiting("StarAnnotation");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarAnnotation
@@ -3906,10 +4617,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // DefaultValue: '=' Expression -> new(Value=expression)
     DefaultValueNode? rule_DefaultValue()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DefaultValue");
         int _mark = base.Mark();
         DefaultValueNode? _res = null;
         {
             // '=' Expression -> new(Value=expression)
+            base.LogAlternativeEntered("'=' Expression");
             IGreenNode? equal;
             IGreenNode? expression;
             if ((equal = Expect(TokenType.Equal)) is not null
@@ -3917,6 +4631,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'=' Expression");
                 _res = new DefaultValueNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3926,9 +4641,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'=' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DefaultValue");
     _Return:
+        base.LogRuleExiting("DefaultValue");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DefaultValue
@@ -3939,10 +4658,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'if' NamedExpression ':' Block -ElseBlock -> IfMaybeElseStatement(Condition=named_expression, Block=block, Else=else_block)
     IfStatementNode? rule_IfStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("IfStatement");
         int _mark = base.Mark();
         IfStatementNode? _res = null;
         {
             // 'if' NamedExpression ':' Block ElifStatement -> IfElifStatement(Condition=named_expression, Block=block, Elif=elif_statement)
+            base.LogAlternativeEntered("'if' NamedExpression ':' Block ElifStatement");
             IGreenNode? _string_token;
             IGreenNode? named_expression;
             IGreenNode? colon;
@@ -3959,6 +4681,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (elif_statement = rule_ElifStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("'if' NamedExpression ':' Block ElifStatement");
                 _res = new IfElifStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -3971,10 +4694,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'if' NamedExpression ':' Block ElifStatement");
         }
         base.Reset(_mark);
         {
             // 'if' NamedExpression ':' Block -ElseBlock -> IfMaybeElseStatement(Condition=named_expression, Block=block, Else=else_block)
+            base.LogAlternativeEntered("'if' NamedExpression ':' Block -ElseBlock");
             IGreenNode? _string_token;
             IGreenNode? named_expression;
             IGreenNode? colon;
@@ -3991,6 +4716,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((else_block = rule_ElseBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'if' NamedExpression ':' Block -ElseBlock");
                 _res = new IfMaybeElseStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4003,9 +4729,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'if' NamedExpression ':' Block -ElseBlock");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("IfStatement");
     _Return:
+        base.LogRuleExiting("IfStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // IfStatement
@@ -4016,10 +4746,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'elif' NamedExpression ':' Block -ElseBlock -> ElifMaybeElseStatement(Condition=named_expression, Block=block, Else=else_block)
     ElifStatementNode? rule_ElifStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ElifStatement");
         int _mark = base.Mark();
         ElifStatementNode? _res = null;
         {
             // 'elif' NamedExpression ':' Block ElifStatement -> ElifElifStatement(Condition=named_expression, Block=block, Elif=elif_statement)
+            base.LogAlternativeEntered("'elif' NamedExpression ':' Block ElifStatement");
             IGreenNode? _string_token;
             IGreenNode? named_expression;
             IGreenNode? colon;
@@ -4036,6 +4769,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (elif_statement = rule_ElifStatement()) is not null
             )
             {
+                base.LogAlternativeSucceed("'elif' NamedExpression ':' Block ElifStatement");
                 _res = new ElifElifStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4048,10 +4782,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'elif' NamedExpression ':' Block ElifStatement");
         }
         base.Reset(_mark);
         {
             // 'elif' NamedExpression ':' Block -ElseBlock -> ElifMaybeElseStatement(Condition=named_expression, Block=block, Else=else_block)
+            base.LogAlternativeEntered("'elif' NamedExpression ':' Block -ElseBlock");
             IGreenNode? _string_token;
             IGreenNode? named_expression;
             IGreenNode? colon;
@@ -4068,6 +4804,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((else_block = rule_ElseBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'elif' NamedExpression ':' Block -ElseBlock");
                 _res = new ElifMaybeElseStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4080,9 +4817,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'elif' NamedExpression ':' Block -ElseBlock");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ElifStatement");
     _Return:
+        base.LogRuleExiting("ElifStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ElifStatement
@@ -4091,10 +4832,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ElseBlock: 'else' ':' Block -> new(Block=block)
     ElseBlockNode? rule_ElseBlock()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ElseBlock");
         int _mark = base.Mark();
         ElseBlockNode? _res = null;
         {
             // 'else' ':' Block -> new(Block=block)
+            base.LogAlternativeEntered("'else' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? colon;
             IGreenNode? block;
@@ -4105,6 +4849,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'else' ':' Block");
                 _res = new ElseBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4115,9 +4860,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'else' ':' Block");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ElseBlock");
     _Return:
+        base.LogRuleExiting("ElseBlock");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ElseBlock
@@ -4126,10 +4875,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // WhileStatement: 'while' NamedExpression ':' Block -ElseBlock -> new(Condition=named_expression, Block=block, Else=else_block)
     WhileStatementNode? rule_WhileStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("WhileStatement");
         int _mark = base.Mark();
         WhileStatementNode? _res = null;
         {
             // 'while' NamedExpression ':' Block -ElseBlock -> new(Condition=named_expression, Block=block, Else=else_block)
+            base.LogAlternativeEntered("'while' NamedExpression ':' Block -ElseBlock");
             IGreenNode? _string_token;
             IGreenNode? named_expression;
             IGreenNode? colon;
@@ -4146,6 +4898,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((else_block = rule_ElseBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'while' NamedExpression ':' Block -ElseBlock");
                 _res = new WhileStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4158,9 +4911,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'while' NamedExpression ':' Block -ElseBlock");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("WhileStatement");
     _Return:
+        base.LogRuleExiting("WhileStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // WhileStatement
@@ -4177,12 +4934,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     ForStatementNode? rule_ForStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ForStatement");
         int _mark = base.Mark();
         ForStatementNode? _res = null;
         bool _cut = false;
         {
             // 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock -> NormalForStatement(
             //         Targets=star_targets, Expression=star_expressions, Block=block, Else=else_block)
+            base.LogAlternativeEntered("'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock");
             IGreenNode? _string_token;
             IGreenNode? star_targets;
             IGreenNode? _string_token1;
@@ -4207,6 +4967,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((else_block = rule_ElseBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock");
                 _res = new NormalForStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4221,6 +4982,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock");
         }
         base.Reset(_mark);
         if (_cut)
@@ -4231,6 +4993,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // 'async' 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock -> AsyncForStatement(
             //         Targets=star_targets, Expression=star_expressions, Block=block, Else=else_block)
+            base.LogAlternativeEntered("'async' 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             IGreenNode? star_targets;
@@ -4258,6 +5021,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((else_block = rule_ElseBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'async' 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock");
                 _res = new AsyncForStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4273,6 +5037,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async' 'for' StarTargets 'in' ~ StarExpressions ':' Block -ElseBlock");
         }
         base.Reset(_mark);
         if (_cut)
@@ -4280,7 +5045,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = null;
             goto _Return;
         }
+        base.LogRuleFailed("ForStatement");
     _Return:
+        base.LogRuleExiting("ForStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ForStatement
@@ -4293,10 +5061,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'async' 'with' WithItem+.',' ':' Block -> OneLinedAsyncWithStatement(Items=with_item_Gather, Block=block)
     WithStatementNode? rule_WithStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("WithStatement");
         int _mark = base.Mark();
         WithStatementNode? _res = null;
         {
             // 'with' '(' WithItem+.',' -',' ')' ':' Block -> ParenthesizedWithStatement(Items=with_item_Gather, Block=block)
+            base.LogAlternativeEntered("'with' '(' WithItem+.',' -',' ')' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? left_paren;
             INodeArray<GreenNode>? with_item_Gather;
@@ -4319,6 +5090,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'with' '(' WithItem+.',' -',' ')' ':' Block");
                 _res = new ParenthesizedWithStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4333,6 +5105,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'with' '(' WithItem+.',' -',' ')' ':' Block");
             NodeArray<GreenNode>? _GatherHelper_with_item_Gather()
             {
                 GreenNode? _node = rule_WithItem();
@@ -4359,6 +5132,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // 'with' WithItem+.',' ':' Block -> OneLinedWithStatement(Items=with_item_Gather, Block=block)
+            base.LogAlternativeEntered("'with' WithItem+.',' ':' Block");
             IGreenNode? _string_token;
             INodeArray<GreenNode>? with_item_Gather;
             IGreenNode? colon;
@@ -4372,6 +5146,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'with' WithItem+.',' ':' Block");
                 _res = new OneLinedWithStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4383,6 +5158,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'with' WithItem+.',' ':' Block");
             NodeArray<GreenNode>? _GatherHelper_with_item_Gather()
             {
                 GreenNode? _node = rule_WithItem();
@@ -4409,6 +5185,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // 'async' 'with' '(' WithItem+.',' -',' ')' ':' Block -> ParenthesizedAsyncWithStatement(Items=with_item_Gather, Block=block)
+            base.LogAlternativeEntered("'async' 'with' '(' WithItem+.',' -',' ')' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             IGreenNode? left_paren;
@@ -4434,6 +5211,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'async' 'with' '(' WithItem+.',' -',' ')' ':' Block");
                 _res = new ParenthesizedAsyncWithStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4449,6 +5227,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async' 'with' '(' WithItem+.',' -',' ')' ':' Block");
             NodeArray<GreenNode>? _GatherHelper_with_item_Gather()
             {
                 GreenNode? _node = rule_WithItem();
@@ -4475,6 +5254,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // 'async' 'with' WithItem+.',' ':' Block -> OneLinedAsyncWithStatement(Items=with_item_Gather, Block=block)
+            base.LogAlternativeEntered("'async' 'with' WithItem+.',' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             INodeArray<GreenNode>? with_item_Gather;
@@ -4491,6 +5271,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'async' 'with' WithItem+.',' ':' Block");
                 _res = new OneLinedAsyncWithStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4503,6 +5284,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async' 'with' WithItem+.',' ':' Block");
             NodeArray<GreenNode>? _GatherHelper_with_item_Gather()
             {
                 GreenNode? _node = rule_WithItem();
@@ -4527,7 +5309,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("WithStatement");
     _Return:
+        base.LogRuleExiting("WithStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // WithStatement
@@ -4541,10 +5326,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     WithItemNode? rule_WithItem()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("WithItem");
         int _mark = base.Mark();
         WithItemNode? _res = null;
         {
             // Expression 'as' StarTarget &(@inline ',' | ')' | ':') -> NamedWithItem(Expression=expression, Target=star_target)
+            base.LogAlternativeEntered("Expression 'as' StarTarget &(@inline ',' | ')' | ':')");
             IGreenNode? expression;
             IGreenNode? _string_token;
             IGreenNode? star_target;
@@ -4557,6 +5345,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper__token_inline_group5()
             )
             {
+                base.LogAlternativeSucceed("Expression 'as' StarTarget &(@inline ',' | ')' | ':')");
                 _res = new NamedWithItemNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4567,6 +5356,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Expression 'as' StarTarget &(@inline ',' | ')' | ':')");
             bool _LookaheadHelper__token_inline_group5()
             {
                 int _mark = base.Mark();
@@ -4578,9 +5368,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // Expression -> PlainWithItem(Expression=expression)
+            base.LogAlternativeEntered("Expression");
             IGreenNode? expression;
             if ((expression = rule_Expression()) is not null)
             {
+                base.LogAlternativeSucceed("Expression");
                 _res = new PlainWithItemNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4589,9 +5381,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("WithItem");
     _Return:
+        base.LogRuleExiting("WithItem");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // WithItem
@@ -4600,39 +5396,53 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline ',' | ')' | ':')
     TokenNode? rule__TokenInlineGroup5()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup5");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // ','
+            base.LogAlternativeEntered("','");
             IGreenNode? comma;
             if ((comma = Expect(TokenType.Comma)) is not null)
             {
+                base.LogAlternativeSucceed("','");
                 _res = (TokenNode?)comma;
                 goto _Return;
             }
+            base.LogAlternativeFailed("','");
         }
         base.Reset(_mark);
         {
             // ')'
+            base.LogAlternativeEntered("')'");
             IGreenNode? right_paren;
             if ((right_paren = Expect(TokenType.RightParen)) is not null)
             {
+                base.LogAlternativeSucceed("')'");
                 _res = (TokenNode?)right_paren;
                 goto _Return;
             }
+            base.LogAlternativeFailed("')'");
         }
         base.Reset(_mark);
         {
             // ':'
+            base.LogAlternativeEntered("':'");
             IGreenNode? colon;
             if ((colon = Expect(TokenType.Colon)) is not null)
             {
+                base.LogAlternativeSucceed("':'");
                 _res = (TokenNode?)colon;
                 goto _Return;
             }
+            base.LogAlternativeFailed("':'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup5");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup5");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup5
@@ -4648,10 +5458,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         Try=block, Excepts=except_star_block_Plus, Else=else_block, Finally=finally_block)
     TryStatementNode? rule_TryStatement()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TryStatement");
         int _mark = base.Mark();
         TryStatementNode? _res = null;
         {
             // 'try' ':' Block FinallyBlock -> TryFinallyStatement(Try=block, Finally=finally_block)
+            base.LogAlternativeEntered("'try' ':' Block FinallyBlock");
             IGreenNode? _string_token;
             IGreenNode? colon;
             IGreenNode? block;
@@ -4665,6 +5478,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (finally_block = rule_FinallyBlock()) is not null
             )
             {
+                base.LogAlternativeSucceed("'try' ':' Block FinallyBlock");
                 _res = new TryFinallyStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4676,11 +5490,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'try' ':' Block FinallyBlock");
         }
         base.Reset(_mark);
         {
             // 'try' ':' Block ExceptBlock+ -ElseBlock -FinallyBlock -> TryExceptStatement(
             //         Try=block, Excepts=except_block_Plus, Else=else_block, Finally=finally_block)
+            base.LogAlternativeEntered("'try' ':' Block ExceptBlock+ -ElseBlock -FinallyBlock");
             IGreenNode? _string_token;
             IGreenNode? colon;
             IGreenNode? block;
@@ -4700,6 +5516,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((finally_block = rule_FinallyBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'try' ':' Block ExceptBlock+ -ElseBlock -FinallyBlock");
                 _res = new TryExceptStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4713,6 +5530,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'try' ':' Block ExceptBlock+ -ElseBlock -FinallyBlock");
             NodeArray<ExceptBlockNode>? _RepeatHelper_except_block_Plus()
             {
                 ExceptBlockNode? _node = rule_ExceptBlock();
@@ -4729,6 +5547,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // 'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock -> TryExceptStarStatement(
             //         Try=block, Excepts=except_star_block_Plus, Else=else_block, Finally=finally_block)
+            base.LogAlternativeEntered("'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock");
             IGreenNode? _string_token;
             IGreenNode? colon;
             IGreenNode? block;
@@ -4748,6 +5567,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((finally_block = rule_FinallyBlock()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock");
                 _res = new TryExceptStarStatementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4761,6 +5581,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'try' ':' Block ExceptStarBlock+ -ElseBlock -FinallyBlock");
             NodeArray<ExceptStarBlockNode>? _RepeatHelper_except_star_block_Plus()
             {
                 ExceptStarBlockNode? _node = rule_ExceptStarBlock();
@@ -4774,7 +5595,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TryStatement");
     _Return:
+        base.LogRuleExiting("TryStatement");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TryStatement
@@ -4787,10 +5611,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'except' ':' Block -> EmptyExceptBlock(Block=block)
     ExceptBlockNode? rule_ExceptBlock()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ExceptBlock");
         int _mark = base.Mark();
         ExceptBlockNode? _res = null;
         {
             // 'except' Expression ':' Block -> PlainExceptBlock(Exception=expression, Block=block)
+            base.LogAlternativeEntered("'except' Expression ':' Block");
             IGreenNode? _string_token;
             IGreenNode? expression;
             IGreenNode? colon;
@@ -4804,6 +5631,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' Expression ':' Block");
                 _res = new PlainExceptBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4815,10 +5643,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' Expression ':' Block");
         }
         base.Reset(_mark);
         {
             // 'except' Expression 'as' Name ':' Block -> AliasExceptBlock(Exception=expression, Alias=name, Block=block)
+            base.LogAlternativeEntered("'except' Expression 'as' Name ':' Block");
             IGreenNode? _string_token;
             IGreenNode? expression;
             IGreenNode? _string_token1;
@@ -4838,6 +5668,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' Expression 'as' Name ':' Block");
                 _res = new AliasExceptBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4851,10 +5682,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' Expression 'as' Name ':' Block");
         }
         base.Reset(_mark);
         {
             // 'except' Expression+.',' -',' ':' Block -> MultipleExceptBlock(Exceptions=expression_Gather, Block=block)
+            base.LogAlternativeEntered("'except' Expression+.',' -',' ':' Block");
             IGreenNode? _string_token;
             INodeArray<GreenNode>? expression_Gather;
             IGreenNode? comma;
@@ -4871,6 +5704,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' Expression+.',' -',' ':' Block");
                 _res = new MultipleExceptBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4883,6 +5717,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' Expression+.',' -',' ':' Block");
             NodeArray<GreenNode>? _GatherHelper_expression_Gather()
             {
                 IGreenNode? _node = rule_Expression();
@@ -4909,6 +5744,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // 'except' ':' Block -> EmptyExceptBlock(Block=block)
+            base.LogAlternativeEntered("'except' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? colon;
             IGreenNode? block;
@@ -4919,6 +5755,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' ':' Block");
                 _res = new EmptyExceptBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4929,9 +5766,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' ':' Block");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ExceptBlock");
     _Return:
+        base.LogRuleExiting("ExceptBlock");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ExceptBlock
@@ -4943,10 +5784,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'except' '*' Expression+.',' -',' ':' Block -> MultipleExceptStarBlock(Exceptions=expression_Gather, Block=block)
     ExceptStarBlockNode? rule_ExceptStarBlock()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ExceptStarBlock");
         int _mark = base.Mark();
         ExceptStarBlockNode? _res = null;
         {
             // 'except' '*' Expression ':' Block -> PlainExceptStarBlock(Exception=expression, Block=block)
+            base.LogAlternativeEntered("'except' '*' Expression ':' Block");
             IGreenNode? _string_token;
             IGreenNode? star;
             IGreenNode? expression;
@@ -4963,6 +5807,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' '*' Expression ':' Block");
                 _res = new PlainExceptStarBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -4975,10 +5820,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' '*' Expression ':' Block");
         }
         base.Reset(_mark);
         {
             // 'except' '*' Expression 'as' Name ':' Block -> AliasExceptStarBlock(Exception=expression, Alias=name, Block=block)
+            base.LogAlternativeEntered("'except' '*' Expression 'as' Name ':' Block");
             IGreenNode? _string_token;
             IGreenNode? star;
             IGreenNode? expression;
@@ -5001,6 +5848,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' '*' Expression 'as' Name ':' Block");
                 _res = new AliasExceptStarBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5015,10 +5863,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' '*' Expression 'as' Name ':' Block");
         }
         base.Reset(_mark);
         {
             // 'except' '*' Expression+.',' -',' ':' Block -> MultipleExceptStarBlock(Exceptions=expression_Gather, Block=block)
+            base.LogAlternativeEntered("'except' '*' Expression+.',' -',' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? star;
             INodeArray<GreenNode>? expression_Gather;
@@ -5038,6 +5888,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'except' '*' Expression+.',' -',' ':' Block");
                 _res = new MultipleExceptStarBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5051,6 +5902,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'except' '*' Expression+.',' -',' ':' Block");
             NodeArray<GreenNode>? _GatherHelper_expression_Gather()
             {
                 IGreenNode? _node = rule_Expression();
@@ -5075,7 +5927,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ExceptStarBlock");
     _Return:
+        base.LogRuleExiting("ExceptStarBlock");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ExceptStarBlock
@@ -5084,10 +5939,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // FinallyBlock: 'finally' ':' Block -> new(Value=block)
     FinallyBlockNode? rule_FinallyBlock()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FinallyBlock");
         int _mark = base.Mark();
         FinallyBlockNode? _res = null;
         {
             // 'finally' ':' Block -> new(Value=block)
+            base.LogAlternativeEntered("'finally' ':' Block");
             IGreenNode? _string_token;
             IGreenNode? colon;
             IGreenNode? block;
@@ -5098,6 +5956,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (block = rule_Block()) is not null
             )
             {
+                base.LogAlternativeSucceed("'finally' ':' Block");
                 _res = new FinallyBlockNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5108,9 +5967,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'finally' ':' Block");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FinallyBlock");
     _Return:
+        base.LogRuleExiting("FinallyBlock");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FinallyBlock
@@ -5119,10 +5982,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TypeAlias: 'type' Name -TypeParameters '=' Expression -> new(Name=name, TypeParameters=type_parameters, Value=expression)
     TypeAliasNode? rule_TypeAlias()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TypeAlias");
         int _mark = base.Mark();
         TypeAliasNode? _res = null;
         {
             // 'type' Name -TypeParameters '=' Expression -> new(Name=name, TypeParameters=type_parameters, Value=expression)
+            base.LogAlternativeEntered("'type' Name -TypeParameters '=' Expression");
             IGreenNode? _string_token;
             IGreenNode? name;
             IGreenNode? type_parameters;
@@ -5139,6 +6005,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'type' Name -TypeParameters '=' Expression");
                 _res = new TypeAliasNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5151,9 +6018,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'type' Name -TypeParameters '=' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TypeAlias");
     _Return:
+        base.LogRuleExiting("TypeAlias");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TypeAlias
@@ -5162,10 +6033,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TypeParameters: '[' TypeParameter+.',' -',' ']' -> new(Values=type_parameter_Gather)
     TypeParametersNode? rule_TypeParameters()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TypeParameters");
         int _mark = base.Mark();
         TypeParametersNode? _res = null;
         {
             // '[' TypeParameter+.',' -',' ']' -> new(Values=type_parameter_Gather)
+            base.LogAlternativeEntered("'[' TypeParameter+.',' -',' ']'");
             IGreenNode? left_square_bracket;
             INodeArray<GreenNode>? type_parameter_Gather;
             IGreenNode? comma;
@@ -5179,6 +6053,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
+                base.LogAlternativeSucceed("'[' TypeParameter+.',' -',' ']'");
                 _res = new TypeParametersNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5190,6 +6065,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'[' TypeParameter+.',' -',' ']'");
             NodeArray<GreenNode>? _GatherHelper_type_parameter_Gather()
             {
                 GreenNode? _node = rule_TypeParameter();
@@ -5214,7 +6090,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TypeParameters");
     _Return:
+        base.LogRuleExiting("TypeParameters");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TypeParameters
@@ -5228,14 +6107,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Name '**' -TypeParameterDefault
     TypeParameterNode? rule_TypeParameter()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TypeParameter");
         int _mark = base.Mark();
-        if (_memo_TypeParameter.TryGetCache(_mark, out TypeParameterNode? _memoized))
+        if (_memo_TypeParameter.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("TypeParameter", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         TypeParameterNode? _res = null;
         {
             // Name -TypeParameterBound -TypeParameterDefault
+            base.LogAlternativeEntered("Name -TypeParameterBound -TypeParameterDefault");
             IGreenNode? name;
             IGreenNode? type_parameter_bound;
             IGreenNode? type_parameter_default;
@@ -5246,6 +6131,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((type_parameter_default = rule_TypeParameterDefault()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Name -TypeParameterBound -TypeParameterDefault");
                 _res = new TypeParameterNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5256,10 +6142,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name -TypeParameterBound -TypeParameterDefault");
         }
         base.Reset(_mark);
         {
             // Name '*' -TypeParameterStarredDefault
+            base.LogAlternativeEntered("Name '*' -TypeParameterStarredDefault");
             IGreenNode? name;
             IGreenNode? star;
             IGreenNode? type_parameter_starred_default;
@@ -5270,6 +6158,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((type_parameter_starred_default = rule_TypeParameterStarredDefault()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Name '*' -TypeParameterStarredDefault");
                 _res = new TypeParameterNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5280,10 +6169,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name '*' -TypeParameterStarredDefault");
         }
         base.Reset(_mark);
         {
             // Name '**' -TypeParameterDefault
+            base.LogAlternativeEntered("Name '**' -TypeParameterDefault");
             IGreenNode? name;
             IGreenNode? double_star;
             IGreenNode? type_parameter_default;
@@ -5294,6 +6185,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((type_parameter_default = rule_TypeParameterDefault()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Name '**' -TypeParameterDefault");
                 _res = new TypeParameterNode_Derived2()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5304,10 +6196,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name '**' -TypeParameterDefault");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TypeParameter");
     _Return:
-        _memo_TypeParameter.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("TypeParameter", _mark, _res == null);
+        base.LogRuleExiting("TypeParameter");
+        base.LogDecreaseLevel();
+        _memo_TypeParameter.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // TypeParameter
@@ -5316,10 +6213,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TypeParameterBound: ':' Expression -> new(Value=expression)
     TypeParameterBoundNode? rule_TypeParameterBound()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TypeParameterBound");
         int _mark = base.Mark();
         TypeParameterBoundNode? _res = null;
         {
             // ':' Expression -> new(Value=expression)
+            base.LogAlternativeEntered("':' Expression");
             IGreenNode? colon;
             IGreenNode? expression;
             if ((colon = Expect(TokenType.Colon)) is not null
@@ -5327,6 +6227,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("':' Expression");
                 _res = new TypeParameterBoundNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5336,9 +6237,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("':' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TypeParameterBound");
     _Return:
+        base.LogRuleExiting("TypeParameterBound");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TypeParameterBound
@@ -5347,10 +6252,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TypeParameterDefault: '=' Expression -> new(Value=expression)
     TypeParameterDefaultNode? rule_TypeParameterDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TypeParameterDefault");
         int _mark = base.Mark();
         TypeParameterDefaultNode? _res = null;
         {
             // '=' Expression -> new(Value=expression)
+            base.LogAlternativeEntered("'=' Expression");
             IGreenNode? equal;
             IGreenNode? expression;
             if ((equal = Expect(TokenType.Equal)) is not null
@@ -5358,6 +6266,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'=' Expression");
                 _res = new TypeParameterDefaultNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5367,9 +6276,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'=' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TypeParameterDefault");
     _Return:
+        base.LogRuleExiting("TypeParameterDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TypeParameterDefault
@@ -5378,10 +6291,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TypeParameterStarredDefault: '=' StarExpression -> new(Value=star_expression)
     TypeParameterStarredDefaultNode? rule_TypeParameterStarredDefault()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TypeParameterStarredDefault");
         int _mark = base.Mark();
         TypeParameterStarredDefaultNode? _res = null;
         {
             // '=' StarExpression -> new(Value=star_expression)
+            base.LogAlternativeEntered("'=' StarExpression");
             IGreenNode? equal;
             IGreenNode? star_expression;
             if ((equal = Expect(TokenType.Equal)) is not null
@@ -5389,6 +6305,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (star_expression = rule_StarExpression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'=' StarExpression");
                 _res = new TypeParameterStarredDefaultNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5398,9 +6315,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'=' StarExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TypeParameterStarredDefault");
     _Return:
+        base.LogRuleExiting("TypeParameterStarredDefault");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TypeParameterStarredDefault
@@ -5415,34 +6336,49 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     ExpressionNode? rule_Expression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Expression");
         int _mark = base.Mark();
-        if (_memo_Expression.TryGetCache(_mark, out ExpressionNode? _memoized))
+        if (_memo_Expression.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Expression", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         ExpressionNode? _res = null;
         {
             // IfExpression
+            base.LogAlternativeEntered("IfExpression");
             IGreenNode? if_expression;
             if ((if_expression = rule_IfExpression()) is not null)
             {
+                base.LogAlternativeSucceed("IfExpression");
                 _res = (IfExpressionNode?)if_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("IfExpression");
         }
         base.Reset(_mark);
         {
             // Disjunction
+            base.LogAlternativeEntered("Disjunction");
             IGreenNode? disjunction;
             if ((disjunction = rule_Disjunction()) is not null)
             {
+                base.LogAlternativeSucceed("Disjunction");
                 _res = (DisjunctionNode?)disjunction;
                 goto _Return;
             }
+            base.LogAlternativeFailed("Disjunction");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Expression");
     _Return:
-        _memo_Expression.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Expression", _mark, _res == null);
+        base.LogRuleExiting("Expression");
+        base.LogDecreaseLevel();
+        _memo_Expression.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Expression
@@ -5451,10 +6387,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // IfExpression: Disjunction 'if' Disjunction 'else' Expression
     IfExpressionNode? rule_IfExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("IfExpression");
         int _mark = base.Mark();
         IfExpressionNode? _res = null;
         {
             // Disjunction 'if' Disjunction 'else' Expression
+            base.LogAlternativeEntered("Disjunction 'if' Disjunction 'else' Expression");
             IGreenNode? disjunction;
             IGreenNode? _string_token;
             IGreenNode? disjunction1;
@@ -5471,6 +6410,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("Disjunction 'if' Disjunction 'else' Expression");
                 _res = new IfExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5483,9 +6423,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Disjunction 'if' Disjunction 'else' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("IfExpression");
     _Return:
+        base.LogRuleExiting("IfExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // IfExpression
@@ -5496,10 +6440,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | 'yield' -StarExpressions -> YieldStarExpression(Expression=star_expressions)
     YieldExpressionNode? rule_YieldExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("YieldExpression");
         int _mark = base.Mark();
         YieldExpressionNode? _res = null;
         {
             // 'yield' 'from' Expression -> YieldFromExpression(Expression=expression)
+            base.LogAlternativeEntered("'yield' 'from' Expression");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             IGreenNode? expression;
@@ -5510,6 +6457,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'yield' 'from' Expression");
                 _res = new YieldFromExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5520,10 +6468,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'yield' 'from' Expression");
         }
         base.Reset(_mark);
         {
             // 'yield' -StarExpressions -> YieldStarExpression(Expression=star_expressions)
+            base.LogAlternativeEntered("'yield' -StarExpressions");
             IGreenNode? _string_token;
             IGreenNode? star_expressions;
             if ((_string_token = Expect("yield")) is not null
@@ -5531,6 +6481,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((star_expressions = rule_StarExpressions()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("'yield' -StarExpressions");
                 _res = new YieldStarExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5540,9 +6491,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'yield' -StarExpressions");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("YieldExpression");
     _Return:
+        base.LogRuleExiting("YieldExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // YieldExpression
@@ -5551,10 +6506,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StarExpressions: StarExpression+.',' -',' -> new(Values=star_expression_Gather)
     StarExpressionsNode? rule_StarExpressions()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarExpressions");
         int _mark = base.Mark();
         StarExpressionsNode? _res = null;
         {
             // StarExpression+.',' -',' -> new(Values=star_expression_Gather)
+            base.LogAlternativeEntered("StarExpression+.',' -','");
             INodeArray<GreenNode>? star_expression_Gather;
             IGreenNode? comma;
             if ((star_expression_Gather = _GatherHelper_star_expression_Gather()) is not null
@@ -5562,6 +6520,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("StarExpression+.',' -','");
                 _res = new StarExpressionsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5571,6 +6530,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarExpression+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_star_expression_Gather()
             {
                 GreenNode? _node = rule_StarExpression();
@@ -5595,7 +6555,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarExpressions");
     _Return:
+        base.LogRuleExiting("StarExpressions");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarExpressions
@@ -5608,14 +6571,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Expression -> WithoutStarExpression(Value=expression)
     StarExpressionNode? rule_StarExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarExpression");
         int _mark = base.Mark();
-        if (_memo_StarExpression.TryGetCache(_mark, out StarExpressionNode? _memoized))
+        if (_memo_StarExpression.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("StarExpression", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         StarExpressionNode? _res = null;
         {
             // '*' BitwiseOr -> NormalStarExpression(Value=bitwise_or)
+            base.LogAlternativeEntered("'*' BitwiseOr");
             IGreenNode? star;
             IGreenNode? bitwise_or;
             if ((star = Expect(TokenType.Star)) is not null
@@ -5623,6 +6592,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'*' BitwiseOr");
                 _res = new NormalStarExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5632,13 +6602,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // Expression -> WithoutStarExpression(Value=expression)
+            base.LogAlternativeEntered("Expression");
             IGreenNode? expression;
             if ((expression = rule_Expression()) is not null)
             {
+                base.LogAlternativeSucceed("Expression");
                 _res = new WithoutStarExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5647,10 +6620,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarExpression");
     _Return:
-        _memo_StarExpression.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("StarExpression", _mark, _res == null);
+        base.LogRuleExiting("StarExpression");
+        base.LogDecreaseLevel();
+        _memo_StarExpression.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // StarExpression
@@ -5661,10 +6639,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | NamedExpression -> WithoutStarNamedExpression(Value=named_expression)
     StarNamedExpressionNode? rule_StarNamedExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarNamedExpression");
         int _mark = base.Mark();
         StarNamedExpressionNode? _res = null;
         {
             // '*' BitwiseOr -> NormalStarNamedExpression(Value=bitwise_or)
+            base.LogAlternativeEntered("'*' BitwiseOr");
             IGreenNode? star;
             IGreenNode? bitwise_or;
             if ((star = Expect(TokenType.Star)) is not null
@@ -5672,6 +6653,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'*' BitwiseOr");
                 _res = new NormalStarNamedExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5681,13 +6663,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // NamedExpression -> WithoutStarNamedExpression(Value=named_expression)
+            base.LogAlternativeEntered("NamedExpression");
             IGreenNode? named_expression;
             if ((named_expression = rule_NamedExpression()) is not null)
             {
+                base.LogAlternativeSucceed("NamedExpression");
                 _res = new WithoutStarNamedExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5696,9 +6681,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("NamedExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarNamedExpression");
     _Return:
+        base.LogRuleExiting("StarNamedExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarNamedExpression
@@ -5707,10 +6696,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StarNamedExpressions: StarNamedExpression+.',' -',' -> new(Items=star_named_expression_Gather)
     StarNamedExpressionsNode? rule_StarNamedExpressions()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarNamedExpressions");
         int _mark = base.Mark();
         StarNamedExpressionsNode? _res = null;
         {
             // StarNamedExpression+.',' -',' -> new(Items=star_named_expression_Gather)
+            base.LogAlternativeEntered("StarNamedExpression+.',' -','");
             INodeArray<GreenNode>? star_named_expression_Gather;
             IGreenNode? comma;
             if ((star_named_expression_Gather = _GatherHelper_star_named_expression_Gather()) is not null
@@ -5718,6 +6710,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("StarNamedExpression+.',' -','");
                 _res = new StarNamedExpressionsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5727,6 +6720,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarNamedExpression+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_star_named_expression_Gather()
             {
                 GreenNode? _node = rule_StarNamedExpression();
@@ -5751,7 +6745,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarNamedExpressions");
     _Return:
+        base.LogRuleExiting("StarNamedExpressions");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarNamedExpressions
@@ -5760,11 +6757,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // AssignmentExpression: Name ':=' ~ Expression -> new(Target=name, Value=expression)
     AssignmentExpressionNode? rule_AssignmentExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AssignmentExpression");
         int _mark = base.Mark();
         AssignmentExpressionNode? _res = null;
         bool _cut = false;
         {
             // Name ':=' ~ Expression -> new(Target=name, Value=expression)
+            base.LogAlternativeEntered("Name ':=' ~ Expression");
             IGreenNode? name;
             IGreenNode? colon_equal;
             IGreenNode? expression;
@@ -5777,6 +6777,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("Name ':=' ~ Expression");
                 _res = new AssignmentExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5787,6 +6788,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name ':=' ~ Expression");
         }
         base.Reset(_mark);
         if (_cut)
@@ -5794,7 +6796,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = null;
             goto _Return;
         }
+        base.LogRuleFailed("AssignmentExpression");
     _Return:
+        base.LogRuleExiting("AssignmentExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AssignmentExpression
@@ -5806,29 +6811,37 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Expression !':='
     NamedExpressionNode? rule_NamedExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("NamedExpression");
         int _mark = base.Mark();
         NamedExpressionNode? _res = null;
         {
             // AssignmentExpression
+            base.LogAlternativeEntered("AssignmentExpression");
             IGreenNode? assignment_expression;
             if ((assignment_expression = rule_AssignmentExpression()) is not null)
             {
+                base.LogAlternativeSucceed("AssignmentExpression");
                 _res = (AssignmentExpressionNode?)assignment_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("AssignmentExpression");
         }
         base.Reset(_mark);
         {
             // Expression !':='
+            base.LogAlternativeEntered("Expression !':='");
             IGreenNode? expression;
             if ((expression = rule_Expression()) is not null
                 &&
                 _LookaheadHelper_colon_equal()
             )
             {
+                base.LogAlternativeSucceed("Expression !':='");
                 _res = (ExpressionNode?)expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("Expression !':='");
             bool _LookaheadHelper_colon_equal()
             {
                 int _mark = base.Mark();
@@ -5838,7 +6851,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("NamedExpression");
     _Return:
+        base.LogRuleExiting("NamedExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // NamedExpression
@@ -5849,17 +6865,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Disjunction: Conjunction+.'or' -> new(Values=conjunction_Gather)
     DisjunctionNode? rule_Disjunction()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Disjunction");
         int _mark = base.Mark();
-        if (_memo_Disjunction.TryGetCache(_mark, out DisjunctionNode? _memoized))
+        if (_memo_Disjunction.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Disjunction", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         DisjunctionNode? _res = null;
         {
             // Conjunction+.'or' -> new(Values=conjunction_Gather)
+            base.LogAlternativeEntered("Conjunction+.'or'");
             INodeArray<GreenNode>? conjunction_Gather;
             if ((conjunction_Gather = _GatherHelper_conjunction_Gather()) is not null)
             {
+                base.LogAlternativeSucceed("Conjunction+.'or'");
                 _res = new DisjunctionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5868,6 +6891,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Conjunction+.'or'");
             NodeArray<GreenNode>? _GatherHelper_conjunction_Gather()
             {
                 GreenNode? _node = rule_Conjunction();
@@ -5892,8 +6916,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Disjunction");
     _Return:
-        _memo_Disjunction.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Disjunction", _mark, _res == null);
+        base.LogRuleExiting("Disjunction");
+        base.LogDecreaseLevel();
+        _memo_Disjunction.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Disjunction
@@ -5904,17 +6932,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Conjunction: Inversion+.'and' -> new(Values=inversion_Gather)
     ConjunctionNode? rule_Conjunction()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Conjunction");
         int _mark = base.Mark();
-        if (_memo_Conjunction.TryGetCache(_mark, out ConjunctionNode? _memoized))
+        if (_memo_Conjunction.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Conjunction", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         ConjunctionNode? _res = null;
         {
             // Inversion+.'and' -> new(Values=inversion_Gather)
+            base.LogAlternativeEntered("Inversion+.'and'");
             INodeArray<GreenNode>? inversion_Gather;
             if ((inversion_Gather = _GatherHelper_inversion_Gather()) is not null)
             {
+                base.LogAlternativeSucceed("Inversion+.'and'");
                 _res = new ConjunctionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5923,6 +6958,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Inversion+.'and'");
             NodeArray<GreenNode>? _GatherHelper_inversion_Gather()
             {
                 GreenNode? _node = rule_Inversion();
@@ -5947,8 +6983,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Conjunction");
     _Return:
-        _memo_Conjunction.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Conjunction", _mark, _res == null);
+        base.LogRuleExiting("Conjunction");
+        base.LogDecreaseLevel();
+        _memo_Conjunction.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Conjunction
@@ -5964,14 +7004,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     InversionNode? rule_Inversion()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Inversion");
         int _mark = base.Mark();
-        if (_memo_Inversion.TryGetCache(_mark, out InversionNode? _memoized))
+        if (_memo_Inversion.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Inversion", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         InversionNode? _res = null;
         {
             // 'not' Inversion -> NotInversion(Value=inversion)
+            base.LogAlternativeEntered("'not' Inversion");
             IGreenNode? _string_token;
             IGreenNode? inversion;
             if ((_string_token = Expect("not")) is not null
@@ -5979,6 +7025,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (inversion = rule_Inversion()) is not null
             )
             {
+                base.LogAlternativeSucceed("'not' Inversion");
                 _res = new NotInversionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -5988,13 +7035,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'not' Inversion");
         }
         base.Reset(_mark);
         {
             // Comparison -> DirectInversion(Value=comparison)
+            base.LogAlternativeEntered("Comparison");
             IGreenNode? comparison;
             if ((comparison = rule_Comparison()) is not null)
             {
+                base.LogAlternativeSucceed("Comparison");
                 _res = new DirectInversionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6003,10 +7053,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Comparison");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Inversion");
     _Return:
-        _memo_Inversion.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Inversion", _mark, _res == null);
+        base.LogRuleExiting("Inversion");
+        base.LogDecreaseLevel();
+        _memo_Inversion.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Inversion
@@ -6019,10 +7074,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     ComparisonNode? rule_Comparison()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Comparison");
         int _mark = base.Mark();
         ComparisonNode? _res = null;
         {
             // BitwiseOr CompareOperation+ -> ManyValueComparison(First=bitwise_or, Rest=compare_operation_Plus)
+            base.LogAlternativeEntered("BitwiseOr CompareOperation+");
             IGreenNode? bitwise_or;
             INodeArray<CompareOperationNode>? compare_operation_Plus;
             if ((bitwise_or = rule_BitwiseOr()) is not null
@@ -6030,6 +7088,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (compare_operation_Plus = _RepeatHelper_compare_operation_Plus()) is not null
             )
             {
+                base.LogAlternativeSucceed("BitwiseOr CompareOperation+");
                 _res = new ManyValueComparisonNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6039,6 +7098,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseOr CompareOperation+");
             NodeArray<CompareOperationNode>? _RepeatHelper_compare_operation_Plus()
             {
                 CompareOperationNode? _node = rule_CompareOperation();
@@ -6054,9 +7114,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // BitwiseOr -> SingleValueComparison(First=bitwise_or)
+            base.LogAlternativeEntered("BitwiseOr");
             IGreenNode? bitwise_or;
             if ((bitwise_or = rule_BitwiseOr()) is not null)
             {
+                base.LogAlternativeSucceed("BitwiseOr");
                 _res = new SingleValueComparisonNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6065,9 +7127,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseOr");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Comparison");
     _Return:
+        base.LogRuleExiting("Comparison");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Comparison
@@ -6089,10 +7155,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     CompareOperationNode? rule_CompareOperation()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("CompareOperation");
         int _mark = base.Mark();
         CompareOperationNode? _res = null;
         {
             // '==' BitwiseOr        -> EqOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'==' BitwiseOr");
             IGreenNode? eq_equal;
             IGreenNode? bitwise_or;
             if ((eq_equal = Expect(TokenType.EqEqual)) is not null
@@ -6100,6 +7169,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'==' BitwiseOr");
                 _res = new EqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6109,10 +7179,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'==' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // '!=' BitwiseOr        -> NotEqOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'!=' BitwiseOr");
             IGreenNode? not_equal;
             IGreenNode? bitwise_or;
             if ((not_equal = Expect(TokenType.NotEqual)) is not null
@@ -6120,6 +7192,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'!=' BitwiseOr");
                 _res = new NotEqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6129,10 +7202,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'!=' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // '<=' BitwiseOr        -> LtEqOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'<=' BitwiseOr");
             IGreenNode? less_equal;
             IGreenNode? bitwise_or;
             if ((less_equal = Expect(TokenType.LessEqual)) is not null
@@ -6140,6 +7215,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'<=' BitwiseOr");
                 _res = new LtEqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6149,10 +7225,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'<=' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // '<' BitwiseOr         -> LtOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'<' BitwiseOr");
             IGreenNode? less;
             IGreenNode? bitwise_or;
             if ((less = Expect(TokenType.Less)) is not null
@@ -6160,6 +7238,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'<' BitwiseOr");
                 _res = new LtOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6169,10 +7248,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'<' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // '>=' BitwiseOr        -> GtEqOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'>=' BitwiseOr");
             IGreenNode? greater_equal;
             IGreenNode? bitwise_or;
             if ((greater_equal = Expect(TokenType.GreaterEqual)) is not null
@@ -6180,6 +7261,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'>=' BitwiseOr");
                 _res = new GtEqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6189,10 +7271,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'>=' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // '>' BitwiseOr         -> GtOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'>' BitwiseOr");
             IGreenNode? greater;
             IGreenNode? bitwise_or;
             if ((greater = Expect(TokenType.Greater)) is not null
@@ -6200,6 +7284,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'>' BitwiseOr");
                 _res = new GtOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6209,10 +7294,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'>' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // 'not' 'in' BitwiseOr  -> NotInOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'not' 'in' BitwiseOr");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             IGreenNode? bitwise_or;
@@ -6223,6 +7310,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'not' 'in' BitwiseOr");
                 _res = new NotInOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6233,10 +7321,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'not' 'in' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // 'in' BitwiseOr        -> InOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'in' BitwiseOr");
             IGreenNode? _string_token;
             IGreenNode? bitwise_or;
             if ((_string_token = Expect("in")) is not null
@@ -6244,6 +7334,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'in' BitwiseOr");
                 _res = new InOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6253,10 +7344,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'in' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // 'is' 'not' BitwiseOr  -> IsNotOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'is' 'not' BitwiseOr");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             IGreenNode? bitwise_or;
@@ -6267,6 +7360,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'is' 'not' BitwiseOr");
                 _res = new IsNotOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6277,10 +7371,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'is' 'not' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // 'is' BitwiseOr        -> IsOperation(Right=bitwise_or)
+            base.LogAlternativeEntered("'is' BitwiseOr");
             IGreenNode? _string_token;
             IGreenNode? bitwise_or;
             if ((_string_token = Expect("is")) is not null
@@ -6288,6 +7384,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'is' BitwiseOr");
                 _res = new IsOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6297,9 +7394,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'is' BitwiseOr");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("CompareOperation");
     _Return:
+        base.LogRuleExiting("CompareOperation");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // CompareOperation
@@ -6308,17 +7409,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<BitwiseOrNode> _memo_BitwiseOr = CreateContainer<BitwiseOrNode>();
     BitwiseOrNode? rule_BitwiseOr()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("BitwiseOr");
         BitwiseOrNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_BitwiseOr.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("BitwiseOr", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("BitwiseOr");
         while (true)
         {
-            _memo_BitwiseOr.UpdateCache(_mark, _res);
+            _memo_BitwiseOr.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("BitwiseOr");
             var _rawResult = raw_rule_BitwiseOr();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -6328,6 +7436,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("BitwiseOr", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -6336,10 +7446,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | BitwiseXor -> DirectBitwiseOr(Value=bitwise_xor)
     BitwiseOrNode? raw_rule_BitwiseOr()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitwiseOr");
         int _mark = base.Mark();
         BitwiseOrNode? _res = null;
         {
             // BitwiseOr '|' BitwiseXor -> BinaryBitwiseOr(Left=bitwise_or, Right=bitwise_xor)
+            base.LogAlternativeEntered("BitwiseOr '|' BitwiseXor");
             IGreenNode? bitwise_or;
             IGreenNode? vert_bar;
             IGreenNode? bitwise_xor;
@@ -6350,6 +7463,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_xor = rule_BitwiseXor()) is not null
             )
             {
+                base.LogAlternativeSucceed("BitwiseOr '|' BitwiseXor");
                 _res = new BinaryBitwiseOrNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6360,13 +7474,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseOr '|' BitwiseXor");
         }
         base.Reset(_mark);
         {
             // BitwiseXor -> DirectBitwiseOr(Value=bitwise_xor)
+            base.LogAlternativeEntered("BitwiseXor");
             IGreenNode? bitwise_xor;
             if ((bitwise_xor = rule_BitwiseXor()) is not null)
             {
+                base.LogAlternativeSucceed("BitwiseXor");
                 _res = new DirectBitwiseOrNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6375,9 +7492,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseXor");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("BitwiseOr");
     _Return:
+        base.LogRuleExiting("BitwiseOr");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // BitwiseOr
@@ -6386,17 +7507,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<BitwiseXorNode> _memo_BitwiseXor = CreateContainer<BitwiseXorNode>();
     BitwiseXorNode? rule_BitwiseXor()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("BitwiseXor");
         BitwiseXorNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_BitwiseXor.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("BitwiseXor", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("BitwiseXor");
         while (true)
         {
-            _memo_BitwiseXor.UpdateCache(_mark, _res);
+            _memo_BitwiseXor.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("BitwiseXor");
             var _rawResult = raw_rule_BitwiseXor();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -6406,6 +7534,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("BitwiseXor", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -6414,10 +7544,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | BitwiseAnd -> DirectBitwiseXor(Value=bitwise_and)
     BitwiseXorNode? raw_rule_BitwiseXor()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitwiseXor");
         int _mark = base.Mark();
         BitwiseXorNode? _res = null;
         {
             // BitwiseXor '^' BitwiseAnd -> BinaryBitwiseXor(Left=bitwise_xor, Right=bitwise_and)
+            base.LogAlternativeEntered("BitwiseXor '^' BitwiseAnd");
             IGreenNode? bitwise_xor;
             IGreenNode? circumflex;
             IGreenNode? bitwise_and;
@@ -6428,6 +7561,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_and = rule_BitwiseAnd()) is not null
             )
             {
+                base.LogAlternativeSucceed("BitwiseXor '^' BitwiseAnd");
                 _res = new BinaryBitwiseXorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6438,13 +7572,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseXor '^' BitwiseAnd");
         }
         base.Reset(_mark);
         {
             // BitwiseAnd -> DirectBitwiseXor(Value=bitwise_and)
+            base.LogAlternativeEntered("BitwiseAnd");
             IGreenNode? bitwise_and;
             if ((bitwise_and = rule_BitwiseAnd()) is not null)
             {
+                base.LogAlternativeSucceed("BitwiseAnd");
                 _res = new DirectBitwiseXorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6453,9 +7590,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseAnd");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("BitwiseXor");
     _Return:
+        base.LogRuleExiting("BitwiseXor");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // BitwiseXor
@@ -6464,17 +7605,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<BitwiseAndNode> _memo_BitwiseAnd = CreateContainer<BitwiseAndNode>();
     BitwiseAndNode? rule_BitwiseAnd()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("BitwiseAnd");
         BitwiseAndNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_BitwiseAnd.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("BitwiseAnd", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("BitwiseAnd");
         while (true)
         {
-            _memo_BitwiseAnd.UpdateCache(_mark, _res);
+            _memo_BitwiseAnd.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("BitwiseAnd");
             var _rawResult = raw_rule_BitwiseAnd();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -6484,6 +7632,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("BitwiseAnd", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -6492,10 +7642,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | BitShift -> DirectBitwiseAnd(Value=bit_shift)
     BitwiseAndNode? raw_rule_BitwiseAnd()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitwiseAnd");
         int _mark = base.Mark();
         BitwiseAndNode? _res = null;
         {
             // BitwiseAnd '&' BitShift -> BinaryBitwiseAnd(Left=bitwise_and, Right=bit_shift)
+            base.LogAlternativeEntered("BitwiseAnd '&' BitShift");
             IGreenNode? bitwise_and;
             IGreenNode? ampersand;
             IGreenNode? bit_shift;
@@ -6506,6 +7659,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bit_shift = rule_BitShift()) is not null
             )
             {
+                base.LogAlternativeSucceed("BitwiseAnd '&' BitShift");
                 _res = new BinaryBitwiseAndNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6516,13 +7670,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitwiseAnd '&' BitShift");
         }
         base.Reset(_mark);
         {
             // BitShift -> DirectBitwiseAnd(Value=bit_shift)
+            base.LogAlternativeEntered("BitShift");
             IGreenNode? bit_shift;
             if ((bit_shift = rule_BitShift()) is not null)
             {
+                base.LogAlternativeSucceed("BitShift");
                 _res = new DirectBitwiseAndNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6531,9 +7688,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitShift");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("BitwiseAnd");
     _Return:
+        base.LogRuleExiting("BitwiseAnd");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // BitwiseAnd
@@ -6542,17 +7703,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<BitShiftNode> _memo_BitShift = CreateContainer<BitShiftNode>();
     BitShiftNode? rule_BitShift()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("BitShift");
         BitShiftNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_BitShift.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("BitShift", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("BitShift");
         while (true)
         {
-            _memo_BitShift.UpdateCache(_mark, _res);
+            _memo_BitShift.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("BitShift");
             var _rawResult = raw_rule_BitShift();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -6562,6 +7730,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("BitShift", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -6570,10 +7740,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Sum -> DirectBitShift(Value=sum)
     BitShiftNode? raw_rule_BitShift()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitShift");
         int _mark = base.Mark();
         BitShiftNode? _res = null;
         {
             // BitShift BitShiftOperator Sum -> BinaryBitShift(Left=bit_shift, Right=sum, Operator=bit_shift_operator)
+            base.LogAlternativeEntered("BitShift BitShiftOperator Sum");
             IGreenNode? bit_shift;
             IGreenNode? bit_shift_operator;
             IGreenNode? sum;
@@ -6584,6 +7757,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (sum = rule_Sum()) is not null
             )
             {
+                base.LogAlternativeSucceed("BitShift BitShiftOperator Sum");
                 _res = new BinaryBitShiftNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6594,13 +7768,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("BitShift BitShiftOperator Sum");
         }
         base.Reset(_mark);
         {
             // Sum -> DirectBitShift(Value=sum)
+            base.LogAlternativeEntered("Sum");
             IGreenNode? sum;
             if ((sum = rule_Sum()) is not null)
             {
+                base.LogAlternativeSucceed("Sum");
                 _res = new DirectBitShiftNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6609,9 +7786,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Sum");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("BitShift");
     _Return:
+        base.LogRuleExiting("BitShift");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // BitShift
@@ -6626,29 +7807,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     TokenNode? rule_BitShiftOperator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitShiftOperator");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '<<'
+            base.LogAlternativeEntered("'<<'");
             IGreenNode? left_shift;
             if ((left_shift = Expect(TokenType.LeftShift)) is not null)
             {
+                base.LogAlternativeSucceed("'<<'");
                 _res = (TokenNode?)left_shift;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'<<'");
         }
         base.Reset(_mark);
         {
             // '>>'
+            base.LogAlternativeEntered("'>>'");
             IGreenNode? right_shift;
             if ((right_shift = Expect(TokenType.RightShift)) is not null)
             {
+                base.LogAlternativeSucceed("'>>'");
                 _res = (TokenNode?)right_shift;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'>>'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("BitShiftOperator");
     _Return:
+        base.LogRuleExiting("BitShiftOperator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // BitShiftOperator
@@ -6657,17 +7849,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<SumNode> _memo_Sum = CreateContainer<SumNode>();
     SumNode? rule_Sum()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("Sum");
         SumNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_Sum.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Sum", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("Sum");
         while (true)
         {
-            _memo_Sum.UpdateCache(_mark, _res);
+            _memo_Sum.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("Sum");
             var _rawResult = raw_rule_Sum();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -6677,6 +7876,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("Sum", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -6685,10 +7886,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Term -> DirectSum(Value=term)
     SumNode? raw_rule_Sum()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Sum");
         int _mark = base.Mark();
         SumNode? _res = null;
         {
             // Sum SumOperator Term -> BinarySum(Left=sum, Right=term, Operator=sum_operator)
+            base.LogAlternativeEntered("Sum SumOperator Term");
             IGreenNode? sum;
             IGreenNode? sum_operator;
             IGreenNode? term;
@@ -6699,6 +7903,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (term = rule_Term()) is not null
             )
             {
+                base.LogAlternativeSucceed("Sum SumOperator Term");
                 _res = new BinarySumNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6709,13 +7914,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Sum SumOperator Term");
         }
         base.Reset(_mark);
         {
             // Term -> DirectSum(Value=term)
+            base.LogAlternativeEntered("Term");
             IGreenNode? term;
             if ((term = rule_Term()) is not null)
             {
+                base.LogAlternativeSucceed("Term");
                 _res = new DirectSumNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6724,9 +7932,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Term");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Sum");
     _Return:
+        base.LogRuleExiting("Sum");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Sum
@@ -6738,29 +7950,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '-'
     TokenNode? rule_SumOperator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SumOperator");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '+'
+            base.LogAlternativeEntered("'+'");
             IGreenNode? plus;
             if ((plus = Expect(TokenType.Plus)) is not null)
             {
+                base.LogAlternativeSucceed("'+'");
                 _res = (TokenNode?)plus;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'+'");
         }
         base.Reset(_mark);
         {
             // '-'
+            base.LogAlternativeEntered("'-'");
             IGreenNode? minus;
             if ((minus = Expect(TokenType.Minus)) is not null)
             {
+                base.LogAlternativeSucceed("'-'");
                 _res = (TokenNode?)minus;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'-'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SumOperator");
     _Return:
+        base.LogRuleExiting("SumOperator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SumOperator
@@ -6769,17 +7992,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<TermNode> _memo_Term = CreateContainer<TermNode>();
     TermNode? rule_Term()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("Term");
         TermNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_Term.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Term", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("Term");
         while (true)
         {
-            _memo_Term.UpdateCache(_mark, _res);
+            _memo_Term.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("Term");
             var _rawResult = raw_rule_Term();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -6789,6 +8019,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("Term", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -6797,10 +8029,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Factor -> DirectTerm(Value=factor)
     TermNode? raw_rule_Term()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Term");
         int _mark = base.Mark();
         TermNode? _res = null;
         {
             // Term TermOperator Factor -> BinaryTerm(Left=term, Right=factor, Operator=term_operator)
+            base.LogAlternativeEntered("Term TermOperator Factor");
             IGreenNode? term;
             IGreenNode? term_operator;
             IGreenNode? factor;
@@ -6811,6 +8046,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (factor = rule_Factor()) is not null
             )
             {
+                base.LogAlternativeSucceed("Term TermOperator Factor");
                 _res = new BinaryTermNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6821,13 +8057,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Term TermOperator Factor");
         }
         base.Reset(_mark);
         {
             // Factor -> DirectTerm(Value=factor)
+            base.LogAlternativeEntered("Factor");
             IGreenNode? factor;
             if ((factor = rule_Factor()) is not null)
             {
+                base.LogAlternativeSucceed("Factor");
                 _res = new DirectTermNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6836,9 +8075,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Factor");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Term");
     _Return:
+        base.LogRuleExiting("Term");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Term
@@ -6853,59 +8096,79 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '@'
     TokenNode? rule_TermOperator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TermOperator");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '*'
+            base.LogAlternativeEntered("'*'");
             IGreenNode? star;
             if ((star = Expect(TokenType.Star)) is not null)
             {
+                base.LogAlternativeSucceed("'*'");
                 _res = (TokenNode?)star;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*'");
         }
         base.Reset(_mark);
         {
             // '/'
+            base.LogAlternativeEntered("'/'");
             IGreenNode? slash;
             if ((slash = Expect(TokenType.Slash)) is not null)
             {
+                base.LogAlternativeSucceed("'/'");
                 _res = (TokenNode?)slash;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'/'");
         }
         base.Reset(_mark);
         {
             // '//'
+            base.LogAlternativeEntered("'//'");
             IGreenNode? double_slash;
             if ((double_slash = Expect(TokenType.DoubleSlash)) is not null)
             {
+                base.LogAlternativeSucceed("'//'");
                 _res = (TokenNode?)double_slash;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'//'");
         }
         base.Reset(_mark);
         {
             // '%'
+            base.LogAlternativeEntered("'%'");
             IGreenNode? percent;
             if ((percent = Expect(TokenType.Percent)) is not null)
             {
+                base.LogAlternativeSucceed("'%'");
                 _res = (TokenNode?)percent;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'%'");
         }
         base.Reset(_mark);
         {
             // '@'
+            base.LogAlternativeEntered("'@'");
             IGreenNode? at;
             if ((at = Expect(TokenType.At)) is not null)
             {
+                base.LogAlternativeSucceed("'@'");
                 _res = (TokenNode?)at;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'@'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TermOperator");
     _Return:
+        base.LogRuleExiting("TermOperator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TermOperator
@@ -6918,14 +8181,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Power -> DirectFactor(Value=power)
     FactorNode? rule_Factor()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Factor");
         int _mark = base.Mark();
-        if (_memo_Factor.TryGetCache(_mark, out FactorNode? _memoized))
+        if (_memo_Factor.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Factor", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         FactorNode? _res = null;
         {
             // FactorOperator Factor -> UnaryFactor(Operator=factor_operator, Value=factor)
+            base.LogAlternativeEntered("FactorOperator Factor");
             IGreenNode? factor_operator;
             IGreenNode? factor;
             if ((factor_operator = rule_FactorOperator()) is not null
@@ -6933,6 +8202,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (factor = rule_Factor()) is not null
             )
             {
+                base.LogAlternativeSucceed("FactorOperator Factor");
                 _res = new UnaryFactorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6942,13 +8212,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FactorOperator Factor");
         }
         base.Reset(_mark);
         {
             // Power -> DirectFactor(Value=power)
+            base.LogAlternativeEntered("Power");
             IGreenNode? power;
             if ((power = rule_Power()) is not null)
             {
+                base.LogAlternativeSucceed("Power");
                 _res = new DirectFactorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -6957,10 +8230,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Power");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Factor");
     _Return:
-        _memo_Factor.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Factor", _mark, _res == null);
+        base.LogRuleExiting("Factor");
+        base.LogDecreaseLevel();
+        _memo_Factor.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Factor
@@ -6973,39 +8251,53 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '~'
     TokenNode? rule_FactorOperator()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FactorOperator");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '+'
+            base.LogAlternativeEntered("'+'");
             IGreenNode? plus;
             if ((plus = Expect(TokenType.Plus)) is not null)
             {
+                base.LogAlternativeSucceed("'+'");
                 _res = (TokenNode?)plus;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'+'");
         }
         base.Reset(_mark);
         {
             // '-'
+            base.LogAlternativeEntered("'-'");
             IGreenNode? minus;
             if ((minus = Expect(TokenType.Minus)) is not null)
             {
+                base.LogAlternativeSucceed("'-'");
                 _res = (TokenNode?)minus;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'-'");
         }
         base.Reset(_mark);
         {
             // '~'
+            base.LogAlternativeEntered("'~'");
             IGreenNode? tilde;
             if ((tilde = Expect(TokenType.Tilde)) is not null)
             {
+                base.LogAlternativeSucceed("'~'");
                 _res = (TokenNode?)tilde;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'~'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FactorOperator");
     _Return:
+        base.LogRuleExiting("FactorOperator");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FactorOperator
@@ -7021,14 +8313,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     PowerNode? rule_Power()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Power");
         int _mark = base.Mark();
-        if (_memo_Power.TryGetCache(_mark, out PowerNode? _memoized))
+        if (_memo_Power.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Power", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         PowerNode? _res = null;
         {
             // Primary '**' Factor -> BinaryPower(Left=primary, Right=factor)
+            base.LogAlternativeEntered("Primary '**' Factor");
             IGreenNode? primary;
             IGreenNode? double_star;
             IGreenNode? factor;
@@ -7039,6 +8337,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (factor = rule_Factor()) is not null
             )
             {
+                base.LogAlternativeSucceed("Primary '**' Factor");
                 _res = new BinaryPowerNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7049,13 +8348,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Primary '**' Factor");
         }
         base.Reset(_mark);
         {
             // Primary -> DirectPower(Value=primary)
+            base.LogAlternativeEntered("Primary");
             IGreenNode? primary;
             if ((primary = rule_Primary()) is not null)
             {
+                base.LogAlternativeSucceed("Primary");
                 _res = new DirectPowerNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7064,10 +8366,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Primary");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Power");
     _Return:
-        _memo_Power.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Power", _mark, _res == null);
+        base.LogRuleExiting("Power");
+        base.LogDecreaseLevel();
+        _memo_Power.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Power
@@ -7079,29 +8386,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | RawPrimary
     PrimaryNode? rule_Primary()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Primary");
         int _mark = base.Mark();
         PrimaryNode? _res = null;
         {
             // AwaitPrimary
+            base.LogAlternativeEntered("AwaitPrimary");
             IGreenNode? await_primary;
             if ((await_primary = rule_AwaitPrimary()) is not null)
             {
+                base.LogAlternativeSucceed("AwaitPrimary");
                 _res = (AwaitPrimaryNode?)await_primary;
                 goto _Return;
             }
+            base.LogAlternativeFailed("AwaitPrimary");
         }
         base.Reset(_mark);
         {
             // RawPrimary
+            base.LogAlternativeEntered("RawPrimary");
             IGreenNode? raw_primary;
             if ((raw_primary = rule_RawPrimary()) is not null)
             {
+                base.LogAlternativeSucceed("RawPrimary");
                 _res = (RawPrimaryNode?)raw_primary;
                 goto _Return;
             }
+            base.LogAlternativeFailed("RawPrimary");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Primary");
     _Return:
+        base.LogRuleExiting("Primary");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Primary
@@ -7110,10 +8428,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // AwaitPrimary: 'await' RawPrimary -> new(Value=raw_primary)
     AwaitPrimaryNode? rule_AwaitPrimary()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("AwaitPrimary");
         int _mark = base.Mark();
         AwaitPrimaryNode? _res = null;
         {
             // 'await' RawPrimary -> new(Value=raw_primary)
+            base.LogAlternativeEntered("'await' RawPrimary");
             IGreenNode? _string_token;
             IGreenNode? raw_primary;
             if ((_string_token = Expect("await")) is not null
@@ -7121,6 +8442,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (raw_primary = rule_RawPrimary()) is not null
             )
             {
+                base.LogAlternativeSucceed("'await' RawPrimary");
                 _res = new AwaitPrimaryNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7130,9 +8452,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'await' RawPrimary");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("AwaitPrimary");
     _Return:
+        base.LogRuleExiting("AwaitPrimary");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // AwaitPrimary
@@ -7141,17 +8467,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<RawPrimaryNode> _memo_RawPrimary = CreateContainer<RawPrimaryNode>();
     RawPrimaryNode? rule_RawPrimary()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("RawPrimary");
         RawPrimaryNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_RawPrimary.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("RawPrimary", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("RawPrimary");
         while (true)
         {
-            _memo_RawPrimary.UpdateCache(_mark, _res);
+            _memo_RawPrimary.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("RawPrimary");
             var _rawResult = raw_rule_RawPrimary();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -7161,6 +8494,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("RawPrimary", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -7172,10 +8507,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Atom -> AtomPrimary(Value=atom)
     RawPrimaryNode? raw_rule_RawPrimary()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("RawPrimary");
         int _mark = base.Mark();
         RawPrimaryNode? _res = null;
         {
             // RawPrimary '.' Name -> DotOperationPrimary(Left=raw_primary, Right=name)
+            base.LogAlternativeEntered("RawPrimary '.' Name");
             IGreenNode? raw_primary;
             IGreenNode? dot;
             IGreenNode? name;
@@ -7186,6 +8524,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (name = Expect(TokenType.Name)) is not null
             )
             {
+                base.LogAlternativeSucceed("RawPrimary '.' Name");
                 _res = new DotOperationPrimaryNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7196,10 +8535,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("RawPrimary '.' Name");
         }
         base.Reset(_mark);
         {
             // RawPrimary GeneratorExpression -> CallWithGeneratorPrimary(Function=raw_primary, Argument=generator_expression)
+            base.LogAlternativeEntered("RawPrimary GeneratorExpression");
             IGreenNode? raw_primary;
             IGreenNode? generator_expression;
             if ((raw_primary = rule_RawPrimary()) is not null
@@ -7207,6 +8548,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (generator_expression = rule_GeneratorExpression()) is not null
             )
             {
+                base.LogAlternativeSucceed("RawPrimary GeneratorExpression");
                 _res = new CallWithGeneratorPrimaryNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7216,10 +8558,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("RawPrimary GeneratorExpression");
         }
         base.Reset(_mark);
         {
             // RawPrimary '(' -Arguments ')' -> CallWithArgumentsPrimary(Function=raw_primary, Arguments=arguments)
+            base.LogAlternativeEntered("RawPrimary '(' -Arguments ')'");
             IGreenNode? raw_primary;
             IGreenNode? left_paren;
             IGreenNode? arguments;
@@ -7233,6 +8577,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("RawPrimary '(' -Arguments ')'");
                 _res = new CallWithArgumentsPrimaryNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7244,10 +8589,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("RawPrimary '(' -Arguments ')'");
         }
         base.Reset(_mark);
         {
             // RawPrimary '[' Slices ']' -> SubscriptPrimary(Target=raw_primary, Subscript=slices)
+            base.LogAlternativeEntered("RawPrimary '[' Slices ']'");
             IGreenNode? raw_primary;
             IGreenNode? left_square_bracket;
             IGreenNode? slices;
@@ -7261,6 +8608,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
+                base.LogAlternativeSucceed("RawPrimary '[' Slices ']'");
                 _res = new SubscriptPrimaryNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7272,13 +8620,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("RawPrimary '[' Slices ']'");
         }
         base.Reset(_mark);
         {
             // Atom -> AtomPrimary(Value=atom)
+            base.LogAlternativeEntered("Atom");
             IGreenNode? atom;
             if ((atom = rule_Atom()) is not null)
             {
+                base.LogAlternativeSucceed("Atom");
                 _res = new AtomPrimaryNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7287,9 +8638,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Atom");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("RawPrimary");
     _Return:
+        base.LogRuleExiting("RawPrimary");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // RawPrimary
@@ -7300,16 +8655,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Dimension+.',' -',' -> DimensionalSubscript(Values=dimension_Gather)
     SlicesNode? rule_Slices()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Slices");
         int _mark = base.Mark();
         SlicesNode? _res = null;
         {
             // Slice !',' -> OneSliceSubscript(Value=slice)
+            base.LogAlternativeEntered("Slice !','");
             IGreenNode? slice;
             if ((slice = rule_Slice()) is not null
                 &&
                 _LookaheadHelper_comma()
             )
             {
+                base.LogAlternativeSucceed("Slice !','");
                 _res = new OneSliceSubscriptNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7318,6 +8677,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Slice !','");
             bool _LookaheadHelper_comma()
             {
                 int _mark = base.Mark();
@@ -7329,6 +8689,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // Dimension+.',' -',' -> DimensionalSubscript(Values=dimension_Gather)
+            base.LogAlternativeEntered("Dimension+.',' -','");
             INodeArray<GreenNode>? dimension_Gather;
             IGreenNode? comma;
             if ((dimension_Gather = _GatherHelper_dimension_Gather()) is not null
@@ -7336,6 +8697,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Dimension+.',' -','");
                 _res = new DimensionalSubscriptNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7345,6 +8707,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Dimension+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_dimension_Gather()
             {
                 GreenNode? _node = rule_Dimension();
@@ -7369,7 +8732,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Slices");
     _Return:
+        base.LogRuleExiting("Slices");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Slices
@@ -7380,13 +8746,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | StarExpression -> DimensionExpression(Value=star_expression)
     DimensionNode? rule_Dimension()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Dimension");
         int _mark = base.Mark();
         DimensionNode? _res = null;
         {
             // Slice -> DimensionSlice(Value=slice)
+            base.LogAlternativeEntered("Slice");
             IGreenNode? slice;
             if ((slice = rule_Slice()) is not null)
             {
+                base.LogAlternativeSucceed("Slice");
                 _res = new DimensionSliceNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7395,13 +8765,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Slice");
         }
         base.Reset(_mark);
         {
             // StarExpression -> DimensionExpression(Value=star_expression)
+            base.LogAlternativeEntered("StarExpression");
             IGreenNode? star_expression;
             if ((star_expression = rule_StarExpression()) is not null)
             {
+                base.LogAlternativeSucceed("StarExpression");
                 _res = new DimensionExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7410,9 +8783,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Dimension");
     _Return:
+        base.LogRuleExiting("Dimension");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Dimension
@@ -7425,13 +8802,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         Start=expression, End=expression1, Step=step_slice_param)
     SliceNode? rule_Slice()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Slice");
         int _mark = base.Mark();
         SliceNode? _res = null;
         {
             // NamedExpression -> NamedSliceExpression(Value=named_expression)
+            base.LogAlternativeEntered("NamedExpression");
             IGreenNode? named_expression;
             if ((named_expression = rule_NamedExpression()) is not null)
             {
+                base.LogAlternativeSucceed("NamedExpression");
                 _res = new NamedSliceExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7440,11 +8821,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("NamedExpression");
         }
         base.Reset(_mark);
         {
             // -Expression ':' -Expression [':' -Expression -> StepSliceParam(Value=expression)] -> ColonSlice(
             //         Start=expression, End=expression1, Step=step_slice_param)
+            base.LogAlternativeEntered("-Expression ':' -Expression [':' -Expression -> StepSliceParam(Value=expression)]");
             IGreenNode? expression;
             IGreenNode? colon;
             IGreenNode? expression1;
@@ -7458,6 +8841,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((step_slice_param = rule_StepSliceParam()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("-Expression ':' -Expression [':' -Expression -> StepSliceParam(Value=expression)]");
                 _res = new ColonSliceNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7469,9 +8853,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("-Expression ':' -Expression [':' -Expression -> StepSliceParam(Value=expression)]");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Slice");
     _Return:
+        base.LogRuleExiting("Slice");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Slice
@@ -7480,10 +8868,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // [':' -Expression -> StepSliceParam(Value=expression)]
     StepSliceParamNode? rule_StepSliceParam()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StepSliceParam");
         int _mark = base.Mark();
         StepSliceParamNode? _res = null;
         {
             // ':' -Expression -> StepSliceParam(Value=expression)
+            base.LogAlternativeEntered("':' -Expression");
             IGreenNode? colon;
             IGreenNode? expression;
             if ((colon = Expect(TokenType.Colon)) is not null
@@ -7491,6 +8882,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((expression = rule_Expression()) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("':' -Expression");
                 _res = new StepSliceParamNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7500,9 +8892,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("':' -Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StepSliceParam");
     _Return:
+        base.LogRuleExiting("StepSliceParam");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StepSliceParam
@@ -7523,29 +8919,37 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | &'{' Set
     AtomNode? rule_Atom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Atom");
         int _mark = base.Mark();
         AtomNode? _res = null;
         {
             // OneTokenAtom
+            base.LogAlternativeEntered("OneTokenAtom");
             IGreenNode? one_token_atom;
             if ((one_token_atom = rule_OneTokenAtom()) is not null)
             {
+                base.LogAlternativeSucceed("OneTokenAtom");
                 _res = (OneTokenAtomNode?)one_token_atom;
                 goto _Return;
             }
+            base.LogAlternativeFailed("OneTokenAtom");
         }
         base.Reset(_mark);
         {
             // &(@inline StringLiteral | FStringStart | TStringStart) StringAtom
+            base.LogAlternativeEntered("&(@inline StringLiteral | FStringStart | TStringStart) StringAtom");
             IGreenNode? string_atom;
             if (_LookaheadHelper__token_inline_group6()
                 &&
                 (string_atom = rule_StringAtom()) is not null
             )
             {
+                base.LogAlternativeSucceed("&(@inline StringLiteral | FStringStart | TStringStart) StringAtom");
                 _res = (StringAtomNode?)string_atom;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&(@inline StringLiteral | FStringStart | TStringStart) StringAtom");
             bool _LookaheadHelper__token_inline_group6()
             {
                 int _mark = base.Mark();
@@ -7557,15 +8961,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'(' GeneratorExpression
+            base.LogAlternativeEntered("&'(' GeneratorExpression");
             IGreenNode? generator_expression;
             if (_LookaheadHelper_left_paren()
                 &&
                 (generator_expression = rule_GeneratorExpression()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'(' GeneratorExpression");
                 _res = (GeneratorExpressionNode?)generator_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'(' GeneratorExpression");
             bool _LookaheadHelper_left_paren()
             {
                 int _mark = base.Mark();
@@ -7577,15 +8984,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'(' Tuple
+            base.LogAlternativeEntered("&'(' Tuple");
             IGreenNode? tuple;
             if (_LookaheadHelper_left_paren()
                 &&
                 (tuple = rule_Tuple()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'(' Tuple");
                 _res = (TupleNode?)tuple;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'(' Tuple");
             bool _LookaheadHelper_left_paren()
             {
                 int _mark = base.Mark();
@@ -7597,15 +9007,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'(' Group
+            base.LogAlternativeEntered("&'(' Group");
             IGreenNode? group;
             if (_LookaheadHelper_left_paren()
                 &&
                 (group = rule_Group()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'(' Group");
                 _res = (GroupNode?)group;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'(' Group");
             bool _LookaheadHelper_left_paren()
             {
                 int _mark = base.Mark();
@@ -7617,15 +9030,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'[' ListComprehension
+            base.LogAlternativeEntered("&'[' ListComprehension");
             IGreenNode? list_comprehension;
             if (_LookaheadHelper_left_square_bracket()
                 &&
                 (list_comprehension = rule_ListComprehension()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'[' ListComprehension");
                 _res = (ListComprehensionNode?)list_comprehension;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'[' ListComprehension");
             bool _LookaheadHelper_left_square_bracket()
             {
                 int _mark = base.Mark();
@@ -7637,15 +9053,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'[' List
+            base.LogAlternativeEntered("&'[' List");
             IGreenNode? list;
             if (_LookaheadHelper_left_square_bracket()
                 &&
                 (list = rule_List()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'[' List");
                 _res = (ListNode?)list;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'[' List");
             bool _LookaheadHelper_left_square_bracket()
             {
                 int _mark = base.Mark();
@@ -7657,15 +9076,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'{' DictComprehension
+            base.LogAlternativeEntered("&'{' DictComprehension");
             IGreenNode? dict_comprehension;
             if (_LookaheadHelper_left_brace()
                 &&
                 (dict_comprehension = rule_DictComprehension()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'{' DictComprehension");
                 _res = (DictComprehensionNode?)dict_comprehension;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'{' DictComprehension");
             bool _LookaheadHelper_left_brace()
             {
                 int _mark = base.Mark();
@@ -7677,15 +9099,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'{' SetComprehension
+            base.LogAlternativeEntered("&'{' SetComprehension");
             IGreenNode? set_comprehension;
             if (_LookaheadHelper_left_brace()
                 &&
                 (set_comprehension = rule_SetComprehension()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'{' SetComprehension");
                 _res = (SetComprehensionNode?)set_comprehension;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'{' SetComprehension");
             bool _LookaheadHelper_left_brace()
             {
                 int _mark = base.Mark();
@@ -7697,15 +9122,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'{' Dict
+            base.LogAlternativeEntered("&'{' Dict");
             IGreenNode? dict;
             if (_LookaheadHelper_left_brace()
                 &&
                 (dict = rule_Dict()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'{' Dict");
                 _res = (DictNode?)dict;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'{' Dict");
             bool _LookaheadHelper_left_brace()
             {
                 int _mark = base.Mark();
@@ -7717,15 +9145,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // &'{' Set
+            base.LogAlternativeEntered("&'{' Set");
             IGreenNode? set;
             if (_LookaheadHelper_left_brace()
                 &&
                 (set = rule_Set()) is not null
             )
             {
+                base.LogAlternativeSucceed("&'{' Set");
                 _res = (SetNode?)set;
                 goto _Return;
             }
+            base.LogAlternativeFailed("&'{' Set");
             bool _LookaheadHelper_left_brace()
             {
                 int _mark = base.Mark();
@@ -7735,7 +9166,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Atom");
     _Return:
+        base.LogRuleExiting("Atom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Atom
@@ -7744,39 +9178,53 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // (@inline StringLiteral | FStringStart | TStringStart)
     TokenNode? rule__TokenInlineGroup6()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("_TokenInlineGroup6");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // StringLiteral
+            base.LogAlternativeEntered("StringLiteral");
             IGreenNode? string_literal;
             if ((string_literal = Expect(TokenType.StringLiteral)) is not null)
             {
+                base.LogAlternativeSucceed("StringLiteral");
                 _res = (TokenNode?)string_literal;
                 goto _Return;
             }
+            base.LogAlternativeFailed("StringLiteral");
         }
         base.Reset(_mark);
         {
             // FStringStart
+            base.LogAlternativeEntered("FStringStart");
             IGreenNode? f_string_start;
             if ((f_string_start = Expect(TokenType.FStringStart)) is not null)
             {
+                base.LogAlternativeSucceed("FStringStart");
                 _res = (TokenNode?)f_string_start;
                 goto _Return;
             }
+            base.LogAlternativeFailed("FStringStart");
         }
         base.Reset(_mark);
         {
             // TStringStart
+            base.LogAlternativeEntered("TStringStart");
             IGreenNode? t_string_start;
             if ((t_string_start = Expect(TokenType.TStringStart)) is not null)
             {
+                base.LogAlternativeSucceed("TStringStart");
                 _res = (TokenNode?)t_string_start;
                 goto _Return;
             }
+            base.LogAlternativeFailed("TStringStart");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("_TokenInlineGroup6");
     _Return:
+        base.LogRuleExiting("_TokenInlineGroup6");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // _TokenInlineGroup6
@@ -7791,13 +9239,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '...' -> EllipsisAtom()
     OneTokenAtomNode? rule_OneTokenAtom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("OneTokenAtom");
         int _mark = base.Mark();
         OneTokenAtomNode? _res = null;
         {
             // Name -> NameAtom(Value=name)
+            base.LogAlternativeEntered("Name");
             IGreenNode? name;
             if ((name = Expect(TokenType.Name)) is not null)
             {
+                base.LogAlternativeSucceed("Name");
                 _res = new NameAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7806,13 +9258,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name");
         }
         base.Reset(_mark);
         {
             // 'True' -> TrueAtom()
+            base.LogAlternativeEntered("'True'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("True")) is not null)
             {
+                base.LogAlternativeSucceed("'True'");
                 _res = new TrueAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7821,13 +9276,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'True'");
         }
         base.Reset(_mark);
         {
             // 'False' -> FalseAtom()
+            base.LogAlternativeEntered("'False'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("False")) is not null)
             {
+                base.LogAlternativeSucceed("'False'");
                 _res = new FalseAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7836,13 +9294,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'False'");
         }
         base.Reset(_mark);
         {
             // 'None' -> NoneAtom()
+            base.LogAlternativeEntered("'None'");
             IGreenNode? _string_token;
             if ((_string_token = Expect("None")) is not null)
             {
+                base.LogAlternativeSucceed("'None'");
                 _res = new NoneAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7851,13 +9312,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'None'");
         }
         base.Reset(_mark);
         {
             // Number -> NumberAtom(Value=number)
+            base.LogAlternativeEntered("Number");
             IGreenNode? number;
             if ((number = Expect(TokenType.Number)) is not null)
             {
+                base.LogAlternativeSucceed("Number");
                 _res = new NumberAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7866,13 +9330,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Number");
         }
         base.Reset(_mark);
         {
             // '...' -> EllipsisAtom()
+            base.LogAlternativeEntered("'...'");
             IGreenNode? ellipsis;
             if ((ellipsis = Expect(TokenType.Ellipsis)) is not null)
             {
+                base.LogAlternativeSucceed("'...'");
                 _res = new EllipsisAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7881,9 +9348,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'...'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("OneTokenAtom");
     _Return:
+        base.LogRuleExiting("OneTokenAtom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // OneTokenAtom
@@ -7902,10 +9373,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     GroupNode? rule_Group()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Group");
         int _mark = base.Mark();
         GroupNode? _res = null;
         {
             // '(' NamedExpression ')' -> NamedGroupExpression(Value=named_expression)
+            base.LogAlternativeEntered("'(' NamedExpression ')'");
             IGreenNode? left_paren;
             IGreenNode? named_expression;
             IGreenNode? right_paren;
@@ -7916,6 +9390,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' NamedExpression ')'");
                 _res = new NamedGroupExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7926,10 +9401,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' NamedExpression ')'");
         }
         base.Reset(_mark);
         {
             // '(' YieldExpression ')' -> YieldGroupExpression(Value=yield_expression)
+            base.LogAlternativeEntered("'(' YieldExpression ')'");
             IGreenNode? left_paren;
             IGreenNode? yield_expression;
             IGreenNode? right_paren;
@@ -7940,6 +9417,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' YieldExpression ')'");
                 _res = new YieldGroupExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7950,9 +9428,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' YieldExpression ')'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Group");
     _Return:
+        base.LogRuleExiting("Group");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Group
@@ -7961,10 +9443,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // FString: FStringStart FStringValue* FStringEnd -> new(Header=f_string_start, Values=f_string_value_Star)
     FStringNode? rule_FString()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FString");
         int _mark = base.Mark();
         FStringNode? _res = null;
         {
             // FStringStart FStringValue* FStringEnd -> new(Header=f_string_start, Values=f_string_value_Star)
+            base.LogAlternativeEntered("FStringStart FStringValue* FStringEnd");
             IGreenNode? f_string_start;
             INodeArray<FStringValueNode>? f_string_value_Star;
             IGreenNode? f_string_end;
@@ -7975,6 +9460,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (f_string_end = Expect(TokenType.FStringEnd)) is not null
             )
             {
+                base.LogAlternativeSucceed("FStringStart FStringValue* FStringEnd");
                 _res = new FStringNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -7985,6 +9471,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FStringStart FStringValue* FStringEnd");
             NodeArray<FStringValueNode>? _RepeatHelper_f_string_value_Star()
             {
                 FStringValueNode? _node = rule_FStringValue();
@@ -7998,7 +9485,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FString");
     _Return:
+        base.LogRuleExiting("FString");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FString
@@ -8009,13 +9499,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | FStringReplacementField -> FStringValueReplacement(Value=f_string_replacement_field)
     FStringValueNode? rule_FStringValue()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FStringValue");
         int _mark = base.Mark();
         FStringValueNode? _res = null;
         {
             // FStringMiddle -> FStringValueLiteral(Value=f_string_middle)
+            base.LogAlternativeEntered("FStringMiddle");
             IGreenNode? f_string_middle;
             if ((f_string_middle = Expect(TokenType.FStringMiddle)) is not null)
             {
+                base.LogAlternativeSucceed("FStringMiddle");
                 _res = new FStringValueLiteralNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8024,13 +9518,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FStringMiddle");
         }
         base.Reset(_mark);
         {
             // FStringReplacementField -> FStringValueReplacement(Value=f_string_replacement_field)
+            base.LogAlternativeEntered("FStringReplacementField");
             IGreenNode? f_string_replacement_field;
             if ((f_string_replacement_field = rule_FStringReplacementField()) is not null)
             {
+                base.LogAlternativeSucceed("FStringReplacementField");
                 _res = new FStringValueReplacementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8039,9 +9536,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FStringReplacementField");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FStringValue");
     _Return:
+        base.LogRuleExiting("FStringValue");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FStringValue
@@ -8052,11 +9553,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         Value=annotated_rhs, DebugSpecifier=debug_specifier, Conversion=conversion, FormatSpec=f_string_full_format_spec)
     FStringReplacementFieldNode? rule_FStringReplacementField()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FStringReplacementField");
         int _mark = base.Mark();
         FStringReplacementFieldNode? _res = null;
         {
             // '{' AnnotatedRhs -DebugSpecifier -Conversion -FStringFullFormatSpec '}' -> new(
             //         Value=annotated_rhs, DebugSpecifier=debug_specifier, Conversion=conversion, FormatSpec=f_string_full_format_spec)
+            base.LogAlternativeEntered("'{' AnnotatedRhs -DebugSpecifier -Conversion -FStringFullFormatSpec '}'");
             IGreenNode? left_brace;
             IGreenNode? annotated_rhs;
             IGreenNode? debug_specifier;
@@ -8076,6 +9580,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' AnnotatedRhs -DebugSpecifier -Conversion -FStringFullFormatSpec '}'");
                 _res = new FStringReplacementFieldNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8089,9 +9594,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' AnnotatedRhs -DebugSpecifier -Conversion -FStringFullFormatSpec '}'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FStringReplacementField");
     _Return:
+        base.LogRuleExiting("FStringReplacementField");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FStringReplacementField
@@ -8100,10 +9609,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // FStringFullFormatSpec: ':' FStringFormatSpec* -> new(Specs=f_string_format_spec_Star)
     FStringFullFormatSpecNode? rule_FStringFullFormatSpec()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FStringFullFormatSpec");
         int _mark = base.Mark();
         FStringFullFormatSpecNode? _res = null;
         {
             // ':' FStringFormatSpec* -> new(Specs=f_string_format_spec_Star)
+            base.LogAlternativeEntered("':' FStringFormatSpec*");
             IGreenNode? colon;
             INodeArray<FStringFormatSpecNode>? f_string_format_spec_Star;
             if ((colon = Expect(TokenType.Colon)) is not null
@@ -8111,6 +9623,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (f_string_format_spec_Star = _RepeatHelper_f_string_format_spec_Star()) is not null
             )
             {
+                base.LogAlternativeSucceed("':' FStringFormatSpec*");
                 _res = new FStringFullFormatSpecNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8120,6 +9633,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("':' FStringFormatSpec*");
             NodeArray<FStringFormatSpecNode>? _RepeatHelper_f_string_format_spec_Star()
             {
                 FStringFormatSpecNode? _node = rule_FStringFormatSpec();
@@ -8133,7 +9647,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FStringFullFormatSpec");
     _Return:
+        base.LogRuleExiting("FStringFullFormatSpec");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FStringFullFormatSpec
@@ -8144,13 +9661,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | FStringReplacementField -> FStringFormatReplacement(Value=f_string_replacement_field)
     FStringFormatSpecNode? rule_FStringFormatSpec()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FStringFormatSpec");
         int _mark = base.Mark();
         FStringFormatSpecNode? _res = null;
         {
             // FStringMiddle -> FStringFormatLiteral(Value=f_string_middle)
+            base.LogAlternativeEntered("FStringMiddle");
             IGreenNode? f_string_middle;
             if ((f_string_middle = Expect(TokenType.FStringMiddle)) is not null)
             {
+                base.LogAlternativeSucceed("FStringMiddle");
                 _res = new FStringFormatLiteralNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8159,13 +9680,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FStringMiddle");
         }
         base.Reset(_mark);
         {
             // FStringReplacementField -> FStringFormatReplacement(Value=f_string_replacement_field)
+            base.LogAlternativeEntered("FStringReplacementField");
             IGreenNode? f_string_replacement_field;
             if ((f_string_replacement_field = rule_FStringReplacementField()) is not null)
             {
+                base.LogAlternativeSucceed("FStringReplacementField");
                 _res = new FStringFormatReplacementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8174,9 +9698,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("FStringReplacementField");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("FStringFormatSpec");
     _Return:
+        base.LogRuleExiting("FStringFormatSpec");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // FStringFormatSpec
@@ -8185,10 +9713,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TString: TStringStart TStringValue* TStringEnd -> new(Header=t_string_start, Values=t_string_value_Star)
     TStringNode? rule_TString()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TString");
         int _mark = base.Mark();
         TStringNode? _res = null;
         {
             // TStringStart TStringValue* TStringEnd -> new(Header=t_string_start, Values=t_string_value_Star)
+            base.LogAlternativeEntered("TStringStart TStringValue* TStringEnd");
             IGreenNode? t_string_start;
             INodeArray<TStringValueNode>? t_string_value_Star;
             IGreenNode? t_string_end;
@@ -8199,6 +9730,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (t_string_end = Expect(TokenType.TStringEnd)) is not null
             )
             {
+                base.LogAlternativeSucceed("TStringStart TStringValue* TStringEnd");
                 _res = new TStringNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8209,6 +9741,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TStringStart TStringValue* TStringEnd");
             NodeArray<TStringValueNode>? _RepeatHelper_t_string_value_Star()
             {
                 TStringValueNode? _node = rule_TStringValue();
@@ -8222,7 +9755,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TString");
     _Return:
+        base.LogRuleExiting("TString");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TString
@@ -8233,13 +9769,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | TStringReplacementField -> TStringValueReplacement(Value=t_string_replacement_field)
     TStringValueNode? rule_TStringValue()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TStringValue");
         int _mark = base.Mark();
         TStringValueNode? _res = null;
         {
             // TStringMiddle -> TStringValueLiteral(Value=t_string_middle)
+            base.LogAlternativeEntered("TStringMiddle");
             IGreenNode? t_string_middle;
             if ((t_string_middle = Expect(TokenType.TStringMiddle)) is not null)
             {
+                base.LogAlternativeSucceed("TStringMiddle");
                 _res = new TStringValueLiteralNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8248,13 +9788,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TStringMiddle");
         }
         base.Reset(_mark);
         {
             // TStringReplacementField -> TStringValueReplacement(Value=t_string_replacement_field)
+            base.LogAlternativeEntered("TStringReplacementField");
             IGreenNode? t_string_replacement_field;
             if ((t_string_replacement_field = rule_TStringReplacementField()) is not null)
             {
+                base.LogAlternativeSucceed("TStringReplacementField");
                 _res = new TStringValueReplacementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8263,9 +9806,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TStringReplacementField");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TStringValue");
     _Return:
+        base.LogRuleExiting("TStringValue");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TStringValue
@@ -8275,11 +9822,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     Value=annotated_rhs, DebugSpecifier=debug_specifier, Conversion=conversion, FormatSpec=t_string_full_format_spec)
     TStringReplacementFieldNode? rule_TStringReplacementField()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TStringReplacementField");
         int _mark = base.Mark();
         TStringReplacementFieldNode? _res = null;
         {
             // '{' AnnotatedRhs -DebugSpecifier -Conversion -TStringFullFormatSpec '}' -> new(
             //     Value=annotated_rhs, DebugSpecifier=debug_specifier, Conversion=conversion, FormatSpec=t_string_full_format_spec)
+            base.LogAlternativeEntered("'{' AnnotatedRhs -DebugSpecifier -Conversion -TStringFullFormatSpec '}'");
             IGreenNode? left_brace;
             IGreenNode? annotated_rhs;
             IGreenNode? debug_specifier;
@@ -8299,6 +9849,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' AnnotatedRhs -DebugSpecifier -Conversion -TStringFullFormatSpec '}'");
                 _res = new TStringReplacementFieldNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8312,9 +9863,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' AnnotatedRhs -DebugSpecifier -Conversion -TStringFullFormatSpec '}'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TStringReplacementField");
     _Return:
+        base.LogRuleExiting("TStringReplacementField");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TStringReplacementField
@@ -8323,10 +9878,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TStringFullFormatSpec: ':' TStringFormatSpec* -> new(Specs=t_string_format_spec_Star)
     TStringFullFormatSpecNode? rule_TStringFullFormatSpec()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TStringFullFormatSpec");
         int _mark = base.Mark();
         TStringFullFormatSpecNode? _res = null;
         {
             // ':' TStringFormatSpec* -> new(Specs=t_string_format_spec_Star)
+            base.LogAlternativeEntered("':' TStringFormatSpec*");
             IGreenNode? colon;
             INodeArray<TStringFormatSpecNode>? t_string_format_spec_Star;
             if ((colon = Expect(TokenType.Colon)) is not null
@@ -8334,6 +9892,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (t_string_format_spec_Star = _RepeatHelper_t_string_format_spec_Star()) is not null
             )
             {
+                base.LogAlternativeSucceed("':' TStringFormatSpec*");
                 _res = new TStringFullFormatSpecNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8343,6 +9902,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("':' TStringFormatSpec*");
             NodeArray<TStringFormatSpecNode>? _RepeatHelper_t_string_format_spec_Star()
             {
                 TStringFormatSpecNode? _node = rule_TStringFormatSpec();
@@ -8356,7 +9916,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TStringFullFormatSpec");
     _Return:
+        base.LogRuleExiting("TStringFullFormatSpec");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TStringFullFormatSpec
@@ -8372,13 +9935,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     TStringFormatSpecNode? rule_TStringFormatSpec()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TStringFormatSpec");
         int _mark = base.Mark();
         TStringFormatSpecNode? _res = null;
         {
             // TStringMiddle -> TStringFormatLiteral(Value=t_string_middle)
+            base.LogAlternativeEntered("TStringMiddle");
             IGreenNode? t_string_middle;
             if ((t_string_middle = Expect(TokenType.TStringMiddle)) is not null)
             {
+                base.LogAlternativeSucceed("TStringMiddle");
                 _res = new TStringFormatLiteralNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8387,13 +9954,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TStringMiddle");
         }
         base.Reset(_mark);
         {
             // TStringReplacementField -> TStringFormatReplacement(Value=t_string_replacement_field)
+            base.LogAlternativeEntered("TStringReplacementField");
             IGreenNode? t_string_replacement_field;
             if ((t_string_replacement_field = rule_TStringReplacementField()) is not null)
             {
+                base.LogAlternativeSucceed("TStringReplacementField");
                 _res = new TStringFormatReplacementNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8402,9 +9972,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TStringReplacementField");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TStringFormatSpec");
     _Return:
+        base.LogRuleExiting("TStringFormatSpec");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TStringFormatSpec
@@ -8413,10 +9987,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // DebugSpecifier: '=' DebugSpecifierString -> new(Value=debug_specifier_string)
     DebugSpecifierNode? rule_DebugSpecifier()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DebugSpecifier");
         int _mark = base.Mark();
         DebugSpecifierNode? _res = null;
         {
             // '=' DebugSpecifierString -> new(Value=debug_specifier_string)
+            base.LogAlternativeEntered("'=' DebugSpecifierString");
             IGreenNode? equal;
             IGreenNode? debug_specifier_string;
             if ((equal = Expect(TokenType.Equal)) is not null
@@ -8424,6 +10001,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (debug_specifier_string = Expect(TokenType.DebugSpecifierString)) is not null
             )
             {
+                base.LogAlternativeSucceed("'=' DebugSpecifierString");
                 _res = new DebugSpecifierNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8433,9 +10011,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'=' DebugSpecifierString");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DebugSpecifier");
     _Return:
+        base.LogRuleExiting("DebugSpecifier");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DebugSpecifier
@@ -8444,10 +10026,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Conversion: '!' Name -> new(Value=name)
     ConversionNode? rule_Conversion()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Conversion");
         int _mark = base.Mark();
         ConversionNode? _res = null;
         {
             // '!' Name -> new(Value=name)
+            base.LogAlternativeEntered("'!' Name");
             IGreenNode? exclamation;
             IGreenNode? name;
             if ((exclamation = Expect(TokenType.Exclamation)) is not null
@@ -8455,6 +10040,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (name = Expect(TokenType.Name)) is not null
             )
             {
+                base.LogAlternativeSucceed("'!' Name");
                 _res = new ConversionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8464,9 +10050,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'!' Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Conversion");
     _Return:
+        base.LogRuleExiting("Conversion");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Conversion
@@ -8479,17 +10069,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | TString+ -> StringTemplateAtom(Parts=t_string_Plus)
     StringAtomNode? rule_StringAtom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StringAtom");
         int _mark = base.Mark();
-        if (_memo_StringAtom.TryGetCache(_mark, out StringAtomNode? _memoized))
+        if (_memo_StringAtom.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("StringAtom", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         StringAtomNode? _res = null;
         {
             // StringValue+ -> StringValueAtom(Parts=string_value_Plus)
+            base.LogAlternativeEntered("StringValue+");
             INodeArray<StringValueNode>? string_value_Plus;
             if ((string_value_Plus = _RepeatHelper_string_value_Plus()) is not null)
             {
+                base.LogAlternativeSucceed("StringValue+");
                 _res = new StringValueAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8498,6 +10095,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StringValue+");
             NodeArray<StringValueNode>? _RepeatHelper_string_value_Plus()
             {
                 StringValueNode? _node = rule_StringValue();
@@ -8513,9 +10111,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TString+ -> StringTemplateAtom(Parts=t_string_Plus)
+            base.LogAlternativeEntered("TString+");
             INodeArray<TStringNode>? t_string_Plus;
             if ((t_string_Plus = _RepeatHelper_t_string_Plus()) is not null)
             {
+                base.LogAlternativeSucceed("TString+");
                 _res = new StringTemplateAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8524,6 +10124,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TString+");
             NodeArray<TStringNode>? _RepeatHelper_t_string_Plus()
             {
                 TStringNode? _node = rule_TString();
@@ -8537,8 +10138,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StringAtom");
     _Return:
-        _memo_StringAtom.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("StringAtom", _mark, _res == null);
+        base.LogRuleExiting("StringAtom");
+        base.LogDecreaseLevel();
+        _memo_StringAtom.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // StringAtom
@@ -8547,13 +10152,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StringConstant: StringLiteral -> new(Value=string_literal)
     StringConstantNode? rule_StringConstant()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StringConstant");
         int _mark = base.Mark();
         StringConstantNode? _res = null;
         {
             // StringLiteral -> new(Value=string_literal)
+            base.LogAlternativeEntered("StringLiteral");
             IGreenNode? string_literal;
             if ((string_literal = Expect(TokenType.StringLiteral)) is not null)
             {
+                base.LogAlternativeSucceed("StringLiteral");
                 _res = new StringConstantNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8562,9 +10171,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StringLiteral");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StringConstant");
     _Return:
+        base.LogRuleExiting("StringConstant");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StringConstant
@@ -8576,29 +10189,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | FString
     StringValueNode? rule_StringValue()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StringValue");
         int _mark = base.Mark();
         StringValueNode? _res = null;
         {
             // StringConstant
+            base.LogAlternativeEntered("StringConstant");
             IGreenNode? string_constant;
             if ((string_constant = rule_StringConstant()) is not null)
             {
+                base.LogAlternativeSucceed("StringConstant");
                 _res = (StringConstantNode?)string_constant;
                 goto _Return;
             }
+            base.LogAlternativeFailed("StringConstant");
         }
         base.Reset(_mark);
         {
             // FString
+            base.LogAlternativeEntered("FString");
             IGreenNode? f_string;
             if ((f_string = rule_FString()) is not null)
             {
+                base.LogAlternativeSucceed("FString");
                 _res = (FStringNode?)f_string;
                 goto _Return;
             }
+            base.LogAlternativeFailed("FString");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StringValue");
     _Return:
+        base.LogRuleExiting("StringValue");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StringValue
@@ -8607,10 +10231,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // List: '[' -StarNamedExpressions ']' -> new(Items=star_named_expressions)
     ListNode? rule_List()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("List");
         int _mark = base.Mark();
         ListNode? _res = null;
         {
             // '[' -StarNamedExpressions ']' -> new(Items=star_named_expressions)
+            base.LogAlternativeEntered("'[' -StarNamedExpressions ']'");
             IGreenNode? left_square_bracket;
             IGreenNode? star_named_expressions;
             IGreenNode? right_square_bracket;
@@ -8621,6 +10248,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
+                base.LogAlternativeSucceed("'[' -StarNamedExpressions ']'");
                 _res = new ListNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8631,9 +10259,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'[' -StarNamedExpressions ']'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("List");
     _Return:
+        base.LogRuleExiting("List");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // List
@@ -8642,10 +10274,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Tuple: '(' StarNamedExpression ',' -StarNamedExpressions ')' -> new(First=star_named_expression, Rest=star_named_expressions)
     TupleNode? rule_Tuple()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Tuple");
         int _mark = base.Mark();
         TupleNode? _res = null;
         {
             // '(' StarNamedExpression ',' -StarNamedExpressions ')' -> new(First=star_named_expression, Rest=star_named_expressions)
+            base.LogAlternativeEntered("'(' StarNamedExpression ',' -StarNamedExpressions ')'");
             IGreenNode? left_paren;
             IGreenNode? star_named_expression;
             IGreenNode? comma;
@@ -8662,6 +10297,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' StarNamedExpression ',' -StarNamedExpressions ')'");
                 _res = new TupleNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8674,9 +10310,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' StarNamedExpression ',' -StarNamedExpressions ')'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Tuple");
     _Return:
+        base.LogRuleExiting("Tuple");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Tuple
@@ -8685,10 +10325,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Set: '{' StarNamedExpressions '}' -> new(Items=star_named_expressions)
     SetNode? rule_Set()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Set");
         int _mark = base.Mark();
         SetNode? _res = null;
         {
             // '{' StarNamedExpressions '}' -> new(Items=star_named_expressions)
+            base.LogAlternativeEntered("'{' StarNamedExpressions '}'");
             IGreenNode? left_brace;
             IGreenNode? star_named_expressions;
             IGreenNode? right_brace;
@@ -8699,6 +10342,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' StarNamedExpressions '}'");
                 _res = new SetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8709,9 +10353,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' StarNamedExpressions '}'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Set");
     _Return:
+        base.LogRuleExiting("Set");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Set
@@ -8720,10 +10368,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Dict: '{' -StarredOrKeyValues '}' -> new(KeyValuePairs=starred_or_key_values)
     DictNode? rule_Dict()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Dict");
         int _mark = base.Mark();
         DictNode? _res = null;
         {
             // '{' -StarredOrKeyValues '}' -> new(KeyValuePairs=starred_or_key_values)
+            base.LogAlternativeEntered("'{' -StarredOrKeyValues '}'");
             IGreenNode? left_brace;
             IGreenNode? starred_or_key_values;
             IGreenNode? right_brace;
@@ -8734,6 +10385,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' -StarredOrKeyValues '}'");
                 _res = new DictNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8744,9 +10396,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' -StarredOrKeyValues '}'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Dict");
     _Return:
+        base.LogRuleExiting("Dict");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Dict
@@ -8755,10 +10411,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StarredOrKeyValues: StarredOrKeyValue+.',' -',' -> new(Items=starred_or_key_value_Gather)
     StarredOrKeyValuesNode? rule_StarredOrKeyValues()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarredOrKeyValues");
         int _mark = base.Mark();
         StarredOrKeyValuesNode? _res = null;
         {
             // StarredOrKeyValue+.',' -',' -> new(Items=starred_or_key_value_Gather)
+            base.LogAlternativeEntered("StarredOrKeyValue+.',' -','");
             INodeArray<GreenNode>? starred_or_key_value_Gather;
             IGreenNode? comma;
             if ((starred_or_key_value_Gather = _GatherHelper_starred_or_key_value_Gather()) is not null
@@ -8766,6 +10425,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("StarredOrKeyValue+.',' -','");
                 _res = new StarredOrKeyValuesNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8775,6 +10435,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarredOrKeyValue+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_starred_or_key_value_Gather()
             {
                 GreenNode? _node = rule_StarredOrKeyValue();
@@ -8799,7 +10460,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarredOrKeyValues");
     _Return:
+        base.LogRuleExiting("StarredOrKeyValues");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarredOrKeyValues
@@ -8813,10 +10477,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     StarredOrKeyValueNode? rule_StarredOrKeyValue()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarredOrKeyValue");
         int _mark = base.Mark();
         StarredOrKeyValueNode? _res = null;
         {
             // '**' BitwiseOr -> DoubleStarred(Value=bitwise_or)
+            base.LogAlternativeEntered("'**' BitwiseOr");
             IGreenNode? double_star;
             IGreenNode? bitwise_or;
             if ((double_star = Expect(TokenType.DoubleStar)) is not null
@@ -8824,6 +10491,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (bitwise_or = rule_BitwiseOr()) is not null
             )
             {
+                base.LogAlternativeSucceed("'**' BitwiseOr");
                 _res = new DoubleStarredNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8833,10 +10501,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'**' BitwiseOr");
         }
         base.Reset(_mark);
         {
             // Expression ':' Expression -> KeyValuePair(Key=expression, Value=expression1)
+            base.LogAlternativeEntered("Expression ':' Expression");
             IGreenNode? expression;
             IGreenNode? colon;
             IGreenNode? expression1;
@@ -8847,6 +10517,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression1 = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("Expression ':' Expression");
                 _res = new KeyValuePairNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8857,9 +10528,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Expression ':' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarredOrKeyValue");
     _Return:
+        base.LogRuleExiting("StarredOrKeyValue");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarredOrKeyValue
@@ -8873,12 +10548,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //         Variables=star_targets, Iterable=disjunction, Conditions=if_clause_Star)
     ForIfClauseNode? rule_ForIfClause()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ForIfClause");
         int _mark = base.Mark();
         ForIfClauseNode? _res = null;
         bool _cut = false;
         {
             // 'async' 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))* -> AsyncForIfClause(
             //         Variables=star_targets, Iterable=disjunction, Conditions=if_clause_Star)
+            base.LogAlternativeEntered("'async' 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))*");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
             IGreenNode? star_targets;
@@ -8900,6 +10578,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (if_clause_Star = _RepeatHelper_if_clause_Star()) is not null
             )
             {
+                base.LogAlternativeSucceed("'async' 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))*");
                 _res = new AsyncForIfClauseNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8913,6 +10592,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'async' 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))*");
             NodeArray<IfClauseNode>? _RepeatHelper_if_clause_Star()
             {
                 IfClauseNode? _node = rule_IfClause();
@@ -8934,6 +10614,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // 'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))* -> NormalForIfClause(
             //         Variables=star_targets, Iterable=disjunction, Conditions=if_clause_Star)
+            base.LogAlternativeEntered("'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))*");
             IGreenNode? _string_token;
             IGreenNode? star_targets;
             IGreenNode? _string_token1;
@@ -8952,6 +10633,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (if_clause_Star = _RepeatHelper_if_clause_Star()) is not null
             )
             {
+                base.LogAlternativeSucceed("'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))*");
                 _res = new NormalForIfClauseNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -8964,6 +10646,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'for' StarTargets 'in' ~ Disjunction ('if' Disjunction -> IfClause(Condition=disjunction))*");
             NodeArray<IfClauseNode>? _RepeatHelper_if_clause_Star()
             {
                 IfClauseNode? _node = rule_IfClause();
@@ -8982,7 +10665,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = null;
             goto _Return;
         }
+        base.LogRuleFailed("ForIfClause");
     _Return:
+        base.LogRuleExiting("ForIfClause");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ForIfClause
@@ -8991,10 +10677,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ('if' Disjunction -> IfClause(Condition=disjunction))
     IfClauseNode? rule_IfClause()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("IfClause");
         int _mark = base.Mark();
         IfClauseNode? _res = null;
         {
             // 'if' Disjunction -> IfClause(Condition=disjunction)
+            base.LogAlternativeEntered("'if' Disjunction");
             IGreenNode? _string_token;
             IGreenNode? disjunction;
             if ((_string_token = Expect("if")) is not null
@@ -9002,6 +10691,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (disjunction = rule_Disjunction()) is not null
             )
             {
+                base.LogAlternativeSucceed("'if' Disjunction");
                 _res = new IfClauseNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9011,9 +10701,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'if' Disjunction");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("IfClause");
     _Return:
+        base.LogRuleExiting("IfClause");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // IfClause
@@ -9022,10 +10716,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // ListComprehension: '[' StarNamedExpression ForIfClause+ ']' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
     ListComprehensionNode? rule_ListComprehension()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("ListComprehension");
         int _mark = base.Mark();
         ListComprehensionNode? _res = null;
         {
             // '[' StarNamedExpression ForIfClause+ ']' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
+            base.LogAlternativeEntered("'[' StarNamedExpression ForIfClause+ ']'");
             IGreenNode? left_square_bracket;
             IGreenNode? star_named_expression;
             INodeArray<ForIfClauseNode>? for_if_clause_Plus;
@@ -9039,6 +10736,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
+                base.LogAlternativeSucceed("'[' StarNamedExpression ForIfClause+ ']'");
                 _res = new ListComprehensionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9050,6 +10748,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'[' StarNamedExpression ForIfClause+ ']'");
             NodeArray<ForIfClauseNode>? _RepeatHelper_for_if_clause_Plus()
             {
                 ForIfClauseNode? _node = rule_ForIfClause();
@@ -9063,7 +10762,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("ListComprehension");
     _Return:
+        base.LogRuleExiting("ListComprehension");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // ListComprehension
@@ -9072,10 +10774,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // SetComprehension: '{' StarNamedExpression ForIfClause+ '}' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
     SetComprehensionNode? rule_SetComprehension()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SetComprehension");
         int _mark = base.Mark();
         SetComprehensionNode? _res = null;
         {
             // '{' StarNamedExpression ForIfClause+ '}' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
+            base.LogAlternativeEntered("'{' StarNamedExpression ForIfClause+ '}'");
             IGreenNode? left_brace;
             IGreenNode? star_named_expression;
             INodeArray<ForIfClauseNode>? for_if_clause_Plus;
@@ -9089,6 +10794,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' StarNamedExpression ForIfClause+ '}'");
                 _res = new SetComprehensionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9100,6 +10806,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' StarNamedExpression ForIfClause+ '}'");
             NodeArray<ForIfClauseNode>? _RepeatHelper_for_if_clause_Plus()
             {
                 ForIfClauseNode? _node = rule_ForIfClause();
@@ -9113,7 +10820,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SetComprehension");
     _Return:
+        base.LogRuleExiting("SetComprehension");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SetComprehension
@@ -9122,10 +10832,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // GeneratorExpression: '(' StarNamedExpression ForIfClause+ ')' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
     GeneratorExpressionNode? rule_GeneratorExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("GeneratorExpression");
         int _mark = base.Mark();
         GeneratorExpressionNode? _res = null;
         {
             // '(' StarNamedExpression ForIfClause+ ')' -> new(Expression=star_named_expression, Iterators=for_if_clause_Plus)
+            base.LogAlternativeEntered("'(' StarNamedExpression ForIfClause+ ')'");
             IGreenNode? left_paren;
             IGreenNode? star_named_expression;
             INodeArray<ForIfClauseNode>? for_if_clause_Plus;
@@ -9139,6 +10852,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' StarNamedExpression ForIfClause+ ')'");
                 _res = new GeneratorExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9150,6 +10864,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' StarNamedExpression ForIfClause+ ')'");
             NodeArray<ForIfClauseNode>? _RepeatHelper_for_if_clause_Plus()
             {
                 ForIfClauseNode? _node = rule_ForIfClause();
@@ -9163,7 +10878,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("GeneratorExpression");
     _Return:
+        base.LogRuleExiting("GeneratorExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // GeneratorExpression
@@ -9177,10 +10895,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     DictComprehensionNode? rule_DictComprehension()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DictComprehension");
         int _mark = base.Mark();
         DictComprehensionNode? _res = null;
         {
             // '{' Expression ':' Expression ForIfClause+ '}' -> KeyValueDictComprehension(Key=expression, Value=expression1, Iterators=for_if_clause_Plus)
+            base.LogAlternativeEntered("'{' Expression ':' Expression ForIfClause+ '}'");
             IGreenNode? left_brace;
             IGreenNode? expression;
             IGreenNode? colon;
@@ -9200,6 +10921,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' Expression ':' Expression ForIfClause+ '}'");
                 _res = new KeyValueDictComprehensionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9213,6 +10935,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' Expression ':' Expression ForIfClause+ '}'");
             NodeArray<ForIfClauseNode>? _RepeatHelper_for_if_clause_Plus()
             {
                 ForIfClauseNode? _node = rule_ForIfClause();
@@ -9228,6 +10951,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // '{' '**' Expression ForIfClause+ '}' -> UnpackingDictComprehension(Expression=expression, Iterators=for_if_clause_Plus)
+            base.LogAlternativeEntered("'{' '**' Expression ForIfClause+ '}'");
             IGreenNode? left_brace;
             IGreenNode? double_star;
             IGreenNode? expression;
@@ -9244,6 +10968,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_brace = Expect(TokenType.RightBrace)) is not null
             )
             {
+                base.LogAlternativeSucceed("'{' '**' Expression ForIfClause+ '}'");
                 _res = new UnpackingDictComprehensionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9256,6 +10981,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'{' '**' Expression ForIfClause+ '}'");
             NodeArray<ForIfClauseNode>? _RepeatHelper_for_if_clause_Plus()
             {
                 ForIfClauseNode? _node = rule_ForIfClause();
@@ -9269,7 +10995,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DictComprehension");
     _Return:
+        base.LogRuleExiting("DictComprehension");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DictComprehension
@@ -9284,15 +11013,21 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Kwargs -',' -> OnlyKeywordArguments(Value=kwargs)
     ArgumentsNode? rule_Arguments()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Arguments");
         int _mark = base.Mark();
-        if (_memo_Arguments.TryGetCache(_mark, out ArgumentsNode? _memoized))
+        if (_memo_Arguments.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("Arguments", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         ArgumentsNode? _res = null;
         {
             // PositionalArgument+.',' [',' Kwargs -> KeywordArgumentsPart(Value=kwargs)] -',' -> WithPositionalArguments(
             //         PositionalArgumentsPart=positional_argument_Gather, KeywordArgumentsPart=keyword_arguments_part)
+            base.LogAlternativeEntered("PositionalArgument+.',' [',' Kwargs -> KeywordArgumentsPart(Value=kwargs)] -','");
             INodeArray<GreenNode>? positional_argument_Gather;
             IGreenNode? keyword_arguments_part;
             IGreenNode? comma;
@@ -9303,6 +11038,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("PositionalArgument+.',' [',' Kwargs -> KeywordArgumentsPart(Value=kwargs)] -','");
                 _res = new WithPositionalArgumentsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9313,6 +11049,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("PositionalArgument+.',' [',' Kwargs -> KeywordArgumentsPart(Value=kwargs)] -','");
             NodeArray<GreenNode>? _GatherHelper_positional_argument_Gather()
             {
                 IGreenNode? _node = rule_PositionalArgument();
@@ -9339,6 +11076,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // Kwargs -',' -> OnlyKeywordArguments(Value=kwargs)
+            base.LogAlternativeEntered("Kwargs -','");
             IGreenNode? kwargs;
             IGreenNode? comma;
             if ((kwargs = rule_Kwargs()) is not null
@@ -9346,6 +11084,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("Kwargs -','");
                 _res = new OnlyKeywordArgumentsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9355,10 +11094,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Kwargs -','");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Arguments");
     _Return:
-        _memo_Arguments.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("Arguments", _mark, _res == null);
+        base.LogRuleExiting("Arguments");
+        base.LogDecreaseLevel();
+        _memo_Arguments.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Arguments
@@ -9367,10 +11111,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // [',' Kwargs -> KeywordArgumentsPart(Value=kwargs)]
     KeywordArgumentsPartNode? rule_KeywordArgumentsPart()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("KeywordArgumentsPart");
         int _mark = base.Mark();
         KeywordArgumentsPartNode? _res = null;
         {
             // ',' Kwargs -> KeywordArgumentsPart(Value=kwargs)
+            base.LogAlternativeEntered("',' Kwargs");
             IGreenNode? comma;
             IGreenNode? kwargs;
             if ((comma = Expect(TokenType.Comma)) is not null
@@ -9378,6 +11125,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (kwargs = rule_Kwargs()) is not null
             )
             {
+                base.LogAlternativeSucceed("',' Kwargs");
                 _res = new KeywordArgumentsPartNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9387,9 +11135,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("',' Kwargs");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("KeywordArgumentsPart");
     _Return:
+        base.LogRuleExiting("KeywordArgumentsPart");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // KeywordArgumentsPart
@@ -9401,19 +11153,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | NamedExpression !'='
     PositionalArgumentNode? rule_PositionalArgument()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("PositionalArgument");
         int _mark = base.Mark();
         PositionalArgumentNode? _res = null;
         {
             // StarredExpression !'='
+            base.LogAlternativeEntered("StarredExpression !'='");
             IGreenNode? starred_expression;
             if ((starred_expression = rule_StarredExpression()) is not null
                 &&
                 _LookaheadHelper_equal()
             )
             {
+                base.LogAlternativeSucceed("StarredExpression !'='");
                 _res = (StarredExpressionNode?)starred_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarredExpression !'='");
             bool _LookaheadHelper_equal()
             {
                 int _mark = base.Mark();
@@ -9425,15 +11182,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // NamedExpression !'='
+            base.LogAlternativeEntered("NamedExpression !'='");
             IGreenNode? named_expression;
             if ((named_expression = rule_NamedExpression()) is not null
                 &&
                 _LookaheadHelper_equal()
             )
             {
+                base.LogAlternativeSucceed("NamedExpression !'='");
                 _res = (NamedExpressionNode?)named_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("NamedExpression !'='");
             bool _LookaheadHelper_equal()
             {
                 int _mark = base.Mark();
@@ -9443,7 +11203,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("PositionalArgument");
     _Return:
+        base.LogRuleExiting("PositionalArgument");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // PositionalArgument
@@ -9458,11 +11221,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | KwargOrDoubleStarred+.',' -> DoubleStarredKwargs(Items=kwarg_or_double_starred_Gather)
     KwargsNode? rule_Kwargs()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Kwargs");
         int _mark = base.Mark();
         KwargsNode? _res = null;
         {
             // KwargOrStarred+.',' ',' KwargOrDoubleStarred+.',' -> BothStarredKwargs(
             //         OneStarred=kwarg_or_starred_Gather, DoubleStarred=kwarg_or_double_starred_Gather)
+            base.LogAlternativeEntered("KwargOrStarred+.',' ',' KwargOrDoubleStarred+.','");
             INodeArray<GreenNode>? kwarg_or_starred_Gather;
             IGreenNode? comma;
             INodeArray<GreenNode>? kwarg_or_double_starred_Gather;
@@ -9473,6 +11239,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (kwarg_or_double_starred_Gather = _GatherHelper_kwarg_or_double_starred_Gather()) is not null
             )
             {
+                base.LogAlternativeSucceed("KwargOrStarred+.',' ',' KwargOrDoubleStarred+.','");
                 _res = new BothStarredKwargsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9483,6 +11250,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("KwargOrStarred+.',' ',' KwargOrDoubleStarred+.','");
             NodeArray<GreenNode>? _GatherHelper_kwarg_or_starred_Gather()
             {
                 IGreenNode? _node = rule_KwargOrStarred();
@@ -9531,9 +11299,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // KwargOrStarred+.',' -> OneStarredKwargs(Items=kwarg_or_starred_Gather)
+            base.LogAlternativeEntered("KwargOrStarred+.','");
             INodeArray<GreenNode>? kwarg_or_starred_Gather;
             if ((kwarg_or_starred_Gather = _GatherHelper_kwarg_or_starred_Gather()) is not null)
             {
+                base.LogAlternativeSucceed("KwargOrStarred+.','");
                 _res = new OneStarredKwargsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9542,6 +11312,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("KwargOrStarred+.','");
             NodeArray<GreenNode>? _GatherHelper_kwarg_or_starred_Gather()
             {
                 IGreenNode? _node = rule_KwargOrStarred();
@@ -9568,9 +11339,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // KwargOrDoubleStarred+.',' -> DoubleStarredKwargs(Items=kwarg_or_double_starred_Gather)
+            base.LogAlternativeEntered("KwargOrDoubleStarred+.','");
             INodeArray<GreenNode>? kwarg_or_double_starred_Gather;
             if ((kwarg_or_double_starred_Gather = _GatherHelper_kwarg_or_double_starred_Gather()) is not null)
             {
+                base.LogAlternativeSucceed("KwargOrDoubleStarred+.','");
                 _res = new DoubleStarredKwargsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9579,6 +11352,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("KwargOrDoubleStarred+.','");
             NodeArray<GreenNode>? _GatherHelper_kwarg_or_double_starred_Gather()
             {
                 IGreenNode? _node = rule_KwargOrDoubleStarred();
@@ -9603,7 +11377,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Kwargs");
     _Return:
+        base.LogRuleExiting("Kwargs");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Kwargs
@@ -9615,29 +11392,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | StarExpression
     KwargOrStarredNode? rule_KwargOrStarred()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("KwargOrStarred");
         int _mark = base.Mark();
         KwargOrStarredNode? _res = null;
         {
             // Kwarg
+            base.LogAlternativeEntered("Kwarg");
             IGreenNode? kwarg;
             if ((kwarg = rule_Kwarg()) is not null)
             {
+                base.LogAlternativeSucceed("Kwarg");
                 _res = (KwargNode?)kwarg;
                 goto _Return;
             }
+            base.LogAlternativeFailed("Kwarg");
         }
         base.Reset(_mark);
         {
             // StarExpression
+            base.LogAlternativeEntered("StarExpression");
             IGreenNode? star_expression;
             if ((star_expression = rule_StarExpression()) is not null)
             {
+                base.LogAlternativeSucceed("StarExpression");
                 _res = (StarExpressionNode?)star_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("KwargOrStarred");
     _Return:
+        base.LogRuleExiting("KwargOrStarred");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // KwargOrStarred
@@ -9649,29 +11437,40 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | DoubleStarredExpression
     KwargOrDoubleStarredNode? rule_KwargOrDoubleStarred()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("KwargOrDoubleStarred");
         int _mark = base.Mark();
         KwargOrDoubleStarredNode? _res = null;
         {
             // Kwarg
+            base.LogAlternativeEntered("Kwarg");
             IGreenNode? kwarg;
             if ((kwarg = rule_Kwarg()) is not null)
             {
+                base.LogAlternativeSucceed("Kwarg");
                 _res = (KwargNode?)kwarg;
                 goto _Return;
             }
+            base.LogAlternativeFailed("Kwarg");
         }
         base.Reset(_mark);
         {
             // DoubleStarredExpression
+            base.LogAlternativeEntered("DoubleStarredExpression");
             IGreenNode? double_starred_expression;
             if ((double_starred_expression = rule_DoubleStarredExpression()) is not null)
             {
+                base.LogAlternativeSucceed("DoubleStarredExpression");
                 _res = (DoubleStarredExpressionNode?)double_starred_expression;
                 goto _Return;
             }
+            base.LogAlternativeFailed("DoubleStarredExpression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("KwargOrDoubleStarred");
     _Return:
+        base.LogRuleExiting("KwargOrDoubleStarred");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // KwargOrDoubleStarred
@@ -9680,10 +11479,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // DoubleStarredExpression: '**' Expression -> new(Expression=expression)
     DoubleStarredExpressionNode? rule_DoubleStarredExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DoubleStarredExpression");
         int _mark = base.Mark();
         DoubleStarredExpressionNode? _res = null;
         {
             // '**' Expression -> new(Expression=expression)
+            base.LogAlternativeEntered("'**' Expression");
             IGreenNode? double_star;
             IGreenNode? expression;
             if ((double_star = Expect(TokenType.DoubleStar)) is not null
@@ -9691,6 +11493,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'**' Expression");
                 _res = new DoubleStarredExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9700,9 +11503,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'**' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DoubleStarredExpression");
     _Return:
+        base.LogRuleExiting("DoubleStarredExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DoubleStarredExpression
@@ -9711,10 +11518,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StarredExpression: '*' Expression -> new(Expression=expression)
     StarredExpressionNode? rule_StarredExpression()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarredExpression");
         int _mark = base.Mark();
         StarredExpressionNode? _res = null;
         {
             // '*' Expression -> new(Expression=expression)
+            base.LogAlternativeEntered("'*' Expression");
             IGreenNode? star;
             IGreenNode? expression;
             if ((star = Expect(TokenType.Star)) is not null
@@ -9722,6 +11532,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("'*' Expression");
                 _res = new StarredExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9731,9 +11542,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarredExpression");
     _Return:
+        base.LogRuleExiting("StarredExpression");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarredExpression
@@ -9742,10 +11557,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Kwarg: Name '=' Expression -> new(Keyword=name, Value=expression)
     KwargNode? rule_Kwarg()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Kwarg");
         int _mark = base.Mark();
         KwargNode? _res = null;
         {
             // Name '=' Expression -> new(Keyword=name, Value=expression)
+            base.LogAlternativeEntered("Name '=' Expression");
             IGreenNode? name;
             IGreenNode? equal;
             IGreenNode? expression;
@@ -9756,6 +11574,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (expression = rule_Expression()) is not null
             )
             {
+                base.LogAlternativeSucceed("Name '=' Expression");
                 _res = new KwargNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9766,9 +11585,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name '=' Expression");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("Kwarg");
     _Return:
+        base.LogRuleExiting("Kwarg");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // Kwarg
@@ -9779,16 +11602,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | StarTarget+.',' -','
     StarTargetsNode? rule_StarTargets()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarTargets");
         int _mark = base.Mark();
         StarTargetsNode? _res = null;
         {
             // StarTarget !','
+            base.LogAlternativeEntered("StarTarget !','");
             IGreenNode? star_target;
             if ((star_target = rule_StarTarget()) is not null
                 &&
                 _LookaheadHelper_comma()
             )
             {
+                base.LogAlternativeSucceed("StarTarget !','");
                 _res = new StarTargetsNode_Derived0()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9797,6 +11624,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarTarget !','");
             bool _LookaheadHelper_comma()
             {
                 int _mark = base.Mark();
@@ -9808,6 +11636,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // StarTarget+.',' -','
+            base.LogAlternativeEntered("StarTarget+.',' -','");
             INodeArray<GreenNode>? star_target_Gather;
             IGreenNode? comma;
             if ((star_target_Gather = _GatherHelper_star_target_Gather()) is not null
@@ -9815,6 +11644,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("StarTarget+.',' -','");
                 _res = new StarTargetsNode_Derived1()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9824,6 +11654,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarTarget+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_star_target_Gather()
             {
                 GreenNode? _node = rule_StarTarget();
@@ -9848,7 +11679,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarTargets");
     _Return:
+        base.LogRuleExiting("StarTargets");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarTargets
@@ -9859,10 +11693,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | TargetWithStarAtom -> NotStarTarget(Target=target_with_star_atom)
     StarTargetNode? rule_StarTarget()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarTarget");
         int _mark = base.Mark();
         StarTargetNode? _res = null;
         {
             // '*' TargetWithStarAtom -> ActuallyStarTarget(Target=target_with_star_atom)
+            base.LogAlternativeEntered("'*' TargetWithStarAtom");
             IGreenNode? star;
             IGreenNode? target_with_star_atom;
             if ((star = Expect(TokenType.Star)) is not null
@@ -9870,6 +11707,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (target_with_star_atom = rule_TargetWithStarAtom()) is not null
             )
             {
+                base.LogAlternativeSucceed("'*' TargetWithStarAtom");
                 _res = new ActuallyStarTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9879,13 +11717,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'*' TargetWithStarAtom");
         }
         base.Reset(_mark);
         {
             // TargetWithStarAtom -> NotStarTarget(Target=target_with_star_atom)
+            base.LogAlternativeEntered("TargetWithStarAtom");
             IGreenNode? target_with_star_atom;
             if ((target_with_star_atom = rule_TargetWithStarAtom()) is not null)
             {
+                base.LogAlternativeSucceed("TargetWithStarAtom");
                 _res = new NotStarTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9894,9 +11735,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetWithStarAtom");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarTarget");
     _Return:
+        base.LogRuleExiting("StarTarget");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarTarget
@@ -9908,10 +11753,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | StarAtom -> SingleStarTarget(Atom=star_atom)
     TargetWithStarAtomNode? rule_TargetWithStarAtom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TargetWithStarAtom");
         int _mark = base.Mark();
         TargetWithStarAtomNode? _res = null;
         {
             // TargetPrimary '.' Name !TargetPrimaryContinuation -> DottedStarTarget(Left=target_primary, Right=name)
+            base.LogAlternativeEntered("TargetPrimary '.' Name !TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? dot;
             IGreenNode? name;
@@ -9924,6 +11772,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '.' Name !TargetPrimaryContinuation");
                 _res = new DottedStarTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9934,6 +11783,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '.' Name !TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -9945,6 +11795,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TargetPrimary '[' Slices ']' !TargetPrimaryContinuation -> SubscriptStarTarget(Primary=target_primary, Subscript=slices)
+            base.LogAlternativeEntered("TargetPrimary '[' Slices ']' !TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? left_square_bracket;
             IGreenNode? slices;
@@ -9960,6 +11811,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '[' Slices ']' !TargetPrimaryContinuation");
                 _res = new SubscriptStarTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9971,6 +11823,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '[' Slices ']' !TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -9982,9 +11835,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // StarAtom -> SingleStarTarget(Atom=star_atom)
+            base.LogAlternativeEntered("StarAtom");
             IGreenNode? star_atom;
             if ((star_atom = rule_StarAtom()) is not null)
             {
+                base.LogAlternativeSucceed("StarAtom");
                 _res = new SingleStarTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -9993,9 +11848,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarAtom");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TargetWithStarAtom");
     _Return:
+        base.LogRuleExiting("TargetWithStarAtom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TargetWithStarAtom
@@ -10008,13 +11867,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | '[' -StarTargetSequence ']' -> ListStarAtom(Items=star_target_sequence)
     StarAtomNode? rule_StarAtom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarAtom");
         int _mark = base.Mark();
         StarAtomNode? _res = null;
         {
             // Name -> NameStarAtom(Value=name)
+            base.LogAlternativeEntered("Name");
             IGreenNode? name;
             if ((name = Expect(TokenType.Name)) is not null)
             {
+                base.LogAlternativeSucceed("Name");
                 _res = new NameStarAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10023,10 +11886,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name");
         }
         base.Reset(_mark);
         {
             // '(' -StarTargetSequence ')' -> TupleStarAtom(Items=star_target_sequence)
+            base.LogAlternativeEntered("'(' -StarTargetSequence ')'");
             IGreenNode? left_paren;
             IGreenNode? star_target_sequence;
             IGreenNode? right_paren;
@@ -10037,6 +11902,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_paren = Expect(TokenType.RightParen)) is not null
             )
             {
+                base.LogAlternativeSucceed("'(' -StarTargetSequence ')'");
                 _res = new TupleStarAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10047,10 +11913,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'(' -StarTargetSequence ')'");
         }
         base.Reset(_mark);
         {
             // '[' -StarTargetSequence ']' -> ListStarAtom(Items=star_target_sequence)
+            base.LogAlternativeEntered("'[' -StarTargetSequence ']'");
             IGreenNode? left_square_bracket;
             IGreenNode? star_target_sequence;
             IGreenNode? right_square_bracket;
@@ -10061,6 +11929,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 (right_square_bracket = Expect(TokenType.RightSquareBracket)) is not null
             )
             {
+                base.LogAlternativeSucceed("'[' -StarTargetSequence ']'");
                 _res = new ListStarAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10071,9 +11940,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("'[' -StarTargetSequence ']'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarAtom");
     _Return:
+        base.LogRuleExiting("StarAtom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarAtom
@@ -10082,10 +11955,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StarTargetSequence: StarTarget+.',' -',' -> new(Items=star_target_Gather)
     StarTargetSequenceNode? rule_StarTargetSequence()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarTargetSequence");
         int _mark = base.Mark();
         StarTargetSequenceNode? _res = null;
         {
             // StarTarget+.',' -',' -> new(Items=star_target_Gather)
+            base.LogAlternativeEntered("StarTarget+.',' -','");
             INodeArray<GreenNode>? star_target_Gather;
             IGreenNode? comma;
             if ((star_target_Gather = _GatherHelper_star_target_Gather()) is not null
@@ -10093,6 +11969,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 ((comma = Expect(TokenType.Comma)) is not null || true) // Optional
             )
             {
+                base.LogAlternativeSucceed("StarTarget+.',' -','");
                 _res = new StarTargetSequenceNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10102,6 +11979,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("StarTarget+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_star_target_Gather()
             {
                 GreenNode? _node = rule_StarTarget();
@@ -10126,7 +12004,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("StarTargetSequence");
     _Return:
+        base.LogRuleExiting("StarTargetSequence");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // StarTargetSequence
@@ -10138,13 +12019,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     SingleTargetNode? rule_SingleTarget()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SingleTarget");
         int _mark = base.Mark();
         SingleTargetNode? _res = null;
         {
             // SingleSubscriptAttributeTarget -> SubscriptSingleTarget(Value=single_subscript_attribute_target)
+            base.LogAlternativeEntered("SingleSubscriptAttributeTarget");
             IGreenNode? single_subscript_attribute_target;
             if ((single_subscript_attribute_target = rule_SingleSubscriptAttributeTarget()) is not null)
             {
+                base.LogAlternativeSucceed("SingleSubscriptAttributeTarget");
                 _res = new SubscriptSingleTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10153,13 +12038,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("SingleSubscriptAttributeTarget");
         }
         base.Reset(_mark);
         {
             // Name -> NameSingleTarget(Value=name)
+            base.LogAlternativeEntered("Name");
             IGreenNode? name;
             if ((name = Expect(TokenType.Name)) is not null)
             {
+                base.LogAlternativeSucceed("Name");
                 _res = new NameSingleTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10168,9 +12056,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SingleTarget");
     _Return:
+        base.LogRuleExiting("SingleTarget");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SingleTarget
@@ -10181,10 +12073,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | TargetPrimary '[' Slices ']' !TargetPrimaryContinuation -> SingleSubscriptTarget(Primary=target_primary, Subscript=slices)
     SingleSubscriptAttributeTargetNode? rule_SingleSubscriptAttributeTarget()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SingleSubscriptAttributeTarget");
         int _mark = base.Mark();
         SingleSubscriptAttributeTargetNode? _res = null;
         {
             // TargetPrimary '.' Name !TargetPrimaryContinuation -> SingleAttributeTarget(Primary=target_primary, AttributeName=name)
+            base.LogAlternativeEntered("TargetPrimary '.' Name !TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? dot;
             IGreenNode? name;
@@ -10197,6 +12092,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '.' Name !TargetPrimaryContinuation");
                 _res = new SingleAttributeTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10207,6 +12103,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '.' Name !TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10218,6 +12115,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TargetPrimary '[' Slices ']' !TargetPrimaryContinuation -> SingleSubscriptTarget(Primary=target_primary, Subscript=slices)
+            base.LogAlternativeEntered("TargetPrimary '[' Slices ']' !TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? left_square_bracket;
             IGreenNode? slices;
@@ -10233,6 +12131,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '[' Slices ']' !TargetPrimaryContinuation");
                 _res = new SingleSubscriptTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10244,6 +12143,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '[' Slices ']' !TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10253,7 +12153,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("SingleSubscriptAttributeTarget");
     _Return:
+        base.LogRuleExiting("SingleSubscriptAttributeTarget");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // SingleSubscriptAttributeTarget
@@ -10262,17 +12165,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     private readonly IMemoContainer<TargetPrimaryNode> _memo_TargetPrimary = CreateContainer<TargetPrimaryNode>();
     TargetPrimaryNode? rule_TargetPrimary()
     {
+        base.LogIncreaseLevel();
+        base.LogLeftRecursionRuleEntered("TargetPrimary");
         TargetPrimaryNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_TargetPrimary.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("TargetPrimary", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
+        base.LogStartGrow("TargetPrimary");
         while (true)
         {
-            _memo_TargetPrimary.UpdateCache(_mark, _res);
+            _memo_TargetPrimary.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
+            base.LogNextGrow("TargetPrimary");
             var _rawResult = raw_rule_TargetPrimary();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
@@ -10282,6 +12192,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
+        base.LogEndGrow("TargetPrimary", _res == null);
+        base.LogDecreaseLevel();
         return _res;
     }
     // @memo
@@ -10293,10 +12205,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | Atom &TargetPrimaryContinuation -> AtomTarget(Value=atom)
     TargetPrimaryNode? raw_rule_TargetPrimary()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TargetPrimary");
         int _mark = base.Mark();
         TargetPrimaryNode? _res = null;
         {
             // TargetPrimary '.' Name &TargetPrimaryContinuation -> AttributeTarget(Primary=target_primary, AttributeName=name)
+            base.LogAlternativeEntered("TargetPrimary '.' Name &TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? dot;
             IGreenNode? name;
@@ -10309,6 +12224,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '.' Name &TargetPrimaryContinuation");
                 _res = new AttributeTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10319,6 +12235,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '.' Name &TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10330,6 +12247,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TargetPrimary '[' Slices ']' &TargetPrimaryContinuation -> SubscriptTarget(Primary=target_primary, Subscript=slices)
+            base.LogAlternativeEntered("TargetPrimary '[' Slices ']' &TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? left_square_bracket;
             IGreenNode? slices;
@@ -10345,6 +12263,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '[' Slices ']' &TargetPrimaryContinuation");
                 _res = new SubscriptTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10356,6 +12275,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '[' Slices ']' &TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10367,6 +12287,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TargetPrimary GeneratorExpression &TargetPrimaryContinuation -> GeneratorTarget(Primary=target_primary, Generator=generator_expression)
+            base.LogAlternativeEntered("TargetPrimary GeneratorExpression &TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? generator_expression;
             if ((target_primary = rule_TargetPrimary()) is not null
@@ -10376,6 +12297,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary GeneratorExpression &TargetPrimaryContinuation");
                 _res = new GeneratorTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10385,6 +12307,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary GeneratorExpression &TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10396,6 +12319,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TargetPrimary '(' -Arguments ')' &TargetPrimaryContinuation -> CallTarget(Primary=target_primary, Arguments=arguments)
+            base.LogAlternativeEntered("TargetPrimary '(' -Arguments ')' &TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? left_paren;
             IGreenNode? arguments;
@@ -10411,6 +12335,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '(' -Arguments ')' &TargetPrimaryContinuation");
                 _res = new CallTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10422,6 +12347,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '(' -Arguments ')' &TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10433,12 +12359,14 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // Atom &TargetPrimaryContinuation -> AtomTarget(Value=atom)
+            base.LogAlternativeEntered("Atom &TargetPrimaryContinuation");
             IGreenNode? atom;
             if ((atom = rule_Atom()) is not null
                 &&
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("Atom &TargetPrimaryContinuation");
                 _res = new AtomTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10447,6 +12375,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Atom &TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10456,7 +12385,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TargetPrimary");
     _Return:
+        base.LogRuleExiting("TargetPrimary");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TargetPrimary
@@ -10473,39 +12405,53 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     TokenNode? rule_TargetPrimaryContinuation()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TargetPrimaryContinuation");
         int _mark = base.Mark();
         TokenNode? _res = null;
         {
             // '('
+            base.LogAlternativeEntered("'('");
             IGreenNode? left_paren;
             if ((left_paren = Expect(TokenType.LeftParen)) is not null)
             {
+                base.LogAlternativeSucceed("'('");
                 _res = (TokenNode?)left_paren;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'('");
         }
         base.Reset(_mark);
         {
             // '['
+            base.LogAlternativeEntered("'['");
             IGreenNode? left_square_bracket;
             if ((left_square_bracket = Expect(TokenType.LeftSquareBracket)) is not null)
             {
+                base.LogAlternativeSucceed("'['");
                 _res = (TokenNode?)left_square_bracket;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'['");
         }
         base.Reset(_mark);
         {
             // '.'
+            base.LogAlternativeEntered("'.'");
             IGreenNode? dot;
             if ((dot = Expect(TokenType.Dot)) is not null)
             {
+                base.LogAlternativeSucceed("'.'");
                 _res = (TokenNode?)dot;
                 goto _Return;
             }
+            base.LogAlternativeFailed("'.'");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("TargetPrimaryContinuation");
     _Return:
+        base.LogRuleExiting("TargetPrimaryContinuation");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // TargetPrimaryContinuation
@@ -10519,14 +12465,20 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | DeleteTargetAtom -> DeleteAtomTarget(Value=delete_target_atom)
     DeleteTargetNode? rule_DeleteTarget()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DeleteTarget");
         int _mark = base.Mark();
-        if (_memo_DeleteTarget.TryGetCache(_mark, out DeleteTargetNode? _memoized))
+        if (_memo_DeleteTarget.TryGetCache(_mark, out var _memoized))
         {
-            return _memoized;
+            base.LogRuleMemoUsed("DeleteTarget", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
         }
         DeleteTargetNode? _res = null;
         {
             // TargetPrimary '.' Name !TargetPrimaryContinuation -> DeleteAttributeTarget(Primary=target_primary, AttributeName=name)
+            base.LogAlternativeEntered("TargetPrimary '.' Name !TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? dot;
             IGreenNode? name;
@@ -10539,6 +12491,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '.' Name !TargetPrimaryContinuation");
                 _res = new DeleteAttributeTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10549,6 +12502,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '.' Name !TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10560,6 +12514,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // TargetPrimary '[' Slices ']' &TargetPrimaryContinuation -> DeleteSubscriptTarget(Primary=target_primary, Subscript=slices)
+            base.LogAlternativeEntered("TargetPrimary '[' Slices ']' &TargetPrimaryContinuation");
             IGreenNode? target_primary;
             IGreenNode? left_square_bracket;
             IGreenNode? slices;
@@ -10575,6 +12530,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _LookaheadHelper_target_primary_continuation()
             )
             {
+                base.LogAlternativeSucceed("TargetPrimary '[' Slices ']' &TargetPrimaryContinuation");
                 _res = new DeleteSubscriptTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10586,6 +12542,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("TargetPrimary '[' Slices ']' &TargetPrimaryContinuation");
             bool _LookaheadHelper_target_primary_continuation()
             {
                 int _mark = base.Mark();
@@ -10597,9 +12554,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         base.Reset(_mark);
         {
             // DeleteTargetAtom -> DeleteAtomTarget(Value=delete_target_atom)
+            base.LogAlternativeEntered("DeleteTargetAtom");
             IGreenNode? delete_target_atom;
             if ((delete_target_atom = rule_DeleteTargetAtom()) is not null)
             {
+                base.LogAlternativeSucceed("DeleteTargetAtom");
                 _res = new DeleteAtomTargetNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10608,10 +12567,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("DeleteTargetAtom");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DeleteTarget");
     _Return:
-        _memo_DeleteTarget.AddCache(_mark, _res);
+        base.LogRuleMemoCreated("DeleteTarget", _mark, _res == null);
+        base.LogRuleExiting("DeleteTarget");
+        base.LogDecreaseLevel();
+        _memo_DeleteTarget.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // DeleteTarget
@@ -10620,13 +12584,17 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // DeleteTargetAtom: Name -> new(Value=name)
     DeleteTargetAtomNode? rule_DeleteTargetAtom()
     {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("DeleteTargetAtom");
         int _mark = base.Mark();
         DeleteTargetAtomNode? _res = null;
         {
             // Name -> new(Value=name)
+            base.LogAlternativeEntered("Name");
             IGreenNode? name;
             if ((name = Expect(TokenType.Name)) is not null)
             {
+                base.LogAlternativeSucceed("Name");
                 _res = new DeleteTargetAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
@@ -10635,9 +12603,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 };
                 goto _Return;
             }
+            base.LogAlternativeFailed("Name");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("DeleteTargetAtom");
     _Return:
+        base.LogRuleExiting("DeleteTargetAtom");
+        base.LogDecreaseLevel();
         return _res;
     }
     #endregion // DeleteTargetAtom
