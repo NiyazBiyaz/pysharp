@@ -9,6 +9,8 @@ public class TokenNodeStream(ITokenizer tokenizer) : ITokenNodeStream
     private readonly List<TokenNode> tokens = [];
     private readonly ITokenizer tokenizer = tokenizer;
 
+    private TokenPosition lastTokenEndPosition = default;
+
     public int Index
     {
         get;
@@ -43,20 +45,22 @@ public class TokenNodeStream(ITokenizer tokenizer) : ITokenNodeStream
                 var tok = tokenizer.ReadNext();
                 if (tok.Type.IsTrivia)
                 {
-                    node = new(tok, []);
+                    node = new(tok, [], lastTokenEndPosition);
                     trivias.Add(node);
                 }
                 else if (tok.Type.IsError)
                 {
                     Debug.Assert(tokenizer.Error != TokenizerError.NoError);
 
-                    node = new InvalidTokenNode(tok, [], tokenizer.ErrorMessage, tokenizer.Error);
+                    node = new InvalidTokenNode(tok, [], lastTokenEndPosition, tokenizer.ErrorMessage, tokenizer.Error);
                     trivias.Add(node);
                 }
                 else
                 {
-                    node = new(tok, trivias);
+                    node = new(tok, trivias, lastTokenEndPosition);
                 }
+
+                lastTokenEndPosition = tok.End;
             }
             while (node.Type.IsTrivia || node.Type.IsError);
 

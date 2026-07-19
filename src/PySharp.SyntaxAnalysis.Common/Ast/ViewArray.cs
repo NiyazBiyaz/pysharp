@@ -39,11 +39,14 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, TokenPosi
 
     private void ensureViews()
     {
+        var positionAccumulator = Position;
         for (int index = 0; index < views.Length; index++)
         {
+            positionAccumulator += greens[index].FullOffset2D;
+
             if (views[index] == null)
             {
-                views[index] = (TView)greens[index].GetView(Position, Parent);
+                views[index] = (TView)greens[index].GetView(positionAccumulator, Parent);
             }
         }
     }

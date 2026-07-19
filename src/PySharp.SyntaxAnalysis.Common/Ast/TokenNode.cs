@@ -6,16 +6,16 @@ namespace PySharp.SyntaxAnalysis.Common.Ast;
 public record TokenNode : GreenNode
 {
     public override NodeArray<GreenNode>? Children => null;
-    public override TokenPosition FullOffset2D { get; protected init; }
+    public override TokenPosition FullOffset2D { get; }
     public TokenPosition Offset2D { get; }
     public TokenType Type { get; }
     public NodeArray<TokenNode> Leading { get; }
     public string RawString { get; }
 
-    public TokenNode(in Token token, IEnumerable<TokenNode> leading)
+    public TokenNode(in Token token, IEnumerable<TokenNode> leading, TokenPosition lastTokenPosition)
     {
         Type = token.Type;
-        Offset2D = token.End - token.Start;
+        Offset2D = token.End - lastTokenPosition;
 
         TokenPosition acc = TokenPosition.StartOfFile;
         foreach (var node in leading)

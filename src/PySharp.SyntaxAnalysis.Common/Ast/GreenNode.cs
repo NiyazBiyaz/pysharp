@@ -7,15 +7,17 @@ public abstract record GreenNode : IGreenNode
 {
     public virtual TokenPosition FullOffset2D
     {
-        get;
-        protected init
+        get
         {
-            field = default;
-            if (Children is not null)
+            if (Children is not null && field == default)
             {
                 foreach (var child in Children)
+                {
                     field += child.FullOffset2D;
+                }
             }
+
+            return field;
         }
     }
 
