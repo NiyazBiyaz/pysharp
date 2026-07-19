@@ -33,9 +33,7 @@ internal class CsGenerator
         foreach (var variable in action.Variables)
         {
             string varName = variable.Name;
-            if (variable.IsArray)
-                varName = $"new NodeList({varName})";
-            else if (variable.IsOptional)
+            if (variable.IsOptional)
                 varName = $"{varName} ?? VoidNode.Instance";
 
             AddLine($"{varName},");
@@ -498,7 +496,7 @@ internal class CsGenerator
 
                 case FieldKind.Array:
                     AddLine($"""
-                    {modifier} NodeArray<{field.TypeName}> {field.Name} => ((NodeList)Children![{field.ChildIndex}]).GetArray<{field.TypeName}>();
+                    {modifier} NodeArray<{field.TypeName}> {field.Name} => (NodeArray<{field.TypeName}>)Children![{field.ChildIndex}];
                     """);
                     break;
 
@@ -517,7 +515,7 @@ internal class CsGenerator
                             return _field_{{field.Name}}.Value;
                         }
                     }
-                    {{modifier}} NodeArray<GreenNode> Ast{{field.Name}} => (NodeArray<GreenNode>)((NodeList)Children![{{field.ChildIndex}}]).Children!;
+                    {{modifier}} NodeArray<GreenNode> Ast{{field.Name}} => (NodeArray<GreenNode>)Children![{{field.ChildIndex}}];
                     """);
                     break;
 

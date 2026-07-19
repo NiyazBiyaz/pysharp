@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
@@ -11,12 +13,13 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
 {
     private readonly ImmutableArray<TNode> nodes;
 
+    [OverloadResolutionPriority(-1)]
     public NodeArray(IEnumerable<TNode> values)
     {
         nodes = [.. values];
     }
 
-    internal NodeArray(ReadOnlySpan<TNode> values)
+    public NodeArray(ReadOnlySpan<TNode> values)
     {
         nodes = [.. values];
     }
@@ -26,6 +29,30 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
     public TNode this[int index] => nodes[index];
 
     public int Count => nodes.Length;
+
+    public TokenPosition FullOffset2D
+    {
+        get;
+        private init
+        {
+            if (nodes.IsDefaultOrEmpty)
+                field = default;
+
+            var offset = TokenPosition.StartOfFile;
+            foreach (var itemOffset in nodes)
+                offset += itemOffset.FullOffset2D;
+
+            field = offset;
+        }
+    }
+
+    public bool IsArray => true;
+
+    public INodeArray<IGreenNode>? Children
+    {
+        get => (INodeArray<IGreenNode>)this;
+        init => throw new UnreachableException("Children for the node array should never be initialized. Use regular constructor instead.");
+    }
 
     public bool Equals(NodeArray<TNode>? other)
     {
@@ -72,6 +99,36 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
             builder.Append(node.RecoverText());
 
         return builder.ToString();
+    }
+
+    public void AcceptPrettyPrint(StringBuilder builder, int indentation)
+    {
+        builder.Append("NodeArray()");
+
+        if (Children != null)
+        {
+            builder.AppendLine(" [");
+            foreach (var child in Children)
+            {
+                GreenNode.AddIndentation(builder, indentation + 1);
+                child.AcceptPrettyPrint(builder, indentation + 1);
+                builder.AppendLine(",");
+            }
+            GreenNode.AddIndentation(builder, indentation);
+            builder.Append(']');
+        }
+        else
+        {
+            builder.Append(" []");
+        }
+    }
+
+    public void AcceptRecoverText(StringBuilder builder)
+    {
+        foreach (var node in nodes)
+        {
+            node.AcceptRecoverText(builder);
+        }
     }
 
     public bool Equals(INodeArray<IGreenNode>? other) => other is NodeArray<IGreenNode> otherArray && Equals(otherArray);

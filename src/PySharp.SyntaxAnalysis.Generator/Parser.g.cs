@@ -42,8 +42,8 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 _res = new GrammarNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(metadata_Star),
-                        new NodeList(rule_Star),
+                        metadata_Star,
+                        rule_Star,
                         end_of_file,
                     ]),
                 };
@@ -173,12 +173,12 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 _res = new ArmedRuleNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(decorator_Star),
+                        decorator_Star,
                         name,
                         colon,
                         new_line,
                         indent,
-                        new NodeList(arm_Plus),
+                        arm_Plus,
                         dedent,
                     ]),
                 };
@@ -237,7 +237,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 _res = new SingleAlternativeRuleNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(decorator_Star),
+                        decorator_Star,
                         name,
                         colon,
                         alternative,
@@ -376,7 +376,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 _res = new AlternativeNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(molecule_Plus),
+                        molecule_Plus,
                         action ?? VoidNode.Instance,
                     ]),
                 };
@@ -485,7 +485,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                     Children = new NodeArray<IGreenNode>([
                         left_square_bracket,
                         group_decorator ?? VoidNode.Instance,
-                        new NodeList(alternative_Gather),
+                        alternative_Gather,
                         right_square_bracket,
                     ]),
                 };
@@ -775,7 +775,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                     Children = new NodeArray<IGreenNode>([
                         left_paren,
                         group_decorator ?? VoidNode.Instance,
-                        new NodeList(alternative_Gather),
+                        alternative_Gather,
                         right_paren,
                     ]),
                 };
@@ -969,7 +969,7 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
                 _res = new ArgumentsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(target_Gather),
+                        target_Gather,
                     ]),
                 };
                 goto _Return;
@@ -1053,8 +1053,8 @@ internal partial class GrammarParser(ITokenNodeStream _tokenStream) : BaseParser
 #region Type definitions
 internal sealed partial record GrammarNode : GreenNode
 {
-    internal NodeArray<MetadataNode> Metadata => ((NodeList)Children![0]).GetArray<MetadataNode>();
-    internal NodeArray<RuleNode> Rules => ((NodeList)Children![1]).GetArray<RuleNode>();
+    internal NodeArray<MetadataNode> Metadata => (NodeArray<MetadataNode>)Children![0];
+    internal NodeArray<RuleNode> Rules => (NodeArray<RuleNode>)Children![1];
 }
 
 internal sealed partial record MetadataNode : GreenNode
@@ -1065,13 +1065,13 @@ internal sealed partial record MetadataNode : GreenNode
 
 internal abstract partial record RuleNode : GreenNode
 {
-    internal NodeArray<DecoratorNode> Decorators => ((NodeList)Children![0]).GetArray<DecoratorNode>();
+    internal NodeArray<DecoratorNode> Decorators => (NodeArray<DecoratorNode>)Children![0];
     internal TokenNode Name => (TokenNode)Children![1];
 }
 
 internal sealed partial record ArmedRuleNode : RuleNode
 {
-    internal NodeArray<ArmNode> Arms => ((NodeList)Children![5]).GetArray<ArmNode>();
+    internal NodeArray<ArmNode> Arms => (NodeArray<ArmNode>)Children![5];
 }
 
 internal sealed partial record SingleAlternativeRuleNode : RuleNode
@@ -1091,7 +1091,7 @@ internal sealed partial record DecoratorNode : GreenNode
 
 internal sealed partial record AlternativeNode : GreenNode
 {
-    internal NodeArray<MoleculeNode> Molecules => ((NodeList)Children![0]).GetArray<MoleculeNode>();
+    internal NodeArray<MoleculeNode> Molecules => (NodeArray<MoleculeNode>)Children![0];
     internal ActionNode? Action => Children![1] as ActionNode;
 }
 
@@ -1119,7 +1119,7 @@ internal sealed partial record OptionalGroupNode : MoleculeNode
             return _field_Alternatives.Value;
         }
     }
-    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)Children![2];
     internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
 }
 
@@ -1182,7 +1182,7 @@ internal sealed partial record GroupAtomNode : AtomNode
             return _field_Alternatives.Value;
         }
     }
-    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)Children![2];
     internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
 }
 
@@ -1225,7 +1225,7 @@ internal sealed partial record ArgumentsNode : GreenNode
             return _field_Value.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)Children![0];
 }
 
 internal sealed partial record TargetNode : GreenNode

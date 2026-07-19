@@ -8,6 +8,8 @@ public interface IGreenNode
     TokenPosition FullOffset2D { get; }
     INodeArray<IGreenNode>? Children { get; init; }
 
+    bool IsArray { get; }
+
     void AcceptRecoverText(StringBuilder builder);
 
     string RecoverText();

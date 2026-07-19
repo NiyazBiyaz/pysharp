@@ -1,7 +1,7 @@
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
-public interface INodeArray<out TNode> : IReadOnlyList<TNode>
+public interface INodeArray<out TNode> : IGreenNode, IReadOnlyList<TNode>
     where TNode : IGreenNode
 {
-    string RecoverText();
+    // NodeArray<TResult> Cast<TResult>() where TResult : IGreenNode;
 }

@@ -21,6 +21,8 @@ public abstract record GreenNode : IGreenNode
 
     public virtual INodeArray<IGreenNode>? Children { get; init; }
 
+    public bool IsArray => false;
+
     public virtual string RecoverText()
     {
         if (Children is null)
@@ -76,7 +78,7 @@ public abstract record GreenNode : IGreenNode
         }
     }
 
-    protected static void AddIndentation(StringBuilder builder, int indentUnitsCount)
+    internal static void AddIndentation(StringBuilder builder, int indentUnitsCount)
     {
         for (int i = 0; i < indentUnitsCount; i++)
         {
