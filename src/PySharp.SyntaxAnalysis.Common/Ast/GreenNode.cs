@@ -19,6 +19,8 @@ public abstract record GreenNode : IGreenNode
         }
     }
 
+    public abstract IRedView GetView(TokenPosition position, IRedView? parent);
+
     public virtual INodeArray<IGreenNode>? Children { get; init; }
 
     public bool IsArray => false;

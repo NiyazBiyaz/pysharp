@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Humanizer;
 using PySharp.SyntaxAnalysis.Common.Ast;
 
 namespace PySharp.SyntaxAnalysis.Generator;
@@ -26,7 +27,8 @@ internal class CsGenerator
 
     internal void AddGenerativeAction(ActionIr action)
     {
-        AddLine($"_res = new {action.TypeName!}()");
+        string typeName = nodeName(action.TypeName!);
+        AddLine($"_res = new {typeName}()");
         open();
         AddLine("Children = new NodeArray<IGreenNode>([");
         indentation++;
@@ -51,7 +53,8 @@ internal class CsGenerator
     internal void AddPassAction(ActionIr action)
     {
         var variable = action.Variables.First();
-        AddLine($"_res = ({variable.TypeName}?){variable.Name};");
+        string typeName = nodeName(variable.TypeName!, variable.TypeIsUnion);
+        AddLine($"_res = ({typeName}?){variable.Name};");
         AddLine("goto _Return;");
     }
 
@@ -109,12 +112,14 @@ internal class CsGenerator
 
         AddLine($@"base.LogAlternativeEntered(""{entriesText}"");");
 
-        foreach (var varEmit in ir.Variables)
+        foreach (var varIr in ir.Variables)
         {
-            if (varEmit.IsArray)
-                AddLine($"INodeArray<{varEmit.TypeName ?? nameof(GreenNode)}>? {varEmit.Name};");
+            string typeName = nodeName(varIr.TypeName ?? "Green", varIr.TypeIsUnion);
+
+            if (varIr.IsArray)
+                AddLine($"INodeArray<{typeName}>? {varIr.Name};");
             else
-                AddLine($"IGreenNode? {varEmit.Name};");
+                AddLine($"IGreenNode? {varIr.Name};");
         }
 
         beginLine();
@@ -202,7 +207,7 @@ internal class CsGenerator
                 _ => throw new ArgumentOutOfRangeException(nameof(repeat.MinCount)),
             };
 
-            string typeName = repeat.AssignedVar!.TypeName!;
+            string typeName = nodeName(repeat.AssignedVar!.TypeName!, repeat.AssignedVar!.TypeIsUnion);
 
             addLines($$"""
             NodeArray<{{typeName}}>? _RepeatHelper_{{repeat.Identifier}}()
@@ -241,42 +246,50 @@ internal class CsGenerator
 
     internal void AddRule(RuleIr ir)
     {
-        AddRuleHeader(ir);
-        AddRuleBody(ir);
+        string returnTypeName = ir.Kind switch
+        {
+            RuleKind.Type => nodeName(ir.Name, false),
+            RuleKind.Union => nodeName(ir.Name, true),
+            RuleKind.TokenUnion => "TokenNode",
+            _ => throw new ArgumentOutOfRangeException(nameof(ir.Kind), ir.Kind.ToString()),
+        };
+
+        AddRuleHeader(ir, returnTypeName);
+        AddRuleBody(ir, returnTypeName);
         AddRuleEnd(ir);
     }
 
-    internal void AddRuleHeader(RuleIr ir)
+    internal void AddRuleHeader(RuleIr ir, string typeName)
     {
         AddLine($"#region {ir.Name}");
 
         if (ir.IsMemoEnabled)
         {
-            AddLine($"private readonly IMemoContainer<{ir.ReturnTypeName}> _memo_{ir.Name} = CreateContainer<{ir.ReturnTypeName}>();");
+            AddLine($"private readonly IMemoContainer<{typeName}> _memo_{ir.Name} = CreateContainer<{typeName}>();");
         }
 
         if (ir.IsLeftRecursive)
         {
-            addLeftRecursionWrapper(ir);
+            addLeftRecursionWrapper(ir, typeName);
         }
 
         addClearedComment(ir.SourceText);
 
         string rawPrefix = ir.IsLeftRecursive ? "raw_" : "";
 
-        AddLine($"{ir.ReturnTypeName}? {rawPrefix}rule_{ir.Name}()");
+        AddLine($"{typeName}? {rawPrefix}rule_{ir.Name}()");
     }
 
-    private void addLeftRecursionWrapper(RuleIr ir)
+    private void addLeftRecursionWrapper(RuleIr ir, string typeName)
     {
-        AddLine($"{ir.ReturnTypeName}? rule_{ir.Name}()");
+        AddLine($"{typeName}? rule_{ir.Name}()");
 
         open();
 
         addLines($$"""
         base.LogIncreaseLevel();
         base.LogLeftRecursionRuleEntered("{{ir.Name}}");
-        {{ir.ReturnTypeName}}? _res = null;
+        {{typeName}}? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
         if (_memo_{{ir.Name}}.TryGetCache(_mark, out var _memoized))
@@ -309,7 +322,7 @@ internal class CsGenerator
         close();
     }
 
-    internal void AddRuleBody(RuleIr ir)
+    internal void AddRuleBody(RuleIr ir, string typeName)
     {
         open();
 
@@ -332,7 +345,7 @@ internal class CsGenerator
             """);
         }
 
-        AddLine($"{ir.ReturnTypeName}? _res = null;");
+        AddLine($"{typeName}? _res = null;");
 
         if (ir.Alternatives.Any(a => a.HasCut))
             AddLine("bool _cut = false;");
@@ -392,7 +405,7 @@ internal class CsGenerator
     {
         string modifierName = accessModifier.CodeRepresentation();
 
-        AddLine($"{modifierName} partial class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}>(_tokenStream)");
+        AddLine($"{modifierName} partial class {parserName}(ITokenNodeStream _tokenStream) : BaseParser<{topLevelNodeName}Node>(_tokenStream)");
     }
 
     internal void AddParserBody(string mainName, string mainTypeName, IEnumerable<RuleIr> ruleIrs, IEnumerable<string> keywords)
@@ -420,7 +433,7 @@ internal class CsGenerator
 
         addBlankLine();
 
-        AddLine($"public override {mainTypeName}? Parse() => rule_{mainName}();");
+        AddLine($"public override {mainTypeName}Node? Parse() => rule_{mainName}();");
 
         foreach (var rule in ruleIrs)
         {
@@ -461,55 +474,73 @@ internal class CsGenerator
                 addBlankLine();
             addBlank = true;
 
-            if (type.Kind == TypeKind.Rule)
+            if (type.Kind == TypeKind.Node)
             {
-                AddTypeSignature(type);
-                AddTypeBody(type);
+                AddNodeType(type);
             }
             else
             {
-                AddUnion(type);
+                AddUnionType(type);
             }
         }
     }
 
-    internal void AddTypeBody(TypeIr ir)
+    internal void AddNodeType(TypeIr ir)
     {
+        string modifierName = ir.AccessModifier.CodeRepresentation();
+        string abstractOrSealed = ir.IsAbstract!.Value ? "abstract" : "sealed";
+        string typeNodeName = nodeName(ir.Name);
+        string baseNodeName = nodeName(ir.BaseName ?? "Green");
+
+        // Add node class.
+        beginLine();
+        add($"{modifierName} {abstractOrSealed} partial record {typeNodeName} : {baseNodeName}");
+        foreach (string union in ir.UnionMembership)
+        {
+            Debug.Assert(union != null);
+            string unionName = nodeName(union, true);
+            add($", {unionName}");
+        }
+        endLine();
+
+        string typeViewName = viewName(ir.Name, ir.Kind == TypeKind.Union);
+
         open();
 
         foreach (var field in ir.Fields)
         {
             string modifier = field.AccessModifier.CodeRepresentation();
+            string fieldTypeName = nodeName(field.TypeName, field.TypeIsUnion);
 
             switch (field.Kind)
             {
                 case FieldKind.Plain:
                     if (field.IsOptional)
                     {
-                        AddLine($"{modifier} {field.TypeName}? {field.Name} => Children![{field.ChildIndex}] as {field.TypeName};");
+                        AddLine($"{modifier} {fieldTypeName}? {field.Name} => Children![{field.ChildIndex}] as {fieldTypeName};");
                     }
                     else
                     {
-                        AddLine($"{modifier} {field.TypeName} {field.Name} => ({field.TypeName})Children![{field.ChildIndex}];");
+                        AddLine($"{modifier} {fieldTypeName} {field.Name} => ({fieldTypeName})Children![{field.ChildIndex}];");
                     }
                     break;
 
                 case FieldKind.Array:
                     AddLine($"""
-                    {modifier} NodeArray<{field.TypeName}> {field.Name} => (NodeArray<{field.TypeName}>)Children![{field.ChildIndex}];
+                    {modifier} NodeArray<{fieldTypeName}> {field.Name} => (NodeArray<{fieldTypeName}>)Children![{field.ChildIndex}];
                     """);
                     break;
 
                 case FieldKind.Gather:
                     addLines($$"""
-                    private global::System.Collections.Immutable.ImmutableArray<{{field.TypeName}}>? _field_{{field.Name}} = null;
-                    {{modifier}} global::System.Collections.Immutable.ImmutableArray<{{field.TypeName}}> {{field.Name}}
+                    private global::System.Collections.Immutable.ImmutableArray<{{fieldTypeName}}>? _field_{{field.Name}} = null;
+                    {{modifier}} global::System.Collections.Immutable.ImmutableArray<{{fieldTypeName}}> {{field.Name}}
                     {
                         get
                         {
                             if (_field_{{field.Name}} is null)
                             {
-                                var _tmp = Ast{{field.Name}}.Where(static (_, i) => i % 2 == 0).Cast<{{field.TypeName}}>();
+                                var _tmp = Ast{{field.Name}}.Where(static (_, i) => i % 2 == 0).Cast<{{fieldTypeName}}>();
                                 _field_{{field.Name}} = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
                             }
                             return _field_{{field.Name}}.Value;
@@ -520,39 +551,159 @@ internal class CsGenerator
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(ir.Kind), ir.Kind.ToString());
+            }
+        }
+
+        if (!ir.IsAbstract.Value)
+        {
+            AddLine($"public override {typeViewName} GetView(TokenPosition position, IRedView? parent)");
+            AddLine($"    => new {typeViewName}(this, position, parent);");
+        }
+
+        close();
+
+        // Add view class.
+        string baseViewName = viewName(ir.BaseName ?? "Red");
+
+        beginLine();
+        add($"{modifierName} {abstractOrSealed} partial class {typeViewName} : {baseViewName}");
+        foreach (string union in ir.UnionMembership)
+        {
+            Debug.Assert(union != null);
+            string unionName = viewName(union, true);
+            add($", {unionName}");
+        }
+        endLine();
+
+        open();
+
+        addLines($$"""
+        {{modifierName}} {{typeViewName}}({{typeNodeName}} green, TokenPosition position, IRedView? parent)
+            : base(green, position, parent)
+        {
+        }
+        """);
+
+        foreach (var field in ir.Fields)
+        {
+            addBlankLine();
+
+            string modifier = field.AccessModifier.CodeRepresentation();
+            string fieldTypeName = viewName(field.TypeName, field.TypeIsUnion);
+            string backingFieldName = "_field_" + field.Name.Camelize();
+
+            string? action = null;
+            string greenField = $"(({typeNodeName})base.Green).{field.Name}";
+            switch (field.Kind)
+            {
+                case FieldKind.Plain:
+                    action = $"{greenField}!.GetView(_positionOfField, this)";
+                    break;
+
+                case FieldKind.Array:
+                    action = $"new ViewArray<{fieldTypeName}>({greenField}, _positionOfField, this)";
+                    fieldTypeName = $"ViewArray<{fieldTypeName}>";
+                    break;
+
+                case FieldKind.Gather:
+                    greenField = $"(({typeNodeName})base.Green).Ast{field.Name}";
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(field.Kind), field.Kind.ToString());
+            }
+
+            string optional = field.IsOptional ? "?" : "";
+            string optionalCondition = field.IsOptional ? $" && {greenField} != null" : "";
+
+            if (field.Kind != FieldKind.Gather)
+            {
+                Debug.Assert(action != null);
+
+                addLines($$"""
+                private {{fieldTypeName}}? {{backingFieldName}} = null;
+                {{modifier}} {{fieldTypeName}}{{optional}} {{field.Name}}
+                {
+                    get
+                    {
+                        if ({{backingFieldName}} == null{{optionalCondition}})
+                        {
+                            var _positionOfField = base.GetPositionFor({{field.ChildIndex}});
+                            {{backingFieldName}} = ({{fieldTypeName}}){{action}};
+                        }
+                        return ({{fieldTypeName}}{{optional}}){{backingFieldName}};
+                    }
+                }
+                """);
+            }
+            else
+            {
+                addLines($$"""
+                private ViewArray<RedView>? _ast{{backingFieldName}} = null;
+                {{modifier}} ViewArray<RedView> Ast{{field.Name}}
+                {
+                    get
+                    {
+                        if (_ast{{backingFieldName}} == null)
+                        {
+                            var _positionOfField = base.GetPositionFor({{field.ChildIndex}});
+                            _ast{{backingFieldName}} = new ViewArray<RedView>({{greenField}}, _positionOfField, this);
+                        }
+                        return _ast{{backingFieldName}}.Value;
+                    }
+                }
+                private global::System.Collections.Immutable.ImmutableArray<{{fieldTypeName}}>? {{backingFieldName}} = null;
+                {{modifier}} global::System.Collections.Immutable.ImmutableArray<{{fieldTypeName}}> {{field.Name}}
+                {
+                    get
+                    {
+                        if ({{backingFieldName}} == null)
+                        {
+                            var _tmp = Ast{{field.Name}}.Where(static (_, i) => i % 2 == 0).Cast<{{fieldTypeName}}>();
+                            {{backingFieldName}} = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+                        }
+                        return {{backingFieldName}}.Value;
+                    }
+                }
+                """);
             }
         }
 
         close();
     }
 
-    internal void AddTypeSignature(TypeIr ir)
+    internal void AddUnionType(TypeIr ir)
     {
         string modifierName = ir.AccessModifier.CodeRepresentation();
+        string typeNodeName = nodeName(ir.Name, true);
 
         beginLine();
-        add($"{modifierName} {(ir.IsAbstract!.Value ? "abstract" : "sealed")} partial record {ir.Name} : {ir.BaseName}");
-        foreach (string union in ir.UnionMembership)
+        add($"{modifierName} partial interface {typeNodeName} : IGreenNode");
+        foreach (string union in ir.UnionMembership.Select(u => nodeName(u, true)))
         {
-            Debug.Assert(union != null);
             add($", {union}");
         }
+        add(";");
         endLine();
-    }
 
-    internal void AddUnion(TypeIr ir)
-    {
-        string modifierName = ir.AccessModifier.CodeRepresentation();
+        string typeViewName = viewName(ir.Name, true);
 
         beginLine();
-        add($"{modifierName} partial interface {ir.Name} : IGreenNode");
-        foreach (var union in ir.UnionMembership)
+        add($"{modifierName} partial interface {typeViewName} : IRedView");
+        foreach (string union in ir.UnionMembership.Select(u => viewName(u, true)))
+        {
             add($", {union}");
-
+        }
         add(";");
         endLine();
     }
+
+    private static string nodeName(string original, bool union = false)
+        => (union ? "I" : "") + original + "Node";
+
+    private static string viewName(string original, bool isUnion = false)
+        => (isUnion ? "I" : "") + original + "View";
 
     private const string indent_string = "    ";
     private const string new_line = "\n";

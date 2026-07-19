@@ -1055,12 +1055,86 @@ internal sealed partial record GrammarNode : GreenNode
 {
     internal NodeArray<MetadataNode> Metadata => (NodeArray<MetadataNode>)Children![0];
     internal NodeArray<RuleNode> Rules => (NodeArray<RuleNode>)Children![1];
+    public override GrammarView GetView(TokenPosition position, IRedView? parent)
+        => new GrammarView(this, position, parent);
+}
+internal sealed partial class GrammarView : RedView
+{
+    internal GrammarView(GrammarNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<MetadataView>? _field_metadata = null;
+    internal ViewArray<MetadataView> Metadata
+    {
+        get
+        {
+            if (_field_metadata == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_metadata = (ViewArray<MetadataView>)new ViewArray<MetadataView>(((GrammarNode)base.Green).Metadata, _positionOfField, this);
+            }
+            return (ViewArray<MetadataView>)_field_metadata;
+        }
+    }
+
+    private ViewArray<RuleView>? _field_rules = null;
+    internal ViewArray<RuleView> Rules
+    {
+        get
+        {
+            if (_field_rules == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_rules = (ViewArray<RuleView>)new ViewArray<RuleView>(((GrammarNode)base.Green).Rules, _positionOfField, this);
+            }
+            return (ViewArray<RuleView>)_field_rules;
+        }
+    }
 }
 
 internal sealed partial record MetadataNode : GreenNode
 {
     internal TokenNode Key => (TokenNode)Children![1];
     internal TokenNode Value => (TokenNode)Children![2];
+    public override MetadataView GetView(TokenPosition position, IRedView? parent)
+        => new MetadataView(this, position, parent);
+}
+internal sealed partial class MetadataView : RedView
+{
+    internal MetadataView(MetadataNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_key = null;
+    internal TokenView Key
+    {
+        get
+        {
+            if (_field_key == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_key = (TokenView)((MetadataNode)base.Green).Key!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_key;
+        }
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_value = (TokenView)((MetadataNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record RuleNode : GreenNode
@@ -1068,40 +1142,234 @@ internal abstract partial record RuleNode : GreenNode
     internal NodeArray<DecoratorNode> Decorators => (NodeArray<DecoratorNode>)Children![0];
     internal TokenNode Name => (TokenNode)Children![1];
 }
+internal abstract partial class RuleView : RedView
+{
+    internal RuleView(RuleNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<DecoratorView>? _field_decorators = null;
+    internal ViewArray<DecoratorView> Decorators
+    {
+        get
+        {
+            if (_field_decorators == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_decorators = (ViewArray<DecoratorView>)new ViewArray<DecoratorView>(((RuleNode)base.Green).Decorators, _positionOfField, this);
+            }
+            return (ViewArray<DecoratorView>)_field_decorators;
+        }
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_name = (TokenView)((RuleNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
+}
 
 internal sealed partial record ArmedRuleNode : RuleNode
 {
     internal NodeArray<ArmNode> Arms => (NodeArray<ArmNode>)Children![5];
+    public override ArmedRuleView GetView(TokenPosition position, IRedView? parent)
+        => new ArmedRuleView(this, position, parent);
+}
+internal sealed partial class ArmedRuleView : RuleView
+{
+    internal ArmedRuleView(ArmedRuleNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ArmView>? _field_arms = null;
+    internal ViewArray<ArmView> Arms
+    {
+        get
+        {
+            if (_field_arms == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_arms = (ViewArray<ArmView>)new ViewArray<ArmView>(((ArmedRuleNode)base.Green).Arms, _positionOfField, this);
+            }
+            return (ViewArray<ArmView>)_field_arms;
+        }
+    }
 }
 
 internal sealed partial record SingleAlternativeRuleNode : RuleNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![3];
+    public override SingleAlternativeRuleView GetView(TokenPosition position, IRedView? parent)
+        => new SingleAlternativeRuleView(this, position, parent);
+}
+internal sealed partial class SingleAlternativeRuleView : RuleView
+{
+    internal SingleAlternativeRuleView(SingleAlternativeRuleNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AlternativeView? _field_alternative = null;
+    internal AlternativeView Alternative
+    {
+        get
+        {
+            if (_field_alternative == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_alternative = (AlternativeView)((SingleAlternativeRuleNode)base.Green).Alternative!.GetView(_positionOfField, this);
+            }
+            return (AlternativeView)_field_alternative;
+        }
+    }
 }
 
 internal sealed partial record ArmNode : GreenNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![1];
+    public override ArmView GetView(TokenPosition position, IRedView? parent)
+        => new ArmView(this, position, parent);
+}
+internal sealed partial class ArmView : RedView
+{
+    internal ArmView(ArmNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AlternativeView? _field_alternative = null;
+    internal AlternativeView Alternative
+    {
+        get
+        {
+            if (_field_alternative == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_alternative = (AlternativeView)((ArmNode)base.Green).Alternative!.GetView(_positionOfField, this);
+            }
+            return (AlternativeView)_field_alternative;
+        }
+    }
 }
 
 internal sealed partial record DecoratorNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
+    public override DecoratorView GetView(TokenPosition position, IRedView? parent)
+        => new DecoratorView(this, position, parent);
+}
+internal sealed partial class DecoratorView : RedView
+{
+    internal DecoratorView(DecoratorNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (TokenView)((DecoratorNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record AlternativeNode : GreenNode
 {
     internal NodeArray<MoleculeNode> Molecules => (NodeArray<MoleculeNode>)Children![0];
     internal ActionNode? Action => Children![1] as ActionNode;
+    public override AlternativeView GetView(TokenPosition position, IRedView? parent)
+        => new AlternativeView(this, position, parent);
+}
+internal sealed partial class AlternativeView : RedView
+{
+    internal AlternativeView(AlternativeNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<MoleculeView>? _field_molecules = null;
+    internal ViewArray<MoleculeView> Molecules
+    {
+        get
+        {
+            if (_field_molecules == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_molecules = (ViewArray<MoleculeView>)new ViewArray<MoleculeView>(((AlternativeNode)base.Green).Molecules, _positionOfField, this);
+            }
+            return (ViewArray<MoleculeView>)_field_molecules;
+        }
+    }
+
+    private ActionView? _field_action = null;
+    internal ActionView? Action
+    {
+        get
+        {
+            if (_field_action == null && ((AlternativeNode)base.Green).Action != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_action = (ActionView)((AlternativeNode)base.Green).Action!.GetView(_positionOfField, this);
+            }
+            return (ActionView?)_field_action;
+        }
+    }
 }
 
 internal sealed partial record GroupDecoratorNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
+    public override GroupDecoratorView GetView(TokenPosition position, IRedView? parent)
+        => new GroupDecoratorView(this, position, parent);
+}
+internal sealed partial class GroupDecoratorView : RedView
+{
+    internal GroupDecoratorView(GroupDecoratorNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (TokenView)((GroupDecoratorNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record MoleculeNode : GreenNode
 {
+}
+internal abstract partial class MoleculeView : RedView
+{
+    internal MoleculeView(MoleculeNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record OptionalGroupNode : MoleculeNode
@@ -1121,50 +1389,291 @@ internal sealed partial record OptionalGroupNode : MoleculeNode
     }
     internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)Children![2];
     internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
+    public override OptionalGroupView GetView(TokenPosition position, IRedView? parent)
+        => new OptionalGroupView(this, position, parent);
+}
+internal sealed partial class OptionalGroupView : MoleculeView
+{
+    internal OptionalGroupView(OptionalGroupNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_alternatives = null;
+    internal ViewArray<RedView> AstAlternatives
+    {
+        get
+        {
+            if (_ast_field_alternatives == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_alternatives = new ViewArray<RedView>(((OptionalGroupNode)base.Green).AstAlternatives, _positionOfField, this);
+            }
+            return _ast_field_alternatives.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<AlternativeView>? _field_alternatives = null;
+    internal global::System.Collections.Immutable.ImmutableArray<AlternativeView> Alternatives
+    {
+        get
+        {
+            if (_field_alternatives == null)
+            {
+                var _tmp = AstAlternatives.Where(static (_, i) => i % 2 == 0).Cast<AlternativeView>();
+                _field_alternatives = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_alternatives.Value;
+        }
+    }
+
+    private GroupDecoratorView? _field_decorator = null;
+    internal GroupDecoratorView? Decorator
+    {
+        get
+        {
+            if (_field_decorator == null && ((OptionalGroupNode)base.Green).Decorator != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_decorator = (GroupDecoratorView)((OptionalGroupNode)base.Green).Decorator!.GetView(_positionOfField, this);
+            }
+            return (GroupDecoratorView?)_field_decorator;
+        }
+    }
 }
 
 internal sealed partial record PositiveLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
+    public override PositiveLookaheadView GetView(TokenPosition position, IRedView? parent)
+        => new PositiveLookaheadView(this, position, parent);
+}
+internal sealed partial class PositiveLookaheadView : MoleculeView
+{
+    internal PositiveLookaheadView(PositiveLookaheadNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_atom = null;
+    internal AtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_atom = (AtomView)((PositiveLookaheadNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_atom;
+        }
+    }
 }
 
 internal sealed partial record NegativeLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
+    public override NegativeLookaheadView GetView(TokenPosition position, IRedView? parent)
+        => new NegativeLookaheadView(this, position, parent);
+}
+internal sealed partial class NegativeLookaheadView : MoleculeView
+{
+    internal NegativeLookaheadView(NegativeLookaheadNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_atom = null;
+    internal AtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_atom = (AtomView)((NegativeLookaheadNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_atom;
+        }
+    }
 }
 
 internal sealed partial record OptionalNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
+    public override OptionalView GetView(TokenPosition position, IRedView? parent)
+        => new OptionalView(this, position, parent);
+}
+internal sealed partial class OptionalView : MoleculeView
+{
+    internal OptionalView(OptionalNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_atom = null;
+    internal AtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_atom = (AtomView)((OptionalNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_atom;
+        }
+    }
 }
 
 internal sealed partial record GatherNode : MoleculeNode
 {
     internal AtomNode ValueAtom => (AtomNode)Children![0];
     internal AtomNode Separator => (AtomNode)Children![3];
+    public override GatherView GetView(TokenPosition position, IRedView? parent)
+        => new GatherView(this, position, parent);
+}
+internal sealed partial class GatherView : MoleculeView
+{
+    internal GatherView(GatherNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_valueAtom = null;
+    internal AtomView ValueAtom
+    {
+        get
+        {
+            if (_field_valueAtom == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_valueAtom = (AtomView)((GatherNode)base.Green).ValueAtom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_valueAtom;
+        }
+    }
+
+    private AtomView? _field_separator = null;
+    internal AtomView Separator
+    {
+        get
+        {
+            if (_field_separator == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_separator = (AtomView)((GatherNode)base.Green).Separator!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_separator;
+        }
+    }
 }
 
 internal sealed partial record RepeatOneMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
+    public override RepeatOneMoreView GetView(TokenPosition position, IRedView? parent)
+        => new RepeatOneMoreView(this, position, parent);
+}
+internal sealed partial class RepeatOneMoreView : MoleculeView
+{
+    internal RepeatOneMoreView(RepeatOneMoreNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_atom = null;
+    internal AtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_atom = (AtomView)((RepeatOneMoreNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_atom;
+        }
+    }
 }
 
 internal sealed partial record RepeatZeroMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
+    public override RepeatZeroMoreView GetView(TokenPosition position, IRedView? parent)
+        => new RepeatZeroMoreView(this, position, parent);
+}
+internal sealed partial class RepeatZeroMoreView : MoleculeView
+{
+    internal RepeatZeroMoreView(RepeatZeroMoreNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_atom = null;
+    internal AtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_atom = (AtomView)((RepeatZeroMoreNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_atom;
+        }
+    }
 }
 
 internal sealed partial record AtomMoleculeNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
+    public override AtomMoleculeView GetView(TokenPosition position, IRedView? parent)
+        => new AtomMoleculeView(this, position, parent);
+}
+internal sealed partial class AtomMoleculeView : MoleculeView
+{
+    internal AtomMoleculeView(AtomMoleculeNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private AtomView? _field_atom = null;
+    internal AtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_atom = (AtomView)((AtomMoleculeNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (AtomView)_field_atom;
+        }
+    }
 }
 
 internal sealed partial record CutNode : MoleculeNode
 {
+    public override CutView GetView(TokenPosition position, IRedView? parent)
+        => new CutView(this, position, parent);
+}
+internal sealed partial class CutView : MoleculeView
+{
+    internal CutView(CutNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal abstract partial record AtomNode : GreenNode
 {
+}
+internal abstract partial class AtomView : RedView
+{
+    internal AtomView(AtomNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record GroupAtomNode : AtomNode
@@ -1184,30 +1693,179 @@ internal sealed partial record GroupAtomNode : AtomNode
     }
     internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)Children![2];
     internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
+    public override GroupAtomView GetView(TokenPosition position, IRedView? parent)
+        => new GroupAtomView(this, position, parent);
+}
+internal sealed partial class GroupAtomView : AtomView
+{
+    internal GroupAtomView(GroupAtomNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_alternatives = null;
+    internal ViewArray<RedView> AstAlternatives
+    {
+        get
+        {
+            if (_ast_field_alternatives == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_alternatives = new ViewArray<RedView>(((GroupAtomNode)base.Green).AstAlternatives, _positionOfField, this);
+            }
+            return _ast_field_alternatives.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<AlternativeView>? _field_alternatives = null;
+    internal global::System.Collections.Immutable.ImmutableArray<AlternativeView> Alternatives
+    {
+        get
+        {
+            if (_field_alternatives == null)
+            {
+                var _tmp = AstAlternatives.Where(static (_, i) => i % 2 == 0).Cast<AlternativeView>();
+                _field_alternatives = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_alternatives.Value;
+        }
+    }
+
+    private GroupDecoratorView? _field_decorator = null;
+    internal GroupDecoratorView? Decorator
+    {
+        get
+        {
+            if (_field_decorator == null && ((GroupAtomNode)base.Green).Decorator != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_decorator = (GroupDecoratorView)((GroupAtomNode)base.Green).Decorator!.GetView(_positionOfField, this);
+            }
+            return (GroupDecoratorView?)_field_decorator;
+        }
+    }
 }
 
 internal sealed partial record NameAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override NameAtomView GetView(TokenPosition position, IRedView? parent)
+        => new NameAtomView(this, position, parent);
+}
+internal sealed partial class NameAtomView : AtomView
+{
+    internal NameAtomView(NameAtomNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((NameAtomNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record StringAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override StringAtomView GetView(TokenPosition position, IRedView? parent)
+        => new StringAtomView(this, position, parent);
+}
+internal sealed partial class StringAtomView : AtomView
+{
+    internal StringAtomView(StringAtomNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((StringAtomNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record ActionNode : GreenNode
 {
     internal ArgumentsNode? Arguments => Children![3] as ArgumentsNode;
 }
+internal abstract partial class ActionView : RedView
+{
+    internal ActionView(ActionNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ArgumentsView? _field_arguments = null;
+    internal ArgumentsView? Arguments
+    {
+        get
+        {
+            if (_field_arguments == null && ((ActionNode)base.Green).Arguments != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_arguments = (ArgumentsView)((ActionNode)base.Green).Arguments!.GetView(_positionOfField, this);
+            }
+            return (ArgumentsView?)_field_arguments;
+        }
+    }
+}
 
 internal sealed partial record InferredActionNode : ActionNode
 {
+    public override InferredActionView GetView(TokenPosition position, IRedView? parent)
+        => new InferredActionView(this, position, parent);
+}
+internal sealed partial class InferredActionView : ActionView
+{
+    internal InferredActionView(InferredActionNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record NamedActionNode : ActionNode
 {
     internal TokenNode Name => (TokenNode)Children![1];
+    public override NamedActionView GetView(TokenPosition position, IRedView? parent)
+        => new NamedActionView(this, position, parent);
+}
+internal sealed partial class NamedActionView : ActionView
+{
+    internal NamedActionView(NamedActionNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_name = (TokenView)((NamedActionNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
 }
 
 internal sealed partial record ArgumentsNode : GreenNode
@@ -1226,11 +1884,84 @@ internal sealed partial record ArgumentsNode : GreenNode
         }
     }
     internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)Children![0];
+    public override ArgumentsView GetView(TokenPosition position, IRedView? parent)
+        => new ArgumentsView(this, position, parent);
+}
+internal sealed partial class ArgumentsView : RedView
+{
+    internal ArgumentsView(ArgumentsNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_value = null;
+    internal ViewArray<RedView> AstValue
+    {
+        get
+        {
+            if (_ast_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_value = new ViewArray<RedView>(((ArgumentsNode)base.Green).AstValue, _positionOfField, this);
+            }
+            return _ast_field_value.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<TargetView>? _field_value = null;
+    internal global::System.Collections.Immutable.ImmutableArray<TargetView> Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _tmp = AstValue.Where(static (_, i) => i % 2 == 0).Cast<TargetView>();
+                _field_value = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_value.Value;
+        }
+    }
 }
 
 internal sealed partial record TargetNode : GreenNode
 {
     internal TokenNode Field => (TokenNode)Children![0];
     internal TokenNode Variable => (TokenNode)Children![2];
+    public override TargetView GetView(TokenPosition position, IRedView? parent)
+        => new TargetView(this, position, parent);
+}
+internal sealed partial class TargetView : RedView
+{
+    internal TargetView(TargetNode green, TokenPosition position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_field = null;
+    internal TokenView Field
+    {
+        get
+        {
+            if (_field_field == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_field = (TokenView)((TargetNode)base.Green).Field!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_field;
+        }
+    }
+
+    private TokenView? _field_variable = null;
+    internal TokenView Variable
+    {
+        get
+        {
+            if (_field_variable == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_variable = (TokenView)((TargetNode)base.Green).Variable!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_variable;
+        }
+    }
 }
 #endregion

@@ -46,6 +46,10 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
         }
     }
 
+    public IRedView GetView(TokenPosition position, IRedView? parent)
+        // Creating array requires type parameter, but it breaks contract for non-array nodes.
+        => throw new NotSupportedException("NodeArray cannot create it's view. Create ViewArray<T> using it's constructor instead.");
+
     public bool IsArray => true;
 
     public INodeArray<IGreenNode>? Children
@@ -91,6 +95,13 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public override string ToString() => $"NodeArray [{string.Join(", ", nodes)}]";
+
+    public string PrettyPrint()
+    {
+        var builder = new StringBuilder();
+        AcceptPrettyPrint(builder, 0);
+        return builder.ToString();
+    }
 
     public string RecoverText()
     {

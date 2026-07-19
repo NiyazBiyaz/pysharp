@@ -35,7 +35,7 @@ internal class BoundGrammar
 internal class BoundRule
 {
     internal required string Name { get; init; }
-    internal required BoundRuleKind Kind { get; init; }
+    internal required RuleKind Kind { get; init; }
     internal required IReadOnlyList<AlternativeNode> AstAlternatives { get; init; }
     internal required string SourceText { get; init; }
     internal required BoundType Type { get; init; }
@@ -79,10 +79,10 @@ internal class BoundRule
     internal RuleIr ToIr() => new(
         SourceText,
         Name,
-        Type.Name,
+        Kind,
         EnableMemoization,
         IsLeftRecursive,
-        Alternatives.Select(a => a.ToIr(Kind != BoundRuleKind.Type)));
+        Alternatives.Select(a => a.ToIr(Kind != RuleKind.Type)));
 
     internal IEnumerable<BoundRule> GetPotentialLeftRecursive(List<CompilationWarning> warnings) =>
         Alternatives
@@ -94,7 +94,7 @@ internal class BoundRule
         .SelectMany(alt => alt.GetAllUsedRules());
 }
 
-internal enum BoundRuleKind
+internal enum RuleKind
 {
     Type,
     Union,
@@ -292,9 +292,11 @@ internal abstract record BoundAlternativeEntry
     internal string? GetTypeName() => this switch
     {
         BoundRuleAlternativeEntry r => r.Value.Type.Name,
-        BoundTokenAlternativeEntry or BoundStringAlternativeEntry => nameof(TokenNode),
+        BoundTokenAlternativeEntry or BoundStringAlternativeEntry => "Token",
         _ => null,
     };
+
+    internal bool GetTypeIsUnion() => this is BoundRuleAlternativeEntry r && r.Value.Type is BoundUnionType;
 
     private static AtomIr? getAtom(BoundAlternativeEntry? alternativeEntry) => alternativeEntry switch
     {
@@ -348,15 +350,15 @@ internal abstract class BoundType
     {
         Base = null,
         IsAbstract = false,
-        Name = "TokenNode",
+        Name = "Token",
     };
 
     internal TypeIr ToIr() => new(
-        this is BoundRuleType ? TypeKind.Rule : TypeKind.Union,
+        this is BoundRuleType ? TypeKind.Node : TypeKind.Union,
         (this as BoundRuleType)?.Fields.Select(f => new FieldIr(f, AccessModifier.Internal)) ?? [],
         AccessModifier.Internal,
         Name,
-        (this as BoundRuleType)?.Base?.Name ?? "GreenNode",
+        (this as BoundRuleType)?.Base?.Name,
         (this as BoundRuleType)?.IsAbstract,
         UnionMembership.Select(u => u.Name)
     );

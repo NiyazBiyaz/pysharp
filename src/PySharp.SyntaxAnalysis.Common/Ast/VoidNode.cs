@@ -12,4 +12,6 @@ public record VoidNode : GreenNode
     public override INodeArray<GreenNode>? Children => null;
     public override TokenPosition FullOffset2D => new(0, 0);
     public override string RecoverText() => "";
+
+    public override IRedView GetView(TokenPosition position, IRedView? parent) => new VoidView(this, position, parent);
 }

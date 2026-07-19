@@ -5,20 +5,21 @@ namespace PySharp.SyntaxAnalysis.Generator;
 internal record RuleIr(
     string SourceText,
     string Name,
-    string ReturnTypeName,
+    RuleKind Kind,
     bool IsMemoEnabled,
     bool IsLeftRecursive,
     IEnumerable<AlternativeIr> Alternatives);
 
 
-internal record VariableIr(string Name, bool IsArray, bool IsOptional, string? TypeName)
+internal record VariableIr(string Name, bool IsArray, bool IsOptional, string? TypeName, bool TypeIsUnion)
 {
     internal VariableIr(BoundAlternativeEntry entry)
         : this(
             entry.Name,
             entry.Quantifier.IsArray,
             entry.Quantifier == QuantifierKind.Optional,
-            entry.GetTypeName())
+            entry.GetTypeName(),
+            entry.GetTypeIsUnion())
     {
     }
 }
@@ -63,7 +64,7 @@ internal record AtomIr(string CallData, bool IsString, bool IsToken, bool IsUnio
 
 internal enum TypeKind
 {
-    Rule,
+    Node,
     Union,
 }
 
@@ -72,7 +73,7 @@ internal record TypeIr(
     IEnumerable<FieldIr> Fields,
     AccessModifier AccessModifier,
     string Name,
-    string BaseName,
+    string? BaseName,
     bool? IsAbstract,
     IEnumerable<string> UnionMembership);
 
@@ -84,6 +85,7 @@ internal record FieldIr
     internal required FieldKind Kind { get; init; }
     internal required int ChildIndex { get; init; }
     internal required bool IsOptional { get; init; }
+    internal required bool TypeIsUnion { get; init; }
 
     [SetsRequiredMembers]
     internal FieldIr(BoundField boundField, AccessModifier accessModifier)
@@ -94,5 +96,6 @@ internal record FieldIr
         ChildIndex = boundField.Index;
         AccessModifier = accessModifier;
         IsOptional = boundField.IsOptional;
+        TypeIsUnion = boundField.Type is BoundUnionType;
     }
 }

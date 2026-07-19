@@ -26,6 +26,8 @@ public record TokenNode : GreenNode
         RawString = token.Lexeme.ToString(); // TODO: add caching.
     }
 
+    public override IRedView GetView(TokenPosition position, IRedView? parent) => new TokenView(this, position, parent);
+
     public override string ToString() => $"TokenNode({Type}, '{RawString}', {Offset2D})";
 
     public override string RecoverText()

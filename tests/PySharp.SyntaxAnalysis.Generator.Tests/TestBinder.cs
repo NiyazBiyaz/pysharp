@@ -85,7 +85,7 @@ public class TestBinder
         binder.RegisterRules(gram.Rules);
 
         Assert.Equal(rules_count, binder.Rules.Count);
-        Assert.All(binder.Grammar.Rules, r => Assert.Equal(BoundRuleKind.Type, r.Kind));
+        Assert.All(binder.Grammar.Rules, r => Assert.Equal(RuleKind.Type, r.Kind));
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class TestBinder
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
-        Assert.Equal(BoundRuleKind.TokenUnion, binder.Grammar.Rules.First(r => r.IsGroup).Kind);
+        Assert.Equal(RuleKind.TokenUnion, binder.Grammar.Rules.First(r => r.IsGroup).Kind);
     }
 
     [Fact]

@@ -78,23 +78,23 @@ internal class Binder
             if (decorators.Contains(decor_union) && decorators.Contains(decor_token_union))
                 throw new CompilationException($"Rule cannot be marked as '{decor_union}' and '{decor_token_union}' both in one time.");
 
-            var kind = decorators.Contains(decor_union) ? BoundRuleKind.Union
-                    : decorators.Contains(decor_token_union) ? BoundRuleKind.TokenUnion
-                    : BoundRuleKind.Type;
+            var kind = decorators.Contains(decor_union) ? RuleKind.Union
+                    : decorators.Contains(decor_token_union) ? RuleKind.TokenUnion
+                    : RuleKind.Type;
 
             BoundType type = kind switch
             {
-                BoundRuleKind.Type => new BoundRuleType
+                RuleKind.Type => new BoundRuleType
                 {
-                    Name = name + "Node",
+                    Name = name,
                     IsAbstract = alternatives.Count() != 1,
                     Base = null,
                 },
-                BoundRuleKind.Union => new BoundUnionType
+                RuleKind.Union => new BoundUnionType
                 {
-                    Name = name + "Node",
+                    Name = name,
                 },
-                BoundRuleKind.TokenUnion => BoundType.TokenNodeType,
+                RuleKind.TokenUnion => BoundType.TokenNodeType,
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
@@ -172,7 +172,7 @@ internal class Binder
 
         type ??= new BoundRuleType
         {
-            Name = name + "Node",
+            Name = name,
             IsAbstract = astGroup.Alternatives.Length != 1,
             Base = null,
         };
@@ -183,7 +183,7 @@ internal class Binder
             SourceText = astGroup.RecoverText(),
             AstAlternatives = astGroup.Alternatives,
             Type = type,
-            Kind = isInline ? BoundRuleKind.TokenUnion : BoundRuleKind.Type,
+            Kind = isInline ? RuleKind.TokenUnion : RuleKind.Type,
             IsGroup = true,
             EnableMemoization = false, // Groups cannot use memo.
         };
@@ -235,15 +235,15 @@ internal class Binder
                     alt.Entries.Add(entry);
                 }
 
-                if (rule.Kind != BoundRuleKind.Type)
+                if (rule.Kind != RuleKind.Type)
                 {
                     if (alt.Variables.Count() != 1)
                         throw new InvalidUnionException($"should have exactly one variable entry: '{astAlt.Molecules.RecoverText()}'. Consider using lookahead because they do not produce variables.");
 
-                    if (rule.Kind == BoundRuleKind.TokenUnion && alt.Variables.First() is not BoundTokenAlternativeEntry and not BoundStringAlternativeEntry)
+                    if (rule.Kind == RuleKind.TokenUnion && alt.Variables.First() is not BoundTokenAlternativeEntry and not BoundStringAlternativeEntry)
                         throw new CompilationException($"Token union rules cannot have non-token entry as variable: '{astAlt.Molecules.RecoverText()}'");
 
-                    if (rule.Kind == BoundRuleKind.Union && alt.Variables.First() is not BoundRuleAlternativeEntry)
+                    if (rule.Kind == RuleKind.Union && alt.Variables.First() is not BoundRuleAlternativeEntry)
                         throw new CompilationException($"Union rules cannot have non-rule entry as variable: '{astAlt.Molecules.RecoverText()}'");
                 }
 
@@ -402,7 +402,7 @@ internal class Binder
     {
         foreach (var rule in Rules.Values)
         {
-            if (rule.Kind != BoundRuleKind.Type)
+            if (rule.Kind != RuleKind.Type)
             {
                 if (rule.AstAlternatives.Any(a => a.Action is not null))
                     throw new InvalidUnionException($"cannot have actions: '{rule.Name}'");
@@ -477,7 +477,7 @@ internal class Binder
                     {
                         Base = (BoundRuleType)rule.Type,
                         IsAbstract = false,
-                        Name = namedAction.Name.RawString + "Node",
+                        Name = namedAction.Name.RawString,
                     };
                 }
 
@@ -525,7 +525,7 @@ internal class Binder
         {
             switch (rule.Kind)
             {
-                case BoundRuleKind.Type:
+                case RuleKind.Type:
                     if (rule.Alternatives.Count == 1)
                     {
                         var fields = rule.Alternatives[0].Action!.CapturedVariables.Select(createField);
@@ -576,7 +576,7 @@ internal class Binder
                     }
                     break;
 
-                case BoundRuleKind.Union:
+                case RuleKind.Union:
                     foreach (var alt in rule.Alternatives)
                     {
                         var unionMember = ((BoundRuleAlternativeEntry)alt.Variables.First()).Value.Type;
@@ -589,7 +589,7 @@ internal class Binder
 
                     break;
 
-                case BoundRuleKind.TokenUnion:
+                case RuleKind.TokenUnion:
                     break;
             }
         }
@@ -640,7 +640,7 @@ internal class Binder
         foreach (var rule in Rules.Values)
         {
             // Rules overall quality.
-            if (rule.Kind == BoundRuleKind.TokenUnion)
+            if (rule.Kind == RuleKind.TokenUnion)
                 continue;
 
             if (rule.GetAllUsedRules().Any(r => r.IsEntryPoint))

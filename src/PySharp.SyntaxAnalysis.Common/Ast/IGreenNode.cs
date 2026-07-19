@@ -15,4 +15,8 @@ public interface IGreenNode
     string RecoverText();
 
     void AcceptPrettyPrint(StringBuilder builder, int indentation);
+
+    string PrettyPrint();
+
+    IRedView GetView(TokenPosition position, IRedView? parent);
 }
