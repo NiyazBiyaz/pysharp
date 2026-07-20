@@ -1,12 +1,10 @@
-using PySharp.SyntaxAnalysis.Tokens;
-
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
 public interface IRedView
 {
-    TokenPosition Position { get; }
+    int Position { get; }
+    int EndPosition { get; }
     IRedView? Parent { get; }
-    TokenPosition EndPosition { get; }
 
     bool IsArray { get; }
 

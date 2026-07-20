@@ -6,29 +6,30 @@ namespace PySharp.SyntaxAnalysis.Common.Ast;
 public record TokenNode : GreenNode
 {
     public override NodeArray<GreenNode>? Children => null;
-    public override TokenPosition FullOffset2D { get; }
-    public TokenPosition Offset2D { get; }
+    public override int FullWidth { get; }
+    public int Width { get; }
     public TokenType Type { get; }
     public NodeArray<TokenNode> Leading { get; }
     public string RawString { get; }
 
-    public TokenNode(in Token token, IEnumerable<TokenNode> leading, TokenPosition lastTokenPosition)
+    public TokenNode(in Token token, IEnumerable<TokenNode> leading)
     {
         Type = token.Type;
-        Offset2D = token.End - lastTokenPosition;
+        Width = token.Lexeme.Length;
 
-        TokenPosition acc = TokenPosition.StartOfFile;
+        int acc = 0;
         foreach (var node in leading)
-            acc += node.Offset2D;
-        FullOffset2D = acc + Offset2D;
+            acc += node.Width;
+
+        FullWidth = acc + Width;
 
         Leading = new(leading);
         RawString = token.Lexeme.ToString(); // TODO: add caching.
     }
 
-    public override IRedView GetView(TokenPosition position, IRedView? parent) => new TokenView(this, position, parent);
+    public override IRedView GetView(int position, IRedView? parent) => new TokenView(this, position, parent);
 
-    public override string ToString() => $"TokenNode({Type}, '{RawString}', {Offset2D})";
+    public override string ToString() => $"TokenNode({Type}, '{RawString}', {Width})";
 
     public override string RecoverText()
     {

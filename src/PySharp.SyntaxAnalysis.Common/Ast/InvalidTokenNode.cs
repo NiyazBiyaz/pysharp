@@ -9,9 +9,8 @@ public record InvalidTokenNode : TokenNode
     public InvalidTokenNode(
         in Token token,
         IEnumerable<TokenNode> leading,
-        TokenPosition lastTokenEndPosition,
         string? message,
-        TokenizerError error) : base(token, leading, lastTokenEndPosition)
+        TokenizerError error) : base(token, leading)
     {
         Error = error;
         ErrorMessage = message;

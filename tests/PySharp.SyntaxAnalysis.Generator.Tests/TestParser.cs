@@ -9,22 +9,21 @@ namespace PySharp.SyntaxAnalysis.Generator.Tests;
 public class TestParser
 {
     [Fact]
-    public void TestViewPositioning_Lines()
+    public void TestViewPositioning_PlainPositions()
     {
         const string src = """
         @header "using BauBau.Mindset;"
         @parser_name "PonDeRingParser"
 
-        @bau
-        BauBau: "Fluffy" "Fuzzy"
         """;
         var view = getView(src);
 
-        Assert.Equal(0, view.Metadata[0].Position.Line);
-        Assert.Equal(1, view.Metadata[1].Position.Line);
-
-        Assert.Equal(3, view.Rules[0].Position.Line);
-        Assert.Equal(4, view.Rules[0].EndPosition.Line);
+        Assert.Equal(00, view.Metadata[0].Position);
+        Assert.Equal(32, view.Metadata[0].EndPosition);
+        Assert.Equal(32, view.Metadata[0].EndPosition - view.Metadata[0].Position);
+        Assert.Equal(32, view.Metadata[1].Position);
+        Assert.Equal(63, view.Metadata[1].EndPosition);
+        Assert.Equal(31, view.Metadata[1].EndPosition - view.Metadata[1].Position);
     }
 
     private static GrammarView getView(string src)
@@ -34,6 +33,6 @@ public class TestParser
         var parser = new GrammarParser(tokenStream);
         var grammar = parser.Parse();
         Debug.Assert(grammar != null, "Invalid test code");
-        return grammar.GetView(TokenPosition.StartOfFile, null);
+        return grammar.GetView(0, null);
     }
 }

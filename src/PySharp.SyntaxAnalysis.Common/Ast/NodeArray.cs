@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
-using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
@@ -30,15 +29,15 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
 
     public int Count => nodes.Length;
 
-    public TokenPosition FullOffset2D
+    public int FullWidth
     {
         get
         {
             if (!nodes.IsDefaultOrEmpty && field == default)
             {
-                var offsetAccumulator = TokenPosition.StartOfFile;
+                var offsetAccumulator = 0;
                 foreach (var itemOffset in nodes)
-                    offsetAccumulator += itemOffset.FullOffset2D;
+                    offsetAccumulator += itemOffset.FullWidth;
 
                 field = offsetAccumulator;
             }
@@ -47,7 +46,7 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
         }
     }
 
-    public IRedView GetView(TokenPosition position, IRedView? parent)
+    public IRedView GetView(int position, IRedView? parent)
         // Creating array requires type parameter, but it breaks contract for non-array nodes.
         => throw new NotSupportedException("NodeArray cannot create it's view. Create ViewArray<T> using it's constructor instead.");
 

@@ -1,9 +1,9 @@
 using System.Collections;
-using PySharp.SyntaxAnalysis.Tokens;
+using System.Diagnostics;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
-public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, TokenPosition position, IRedView? parent) : IViewArray<TView>
+public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, int position, IRedView? parent) : IViewArray<TView>
     where TView : IRedView
 {
     private readonly TView?[] views = new TView[greens.Count];
@@ -16,9 +16,9 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, TokenPosi
 
     public IRedView? Parent { get; } = parent;
 
-    public TokenPosition Position { get; } = position;
+    public int Position { get; } = position;
 
-    public TokenPosition EndPosition => Position + greens.FullOffset2D;
+    public int EndPosition => Position + greens.FullWidth;
 
     public int Count => views.Length;
 
@@ -26,11 +26,13 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, TokenPosi
     {
         if (views[index] == null)
         {
-            var position = Position;
-            for (int indexBeforeChild = 0; indexBeforeChild < index - 1; indexBeforeChild++)
+            int position = Position;
+            for (int indexBeforeChild = 0; indexBeforeChild < index; indexBeforeChild++)
             {
-                position += greens[indexBeforeChild].FullOffset2D;
+                position += greens[indexBeforeChild].FullWidth;
             }
+            Debugger.Break();
+
             views[index] = (TView)greens[index].GetView(position, Parent);
         }
 
@@ -39,14 +41,14 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, TokenPosi
 
     private void ensureViews()
     {
-        var positionAccumulator = Position;
+        int positionAccumulator = Position;
         for (int index = 0; index < views.Length; index++)
         {
             if (views[index] == null)
             {
                 views[index] = (TView)greens[index].GetView(positionAccumulator, Parent);
             }
-            positionAccumulator += greens[index].FullOffset2D;
+            positionAccumulator += greens[index].FullWidth;
         }
     }
 

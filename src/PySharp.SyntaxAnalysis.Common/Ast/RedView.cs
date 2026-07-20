@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
@@ -7,16 +6,16 @@ public abstract class RedView : IRedView
 {
     protected readonly IGreenNode Green;
 
-    public TokenPosition Position { get; }
+    public int Position { get; }
     public IRedView? Parent { get; }
 
-    public TokenPosition EndPosition
+    public int EndPosition
     {
         get
         {
             if (field == default)
             {
-                field = Position + Green.FullOffset2D;
+                field = Position + Green.FullWidth;
             }
             return field;
         }
@@ -24,7 +23,7 @@ public abstract class RedView : IRedView
 
     public virtual bool IsArray => false;
 
-    protected RedView(IGreenNode green, TokenPosition position, IRedView? parentView)
+    protected RedView(IGreenNode green, int position, IRedView? parentView)
     {
         Debug.Assert(!parentView?.IsArray ?? true, "Arrays cannot to be used as parent.");
 
@@ -33,12 +32,12 @@ public abstract class RedView : IRedView
         Position = position;
     }
 
-    public TokenPosition GetPositionFor(int childIndex)
+    public int GetPositionFor(int childIndex)
     {
-        var position = Position;
-        for (int beforeChild = 0; beforeChild < childIndex - 1; beforeChild++)
+        int position = Position;
+        for (int beforeChild = 0; beforeChild < childIndex; beforeChild++)
         {
-            position += Green.Children?[beforeChild].FullOffset2D ?? TokenPosition.StartOfFile;
+            position += Green.Children?[beforeChild].FullWidth ?? 0;
         }
         return position;
     }

@@ -9,7 +9,7 @@ public sealed class TokenView : RedView
 
     public ViewArray<TokenView> LeadingTrivia { get; }
 
-    public TokenView(TokenNode node, TokenPosition position, IRedView? parent)
+    public TokenView(TokenNode node, int position, IRedView? parent)
         : base(node, position, parent)
     {
         Debug.Assert(!parent?.IsArray ?? true, "Arrays cannot be used as parent.");

@@ -63,7 +63,7 @@ internal class Program
 
             var binder = new Binder();
 
-            var grammarView = grammarParsed.GetView(TokenPosition.StartOfFile, null);
+            var grammarView = grammarParsed.GetView(0, null);
 
             try
             {

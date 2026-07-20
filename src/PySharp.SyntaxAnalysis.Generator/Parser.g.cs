@@ -1055,12 +1055,12 @@ internal sealed partial record GrammarNode : GreenNode
 {
     internal NodeArray<MetadataNode> Metadata => (NodeArray<MetadataNode>)Children![0];
     internal NodeArray<RuleNode> Rules => (NodeArray<RuleNode>)Children![1];
-    public override GrammarView GetView(TokenPosition position, IRedView? parent)
+    public override GrammarView GetView(int position, IRedView? parent)
         => new GrammarView(this, position, parent);
 }
 internal sealed partial class GrammarView : RedView
 {
-    internal GrammarView(GrammarNode green, TokenPosition position, IRedView? parent)
+    internal GrammarView(GrammarNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1098,12 +1098,12 @@ internal sealed partial record MetadataNode : GreenNode
 {
     internal TokenNode Key => (TokenNode)Children![1];
     internal TokenNode Value => (TokenNode)Children![2];
-    public override MetadataView GetView(TokenPosition position, IRedView? parent)
+    public override MetadataView GetView(int position, IRedView? parent)
         => new MetadataView(this, position, parent);
 }
 internal sealed partial class MetadataView : RedView
 {
-    internal MetadataView(MetadataNode green, TokenPosition position, IRedView? parent)
+    internal MetadataView(MetadataNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1144,7 +1144,7 @@ internal abstract partial record RuleNode : GreenNode
 }
 internal abstract partial class RuleView : RedView
 {
-    internal RuleView(RuleNode green, TokenPosition position, IRedView? parent)
+    internal RuleView(RuleNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1181,12 +1181,12 @@ internal abstract partial class RuleView : RedView
 internal sealed partial record ArmedRuleNode : RuleNode
 {
     internal NodeArray<ArmNode> Arms => (NodeArray<ArmNode>)Children![5];
-    public override ArmedRuleView GetView(TokenPosition position, IRedView? parent)
+    public override ArmedRuleView GetView(int position, IRedView? parent)
         => new ArmedRuleView(this, position, parent);
 }
 internal sealed partial class ArmedRuleView : RuleView
 {
-    internal ArmedRuleView(ArmedRuleNode green, TokenPosition position, IRedView? parent)
+    internal ArmedRuleView(ArmedRuleNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1209,12 +1209,12 @@ internal sealed partial class ArmedRuleView : RuleView
 internal sealed partial record SingleAlternativeRuleNode : RuleNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![3];
-    public override SingleAlternativeRuleView GetView(TokenPosition position, IRedView? parent)
+    public override SingleAlternativeRuleView GetView(int position, IRedView? parent)
         => new SingleAlternativeRuleView(this, position, parent);
 }
 internal sealed partial class SingleAlternativeRuleView : RuleView
 {
-    internal SingleAlternativeRuleView(SingleAlternativeRuleNode green, TokenPosition position, IRedView? parent)
+    internal SingleAlternativeRuleView(SingleAlternativeRuleNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1237,12 +1237,12 @@ internal sealed partial class SingleAlternativeRuleView : RuleView
 internal sealed partial record ArmNode : GreenNode
 {
     internal AlternativeNode Alternative => (AlternativeNode)Children![1];
-    public override ArmView GetView(TokenPosition position, IRedView? parent)
+    public override ArmView GetView(int position, IRedView? parent)
         => new ArmView(this, position, parent);
 }
 internal sealed partial class ArmView : RedView
 {
-    internal ArmView(ArmNode green, TokenPosition position, IRedView? parent)
+    internal ArmView(ArmNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1265,12 +1265,12 @@ internal sealed partial class ArmView : RedView
 internal sealed partial record DecoratorNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
-    public override DecoratorView GetView(TokenPosition position, IRedView? parent)
+    public override DecoratorView GetView(int position, IRedView? parent)
         => new DecoratorView(this, position, parent);
 }
 internal sealed partial class DecoratorView : RedView
 {
-    internal DecoratorView(DecoratorNode green, TokenPosition position, IRedView? parent)
+    internal DecoratorView(DecoratorNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1294,12 +1294,12 @@ internal sealed partial record AlternativeNode : GreenNode
 {
     internal NodeArray<MoleculeNode> Molecules => (NodeArray<MoleculeNode>)Children![0];
     internal ActionNode? Action => Children![1] as ActionNode;
-    public override AlternativeView GetView(TokenPosition position, IRedView? parent)
+    public override AlternativeView GetView(int position, IRedView? parent)
         => new AlternativeView(this, position, parent);
 }
 internal sealed partial class AlternativeView : RedView
 {
-    internal AlternativeView(AlternativeNode green, TokenPosition position, IRedView? parent)
+    internal AlternativeView(AlternativeNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1336,12 +1336,12 @@ internal sealed partial class AlternativeView : RedView
 internal sealed partial record GroupDecoratorNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
-    public override GroupDecoratorView GetView(TokenPosition position, IRedView? parent)
+    public override GroupDecoratorView GetView(int position, IRedView? parent)
         => new GroupDecoratorView(this, position, parent);
 }
 internal sealed partial class GroupDecoratorView : RedView
 {
-    internal GroupDecoratorView(GroupDecoratorNode green, TokenPosition position, IRedView? parent)
+    internal GroupDecoratorView(GroupDecoratorNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1366,7 +1366,7 @@ internal abstract partial record MoleculeNode : GreenNode
 }
 internal abstract partial class MoleculeView : RedView
 {
-    internal MoleculeView(MoleculeNode green, TokenPosition position, IRedView? parent)
+    internal MoleculeView(MoleculeNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1389,12 +1389,12 @@ internal sealed partial record OptionalGroupNode : MoleculeNode
     }
     internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)Children![2];
     internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
-    public override OptionalGroupView GetView(TokenPosition position, IRedView? parent)
+    public override OptionalGroupView GetView(int position, IRedView? parent)
         => new OptionalGroupView(this, position, parent);
 }
 internal sealed partial class OptionalGroupView : MoleculeView
 {
-    internal OptionalGroupView(OptionalGroupNode green, TokenPosition position, IRedView? parent)
+    internal OptionalGroupView(OptionalGroupNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1444,12 +1444,12 @@ internal sealed partial class OptionalGroupView : MoleculeView
 internal sealed partial record PositiveLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
-    public override PositiveLookaheadView GetView(TokenPosition position, IRedView? parent)
+    public override PositiveLookaheadView GetView(int position, IRedView? parent)
         => new PositiveLookaheadView(this, position, parent);
 }
 internal sealed partial class PositiveLookaheadView : MoleculeView
 {
-    internal PositiveLookaheadView(PositiveLookaheadNode green, TokenPosition position, IRedView? parent)
+    internal PositiveLookaheadView(PositiveLookaheadNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1472,12 +1472,12 @@ internal sealed partial class PositiveLookaheadView : MoleculeView
 internal sealed partial record NegativeLookaheadNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
-    public override NegativeLookaheadView GetView(TokenPosition position, IRedView? parent)
+    public override NegativeLookaheadView GetView(int position, IRedView? parent)
         => new NegativeLookaheadView(this, position, parent);
 }
 internal sealed partial class NegativeLookaheadView : MoleculeView
 {
-    internal NegativeLookaheadView(NegativeLookaheadNode green, TokenPosition position, IRedView? parent)
+    internal NegativeLookaheadView(NegativeLookaheadNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1500,12 +1500,12 @@ internal sealed partial class NegativeLookaheadView : MoleculeView
 internal sealed partial record OptionalNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![1];
-    public override OptionalView GetView(TokenPosition position, IRedView? parent)
+    public override OptionalView GetView(int position, IRedView? parent)
         => new OptionalView(this, position, parent);
 }
 internal sealed partial class OptionalView : MoleculeView
 {
-    internal OptionalView(OptionalNode green, TokenPosition position, IRedView? parent)
+    internal OptionalView(OptionalNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1529,12 +1529,12 @@ internal sealed partial record GatherNode : MoleculeNode
 {
     internal AtomNode ValueAtom => (AtomNode)Children![0];
     internal AtomNode Separator => (AtomNode)Children![3];
-    public override GatherView GetView(TokenPosition position, IRedView? parent)
+    public override GatherView GetView(int position, IRedView? parent)
         => new GatherView(this, position, parent);
 }
 internal sealed partial class GatherView : MoleculeView
 {
-    internal GatherView(GatherNode green, TokenPosition position, IRedView? parent)
+    internal GatherView(GatherNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1571,12 +1571,12 @@ internal sealed partial class GatherView : MoleculeView
 internal sealed partial record RepeatOneMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
-    public override RepeatOneMoreView GetView(TokenPosition position, IRedView? parent)
+    public override RepeatOneMoreView GetView(int position, IRedView? parent)
         => new RepeatOneMoreView(this, position, parent);
 }
 internal sealed partial class RepeatOneMoreView : MoleculeView
 {
-    internal RepeatOneMoreView(RepeatOneMoreNode green, TokenPosition position, IRedView? parent)
+    internal RepeatOneMoreView(RepeatOneMoreNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1599,12 +1599,12 @@ internal sealed partial class RepeatOneMoreView : MoleculeView
 internal sealed partial record RepeatZeroMoreNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
-    public override RepeatZeroMoreView GetView(TokenPosition position, IRedView? parent)
+    public override RepeatZeroMoreView GetView(int position, IRedView? parent)
         => new RepeatZeroMoreView(this, position, parent);
 }
 internal sealed partial class RepeatZeroMoreView : MoleculeView
 {
-    internal RepeatZeroMoreView(RepeatZeroMoreNode green, TokenPosition position, IRedView? parent)
+    internal RepeatZeroMoreView(RepeatZeroMoreNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1627,12 +1627,12 @@ internal sealed partial class RepeatZeroMoreView : MoleculeView
 internal sealed partial record AtomMoleculeNode : MoleculeNode
 {
     internal AtomNode Atom => (AtomNode)Children![0];
-    public override AtomMoleculeView GetView(TokenPosition position, IRedView? parent)
+    public override AtomMoleculeView GetView(int position, IRedView? parent)
         => new AtomMoleculeView(this, position, parent);
 }
 internal sealed partial class AtomMoleculeView : MoleculeView
 {
-    internal AtomMoleculeView(AtomMoleculeNode green, TokenPosition position, IRedView? parent)
+    internal AtomMoleculeView(AtomMoleculeNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1654,12 +1654,12 @@ internal sealed partial class AtomMoleculeView : MoleculeView
 
 internal sealed partial record CutNode : MoleculeNode
 {
-    public override CutView GetView(TokenPosition position, IRedView? parent)
+    public override CutView GetView(int position, IRedView? parent)
         => new CutView(this, position, parent);
 }
 internal sealed partial class CutView : MoleculeView
 {
-    internal CutView(CutNode green, TokenPosition position, IRedView? parent)
+    internal CutView(CutNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1670,7 +1670,7 @@ internal abstract partial record AtomNode : GreenNode
 }
 internal abstract partial class AtomView : RedView
 {
-    internal AtomView(AtomNode green, TokenPosition position, IRedView? parent)
+    internal AtomView(AtomNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1693,12 +1693,12 @@ internal sealed partial record GroupAtomNode : AtomNode
     }
     internal NodeArray<GreenNode> AstAlternatives => (NodeArray<GreenNode>)Children![2];
     internal GroupDecoratorNode? Decorator => Children![1] as GroupDecoratorNode;
-    public override GroupAtomView GetView(TokenPosition position, IRedView? parent)
+    public override GroupAtomView GetView(int position, IRedView? parent)
         => new GroupAtomView(this, position, parent);
 }
 internal sealed partial class GroupAtomView : AtomView
 {
-    internal GroupAtomView(GroupAtomNode green, TokenPosition position, IRedView? parent)
+    internal GroupAtomView(GroupAtomNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1748,12 +1748,12 @@ internal sealed partial class GroupAtomView : AtomView
 internal sealed partial record NameAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
-    public override NameAtomView GetView(TokenPosition position, IRedView? parent)
+    public override NameAtomView GetView(int position, IRedView? parent)
         => new NameAtomView(this, position, parent);
 }
 internal sealed partial class NameAtomView : AtomView
 {
-    internal NameAtomView(NameAtomNode green, TokenPosition position, IRedView? parent)
+    internal NameAtomView(NameAtomNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1776,12 +1776,12 @@ internal sealed partial class NameAtomView : AtomView
 internal sealed partial record StringAtomNode : AtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
-    public override StringAtomView GetView(TokenPosition position, IRedView? parent)
+    public override StringAtomView GetView(int position, IRedView? parent)
         => new StringAtomView(this, position, parent);
 }
 internal sealed partial class StringAtomView : AtomView
 {
-    internal StringAtomView(StringAtomNode green, TokenPosition position, IRedView? parent)
+    internal StringAtomView(StringAtomNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1807,7 +1807,7 @@ internal abstract partial record ActionNode : GreenNode
 }
 internal abstract partial class ActionView : RedView
 {
-    internal ActionView(ActionNode green, TokenPosition position, IRedView? parent)
+    internal ActionView(ActionNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1829,12 +1829,12 @@ internal abstract partial class ActionView : RedView
 
 internal sealed partial record InferredActionNode : ActionNode
 {
-    public override InferredActionView GetView(TokenPosition position, IRedView? parent)
+    public override InferredActionView GetView(int position, IRedView? parent)
         => new InferredActionView(this, position, parent);
 }
 internal sealed partial class InferredActionView : ActionView
 {
-    internal InferredActionView(InferredActionNode green, TokenPosition position, IRedView? parent)
+    internal InferredActionView(InferredActionNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1843,12 +1843,12 @@ internal sealed partial class InferredActionView : ActionView
 internal sealed partial record NamedActionNode : ActionNode
 {
     internal TokenNode Name => (TokenNode)Children![1];
-    public override NamedActionView GetView(TokenPosition position, IRedView? parent)
+    public override NamedActionView GetView(int position, IRedView? parent)
         => new NamedActionView(this, position, parent);
 }
 internal sealed partial class NamedActionView : ActionView
 {
-    internal NamedActionView(NamedActionNode green, TokenPosition position, IRedView? parent)
+    internal NamedActionView(NamedActionNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1884,12 +1884,12 @@ internal sealed partial record ArgumentsNode : GreenNode
         }
     }
     internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)Children![0];
-    public override ArgumentsView GetView(TokenPosition position, IRedView? parent)
+    public override ArgumentsView GetView(int position, IRedView? parent)
         => new ArgumentsView(this, position, parent);
 }
 internal sealed partial class ArgumentsView : RedView
 {
-    internal ArgumentsView(ArgumentsNode green, TokenPosition position, IRedView? parent)
+    internal ArgumentsView(ArgumentsNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }
@@ -1926,12 +1926,12 @@ internal sealed partial record TargetNode : GreenNode
 {
     internal TokenNode Field => (TokenNode)Children![0];
     internal TokenNode Variable => (TokenNode)Children![2];
-    public override TargetView GetView(TokenPosition position, IRedView? parent)
+    public override TargetView GetView(int position, IRedView? parent)
         => new TargetView(this, position, parent);
 }
 internal sealed partial class TargetView : RedView
 {
-    internal TargetView(TargetNode green, TokenPosition position, IRedView? parent)
+    internal TargetView(TargetNode green, int position, IRedView? parent)
         : base(green, position, parent)
     {
     }

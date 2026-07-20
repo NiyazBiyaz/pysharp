@@ -1,11 +1,10 @@
 using System.Text;
-using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
 public interface IGreenNode
 {
-    TokenPosition FullOffset2D { get; }
+    int FullWidth { get; }
     INodeArray<IGreenNode>? Children { get; init; }
 
     bool IsArray { get; }
@@ -18,5 +17,5 @@ public interface IGreenNode
 
     string PrettyPrint();
 
-    IRedView GetView(TokenPosition position, IRedView? parent);
+    IRedView GetView(int position, IRedView? parent);
 }

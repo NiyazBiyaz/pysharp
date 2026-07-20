@@ -1,19 +1,18 @@
 using System.Text;
-using PySharp.SyntaxAnalysis.Tokens;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
 public abstract record GreenNode : IGreenNode
 {
-    public virtual TokenPosition FullOffset2D
+    public virtual int FullWidth
     {
         get
         {
-            if (Children is not null && field == default)
+            if (Children is not null && Children.Count > 0 && field == default)
             {
                 foreach (var child in Children)
                 {
-                    field += child.FullOffset2D;
+                    field += child.FullWidth;
                 }
             }
 
@@ -21,7 +20,7 @@ public abstract record GreenNode : IGreenNode
         }
     }
 
-    public abstract IRedView GetView(TokenPosition position, IRedView? parent);
+    public abstract IRedView GetView(int position, IRedView? parent);
 
     public virtual INodeArray<IGreenNode>? Children { get; init; }
 

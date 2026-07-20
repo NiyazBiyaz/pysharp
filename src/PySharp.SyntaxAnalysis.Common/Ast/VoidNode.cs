@@ -1,5 +1,3 @@
-using PySharp.SyntaxAnalysis.Tokens;
-
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
 /// <summary>
@@ -10,8 +8,8 @@ public record VoidNode : GreenNode
     public static readonly VoidNode Instance = new();
 
     public override INodeArray<GreenNode>? Children => null;
-    public override TokenPosition FullOffset2D => new(0, 0);
+    public override int FullWidth => 0;
     public override string RecoverText() => "";
 
-    public override IRedView GetView(TokenPosition position, IRedView? parent) => new VoidView(this, position, parent);
+    public override IRedView GetView(int position, IRedView? parent) => new VoidView(this, position, parent);
 }

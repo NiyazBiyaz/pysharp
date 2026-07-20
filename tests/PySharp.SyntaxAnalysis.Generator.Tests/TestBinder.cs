@@ -904,6 +904,6 @@ public class TestBinder
         var parser = new GrammarParser(new TokenNodeStream(tokenizer));
         var node = parser.Parse();
         Debug.Assert(node is not null, "Given syntax is not valid.");
-        return node.GetView(TokenPosition.StartOfFile, null);
+        return node.GetView(0, null);
     }
 }
