@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Humanizer" Version="3.0.10" />
     <PackageReference Include="System.CommandLine" Version="2.0.10" />
-    <ProjectReference Include="..\PySharp.SyntaxAnalysis.Common\PySharp.SyntaxAnalysis.Common.csproj" />
+    <ProjectReference Include="..\PySharp\PySharp.csproj" />
     <GenerateInternalsVisibleToAttributes Include="../../tests/PySharp.SyntaxAnalysis.Generator.Tests" />
   </ItemGroup>
 

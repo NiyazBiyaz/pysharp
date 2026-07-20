@@ -82,8 +82,14 @@ public class TestNodeTextRecovery()
         Assert.Equal(expected, actual);
     }
 
-    record ListNode : GreenNode;
-    record ItemNode : GreenNode;
+    record ListNode : GreenNode
+    {
+        public override IRedView GetView(int position, IRedView? parent) => throw new NotImplementedException();
+    }
+    record ItemNode : GreenNode
+    {
+        public override IRedView GetView(int position, IRedView? parent) => throw new NotImplementedException();
+    }
 
     // To avoid boilerplate for initialized it with zero all time.
     private static TokenPosition o => new(0, 0);
