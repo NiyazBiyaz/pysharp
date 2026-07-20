@@ -14,7 +14,7 @@ public class TestBinder
         @header "Bau-bauder"
         @parser_name "BauParser"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.ReadMetadata(gram.Metadata);
         Assert.Equal("Bau-bauder", binder.Grammar!.UserHeader);
@@ -29,7 +29,7 @@ public class TestBinder
         @parser_name "BauParser"
         @top_level_node "BauNode"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidNameException>(() => { binder.ReadMetadata(gram.Metadata); });
 
@@ -38,7 +38,7 @@ public class TestBinder
         @bauser_name "BauParser"
         @top_level_node "BauNode"
         """;
-        gram = getNode(src);
+        gram = getView(src);
         binder = new Binder();
         Assert.Throws<InvalidNameException>(() => { binder.ReadMetadata(gram.Metadata); });
 
@@ -47,7 +47,7 @@ public class TestBinder
         @parser_name "BauParser"
         @bau_level_node "BauNode"
         """;
-        gram = getNode(src);
+        gram = getView(src);
         binder = new Binder();
         Assert.Throws<InvalidNameException>(() => { binder.ReadMetadata(gram.Metadata); });
     }
@@ -58,14 +58,14 @@ public class TestBinder
         string src = """
         @parser_name "BauParser"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<IncompleteMetadataException>(() => binder.ReadMetadata(gram.Metadata));
 
         src = """
         @header "Bau-bauder"
         """;
-        gram = getNode(src);
+        gram = getView(src);
         binder = new Binder();
         Assert.Throws<IncompleteMetadataException>(() => { binder.ReadMetadata(gram.Metadata); });
     }
@@ -80,7 +80,7 @@ public class TestBinder
         FuwaMoco: Fuwa Moco
         """;
         const int rules_count = 3;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
@@ -95,7 +95,7 @@ public class TestBinder
         BauBau: Bau Bau
         Bau: "bau"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
 
         Assert.Throws<CompilationException>(() => binder.RegisterRules(gram.Rules));
@@ -110,7 +110,7 @@ public class TestBinder
         @main
         Bau: "bau"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
 
         Assert.Throws<CompilationException>(() => binder.RegisterRules(gram.Rules));
@@ -126,7 +126,7 @@ public class TestBinder
         FuwaMoco_ch: Fuwa (Moco Chan)*
         """;
         const int rules_count = 5;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
@@ -143,7 +143,7 @@ public class TestBinder
         Bau: BauBau
         """;
         const int rules_count = 4;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
@@ -157,7 +157,7 @@ public class TestBinder
         Dot: Comma
         Name: "name"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidNameException>(() => binder.RegisterRules(gram.Rules));
     }
@@ -169,7 +169,7 @@ public class TestBinder
         @main
         Bau: &(@inline "fluff" | "fuzz" | "mogojyan") Bau
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
@@ -185,7 +185,7 @@ public class TestBinder
         Bau: BauBau
         BauBau: "bau"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
@@ -201,7 +201,7 @@ public class TestBinder
         Bau1: NewLine
         Bau2: Bau1
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -223,7 +223,7 @@ public class TestBinder
         @main
         Bau: "{delim}"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -244,7 +244,7 @@ public class TestBinder
         PonDeRing: &"Pon" !"De" "Ring"
         """;
         const int zero = 0, one = 1;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -299,7 +299,7 @@ public class TestBinder
             [null!, null!, "ring"], // For lookahead names are undefined.
             // For strings names are not guaranteed to be stable.
         ];
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -326,7 +326,7 @@ public class TestBinder
         BauBau: BauBauBau Bau
         BauBauBau: "bau" "bau" "bau"
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
 
@@ -341,13 +341,13 @@ public class TestBinder
         BauBau: "bau" Bau -> new(Bau=bau)
         Bau: "BAU" "(" Name "," Number ")" -> new(Tail=name, Ears=number)
         """,
-        first_type_name = "BauBauNode",
-        second_type_name = "BauNode",
+        first_type_name = "BauBau",
+        second_type_name = "Bau",
         first_type_field_name = "Bau",
         second_type_field_name1 = "Tail",
         second_type_field_name2 = "Ears";
         const int first_type_field_count = 1, second_type_field_count = 2;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -379,9 +379,9 @@ public class TestBinder
             | Name -> Third(BauBau=name)
             | Comma -> Fourth(Another=comma)
         """,
-        base_type_name = "BauBauNode";
+        base_type_name = "BauBau";
         const int types_count = 4;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -407,7 +407,7 @@ public class TestBinder
             | Number -> BauBauBau(Bau=number)
             | Name -> new(BauBau=name)
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -423,10 +423,10 @@ public class TestBinder
         BauBau: Number Bau Name
         Bau: "Bau" "bau" "_bau"
         """,
-        first_type_second_field_name = "BauNode",
-        token_node_type_base_name = "TokenNode";
+        first_type_second_field_name = "Bau",
+        token_node_type_base_name = "Token";
         const int both_type_fields_count = 3;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -453,7 +453,7 @@ public class TestBinder
         @main
         BauBau: "bau" Number Name -> new(Bau=number, Bau=name)
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -468,7 +468,7 @@ public class TestBinder
         @main
         BauBau: "bau" Number Name -> new(Bau=pondering, Another=name)
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -484,9 +484,9 @@ public class TestBinder
         Bau:
             | "bau" Name -> new(Fluff=name)
         """,
-            type_name = "BauNode";
+            type_name = "Bau";
         const int type_count = 1;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -505,7 +505,7 @@ public class TestBinder
         @main
         Bau: "bau" Name -> BauBau(Fluff=name)
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -519,9 +519,9 @@ public class TestBinder
         @main
         Bau: 'bau' ('fluff' Name -> Fuzz(Bau=name))
         """,
-        group_type_name = "FuzzNode";
+        group_type_name = "Fuzz";
         const int types_count = 2;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -540,7 +540,7 @@ public class TestBinder
             | 'bau' 'bau'
             | 'fluffy' 'fuzzy'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -560,7 +560,7 @@ public class TestBinder
         Bau: 'bau'
         Bau: 'Bau'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidNameException>(() =>
         {
@@ -582,7 +582,7 @@ public class TestBinder
             | 'whaet' -> Fluffy()
             | "iyargh" -> Hoeh()
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidNameException>(() =>
         {
@@ -601,7 +601,7 @@ public class TestBinder
             | 'bau' -> BauBau()
             | "hoeh" -> BauBau()
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidNameException>(() =>
         {
@@ -623,7 +623,7 @@ public class TestBinder
             | 'whaet' -> Bau()
             | "iyargh" -> Hoeh()
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidNameException>(() =>
         {
@@ -649,7 +649,7 @@ public class TestBinder
         FluffyOne: "fuwawae"
         FuzzyOne: 'mococoe'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidUnionException>(() =>
         {
@@ -666,7 +666,7 @@ public class TestBinder
         @main
         Bau: [@inline 'fuzz' 'fluff' | "baubau"]
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidUnionException>(() =>
         {
@@ -688,7 +688,7 @@ public class TestBinder
         BauBau: 'bau' -> new()
         Whaet: "iyargh" -> new()
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidUnionException>(() =>
         {
@@ -708,7 +708,7 @@ public class TestBinder
             | "BauBau" -> BauBauBau()
             | "Whaet" -> Hoeh()
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         Assert.Throws<InvalidUnionException>(() =>
         {
@@ -727,7 +727,7 @@ public class TestBinder
         BauBau: 'fuzz' !(BauBau 'fluff')
         """;
         const int rules_count = 3;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -746,7 +746,7 @@ public class TestBinder
         BauBau: 'fuzz' !("BauBau" | 'fluff')
         """;
         const int rules_count = 4;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -769,14 +769,14 @@ public class TestBinder
         Fluff: "fuwawae"
         Fuzz: 'mogojyan'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
         binder.CreateTypes();
 
-        var union = binder.Grammar.Types.First(t => t.Name == "BauNode");
-        var rest = binder.Grammar.Types.Where(t => t.Name != "BauNode");
+        var union = binder.Grammar.Types.First(t => t.Name == "Bau");
+        var rest = binder.Grammar.Types.Where(t => t.Name != "Bau");
 
         foreach (var member in rest)
         {
@@ -803,7 +803,7 @@ public class TestBinder
             | BauBau 'fuzz'
             | 'fluff'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -830,7 +830,7 @@ public class TestBinder
             | BauBau 'fluff' 'fuzz'
             | 'fuzz'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -848,7 +848,7 @@ public class TestBinder
             | 'bau'
             | 'bau' 'halo'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -869,7 +869,7 @@ public class TestBinder
 
         Bau: 'fuwamocoe'
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -889,7 +889,7 @@ public class TestBinder
         Fluffy: 'fuzzy' Bau
         Bau: 'bau' BauBau
         """;
-        var gram = getNode(src);
+        var gram = getView(src);
         var binder = new Binder();
         binder.RegisterRules(gram.Rules);
         binder.PopulateRules();
@@ -898,12 +898,12 @@ public class TestBinder
         Assert.Throws<CompilationException>(binder.InspectRules);
     }
 
-    private static GrammarNode getNode(string src)
+    private static GrammarView getView(string src)
     {
         var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), saveTrivia: true);
         var parser = new GrammarParser(new TokenNodeStream(tokenizer));
         var node = parser.Parse();
         Debug.Assert(node is not null, "Given syntax is not valid.");
-        return node;
+        return node.GetView(TokenPosition.StartOfFile, null);
     }
 }

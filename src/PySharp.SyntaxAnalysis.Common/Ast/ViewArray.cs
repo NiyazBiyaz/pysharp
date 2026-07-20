@@ -42,12 +42,11 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, TokenPosi
         var positionAccumulator = Position;
         for (int index = 0; index < views.Length; index++)
         {
-            positionAccumulator += greens[index].FullOffset2D;
-
             if (views[index] == null)
             {
                 views[index] = (TView)greens[index].GetView(positionAccumulator, Parent);
             }
+            positionAccumulator += greens[index].FullOffset2D;
         }
     }
 

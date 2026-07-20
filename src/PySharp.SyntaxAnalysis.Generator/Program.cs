@@ -63,10 +63,12 @@ internal class Program
 
             var binder = new Binder();
 
+            var grammarView = grammarParsed.GetView(TokenPosition.StartOfFile, null);
+
             try
             {
-                binder.ReadMetadata(grammarParsed.Metadata);
-                binder.RegisterRules(grammarParsed.Rules);
+                binder.ReadMetadata(grammarView.Metadata);
+                binder.RegisterRules(grammarView.Rules);
                 binder.PopulateRules();
                 binder.CreateTypes();
                 binder.InspectRules();

@@ -32,17 +32,18 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
 
     public TokenPosition FullOffset2D
     {
-        get;
-        private init
+        get
         {
-            if (nodes.IsDefaultOrEmpty)
-                field = default;
+            if (!nodes.IsDefaultOrEmpty && field == default)
+            {
+                var offsetAccumulator = TokenPosition.StartOfFile;
+                foreach (var itemOffset in nodes)
+                    offsetAccumulator += itemOffset.FullOffset2D;
 
-            var offset = TokenPosition.StartOfFile;
-            foreach (var itemOffset in nodes)
-                offset += itemOffset.FullOffset2D;
+                field = offsetAccumulator;
+            }
 
-            field = offset;
+            return field;
         }
     }
 

@@ -26,7 +26,7 @@ internal class Binder
     private readonly VariableNamingScope groupTypeNameStore = new();
     private readonly Dictionary<GroupIdentifier, BoundRule> groupRules = [];
 
-    internal void ReadMetadata(IEnumerable<MetadataNode> metadata)
+    internal void ReadMetadata(IEnumerable<MetadataView> metadata)
     {
         string? userHeader = null, parserName = null;
         foreach (var meta in metadata)
@@ -53,15 +53,15 @@ internal class Binder
         Grammar.ParserName = parserName;
     }
 
-    internal void RegisterRules(IEnumerable<RuleNode> rules)
+    internal void RegisterRules(IEnumerable<RuleView> rules)
     {
         Debug.Assert(stage == BinderStage.Empty);
 
         foreach (var astRule in rules)
         {
-            var alternatives = astRule is ArmedRuleNode armed
+            var alternatives = astRule is ArmedRuleView armed
                 ? armed.Arms.Select(a => a.Alternative)
-                : astRule is SingleAlternativeRuleNode single
+                : astRule is SingleAlternativeRuleView single
                     ? [single.Alternative]
                     : throw new UnreachableException($"Unexpected subclass of the RuleNode: {astRule.GetType()}");
 
@@ -141,7 +141,7 @@ internal class Binder
         string name;
         if (astGroup.Alternatives.Length == 1)
         {
-            name = astGroup.Alternatives[0].Action is NamedActionNode typeHint
+            name = astGroup.Alternatives[0].Action is NamedActionView typeHint
                 ? typeHint.Name.RawString
                 : groupTypeNameStore.NextTypeName();
         }
@@ -154,7 +154,7 @@ internal class Binder
         BoundType? type = null;
         bool isInline = false;
 
-        if (astGroup.Decorator is GroupDecoratorNode dec)
+        if (astGroup.Decorator is GroupDecoratorView dec)
         {
             if (dec.Value.RawString == decor_token_union)
             {
@@ -199,22 +199,22 @@ internal class Binder
             createGroupRule(group);
     }
 
-    private static IEnumerable<IGroup> getGroups(AlternativeNode alternative) => alternative.Molecules
-        .Where(m => m is not OptionalGroupNode)
-        .SelectMany<MoleculeNode, AtomNode>(m => m switch
+    private static IEnumerable<IGroup> getGroups(AlternativeView alternative) => alternative.Molecules
+        .Where(m => m is not OptionalGroupView)
+        .SelectMany<MoleculeView, AtomView>(m => m switch
         {
-            AtomMoleculeNode hydrogen => [hydrogen.Atom],
-            PositiveLookaheadNode pos => [pos.Atom],
-            NegativeLookaheadNode neg => [neg.Atom],
-            OptionalNode opt => [opt.Atom],
-            RepeatOneMoreNode one => [one.Atom],
-            RepeatZeroMoreNode zero => [zero.Atom],
-            GatherNode gath => [gath.ValueAtom, gath.Separator],
-            CutNode => [],
+            AtomMoleculeView hydrogen => [hydrogen.Atom],
+            PositiveLookaheadView pos => [pos.Atom],
+            NegativeLookaheadView neg => [neg.Atom],
+            OptionalView opt => [opt.Atom],
+            RepeatOneMoreView one => [one.Atom],
+            RepeatZeroMoreView zero => [zero.Atom],
+            GatherView gath => [gath.ValueAtom, gath.Separator],
+            CutView => [],
             _ => throw new UnreachableException($"Unexpected MoleculeNode subclass: {m.GetType()}")
         })
         .OfType<IGroup>()
-        .Concat(alternative.Molecules.Where(m => m is OptionalGroupNode).Cast<OptionalGroupNode>());
+        .Concat(alternative.Molecules.Where(m => m is OptionalGroupView).Cast<OptionalGroupView>());
 
     internal void PopulateRules()
     {
@@ -254,54 +254,54 @@ internal class Binder
         stage = BinderStage.CreatedEntries;
     }
 
-    private IEnumerable<BoundAlternativeEntry> createEntries(AlternativeNode alternative)
+    private IEnumerable<BoundAlternativeEntry> createEntries(AlternativeView alternative)
     {
         var nameScope = new VariableNamingScope();
         int index = 0;
         foreach (var molecule in alternative.Molecules)
         {
             QuantifierKind quant;
-            AtomNode atom;
+            AtomView atom;
             int? count = null;
             bool? positive = null;
 
             switch (molecule)
             {
-                case AtomMoleculeNode hydrogen:
+                case AtomMoleculeView hydrogen:
                     quant = QuantifierKind.Expect;
                     atom = hydrogen.Atom;
                     break;
 
-                case RepeatOneMoreNode one:
+                case RepeatOneMoreView one:
                     quant = QuantifierKind.Repeat;
                     atom = one.Atom;
                     count = 1;
                     break;
 
-                case RepeatZeroMoreNode zero:
+                case RepeatZeroMoreView zero:
                     quant = QuantifierKind.Repeat;
                     atom = zero.Atom;
                     count = 0;
                     break;
 
-                case PositiveLookaheadNode pos:
+                case PositiveLookaheadView pos:
                     quant = QuantifierKind.Lookahead;
                     positive = true;
                     atom = pos.Atom;
                     break;
 
-                case NegativeLookaheadNode neg:
+                case NegativeLookaheadView neg:
                     quant = QuantifierKind.Lookahead;
                     positive = false;
                     atom = neg.Atom;
                     break;
 
-                case OptionalNode opt:
+                case OptionalView opt:
                     quant = QuantifierKind.Optional;
                     atom = opt.Atom;
                     break;
 
-                case OptionalGroupNode optGroup:
+                case OptionalGroupView optGroup:
                     var rule = groupRules[((IGroup)optGroup).Identifier];
                     yield return new BoundRuleAlternativeEntry
                     {
@@ -314,7 +314,7 @@ internal class Binder
                     };
                     continue;
 
-                case GatherNode gather:
+                case GatherView gather:
                     var localNameScope = new VariableNamingScope();
                     var value = createEntry(gather.ValueAtom, localNameScope, QuantifierKind.Expect, null, null);
                     var sep = createEntry(gather.Separator, localNameScope, QuantifierKind.Expect, null, null);
@@ -330,7 +330,7 @@ internal class Binder
                     };
                     continue;
 
-                case CutNode:
+                case CutView:
                     yield return new BoundCutAlternativeEntry();
                     continue;
 
@@ -349,10 +349,10 @@ internal class Binder
         }
     }
 
-    private BoundAlternativeEntry createEntry(AtomNode atom, VariableNamingScope nameScope, QuantifierKind quant, int? count, bool? positive)
+    private BoundAlternativeEntry createEntry(AtomView atom, VariableNamingScope nameScope, QuantifierKind quant, int? count, bool? positive)
     => atom switch
     {
-        StringAtomNode aliasedToken when TokenType.TryGetDelimiterByString(StringParser.ParseQuoted(aliasedToken.Value.RawString), out var tok) => new BoundTokenAlternativeEntry
+        StringAtomView aliasedToken when TokenType.TryGetDelimiterByString(StringParser.ParseQuoted(aliasedToken.Value.RawString), out var tok) => new BoundTokenAlternativeEntry
         {
             Name = nameScope.NextName(tok.ToString()) + quant.AddSuffix(count),
             Value = tok,
@@ -360,7 +360,7 @@ internal class Binder
             MinRepeatCount = count,
             Positiveness = positive,
         },
-        StringAtomNode str => new BoundStringAlternativeEntry()
+        StringAtomView str => new BoundStringAlternativeEntry()
         {
             Name = nameScope.NextString() + quant.AddSuffix(count),
             Value = StringParser.ParseQuoted(str.Value.RawString),
@@ -368,7 +368,7 @@ internal class Binder
             MinRepeatCount = count,
             Positiveness = positive,
         },
-        NameAtomNode name => name.Value.RawString switch
+        NameAtomView name => name.Value.RawString switch
         {
             string tokenName when Enum.TryParse<TokenType>(tokenName, out _) => new BoundTokenAlternativeEntry
             {
@@ -387,7 +387,7 @@ internal class Binder
                 Positiveness = positive,
             }
         },
-        GroupAtomNode groupAtom => new BoundRuleAlternativeEntry
+        GroupAtomView groupAtom => new BoundRuleAlternativeEntry
         {
             Quantifier = quant,
             Name = nameScope.NextName(groupRules[((IGroup)groupAtom).Identifier].Name) + quant.AddSuffix(count),
@@ -458,13 +458,13 @@ internal class Binder
                         .ToList();
                 }
 
-                if (astAlt.Action is InferredActionNode && rule.Alternatives.Count > 1)
+                if (astAlt.Action is InferredActionView && rule.Alternatives.Count > 1)
                 {
                     throw new CompilationException("Cannot use `new` keyword for rule that have more than 1 arm.");
                 }
 
                 BoundRuleType? type = null;
-                if (astAlt.Action is NamedActionNode namedAction)
+                if (astAlt.Action is NamedActionView namedAction)
                 {
                     string name = namedAction.Name.RawString;
 
@@ -530,7 +530,7 @@ internal class Binder
                     {
                         var fields = rule.Alternatives[0].Action!.CapturedVariables.Select(createField);
 
-                        if (!rule.IsGroup && rule.AstAlternatives[0].Action is NamedActionNode)
+                        if (!rule.IsGroup && rule.AstAlternatives[0].Action is NamedActionView)
                             throw new CompilationException($"Using name for the rule with single arm is not allowed: {rule.Name}");
 
                         ((BoundRuleType)rule.Type).Fields = fields.ToList();
@@ -697,7 +697,7 @@ internal class Binder
                         break;
 
                     default:
-                        throw new NotImplementedException("");
+                        throw new NotImplementedException("Implement cycle finding algorithm.");
                 }
 
                 sccHandled.Add(scc);
