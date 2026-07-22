@@ -136,7 +136,6 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         var span = Source.Span;
 
         ResetStart();
-        MarkDeltaStart();
 
         if (tryNextLine(span, out token) || tryIndentation(out token))
         {

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using PySharp.SyntaxAnalysis.Common;
 
 namespace PySharp.SyntaxAnalysis.Tokens;
 
@@ -31,6 +32,9 @@ public abstract class BaseTokenizer
     protected int StartLineNumber { get; private set; }
 
     private bool skipNextCrlf = false;
+
+    // Integrate it to the synchronization mechanism.
+    public TextPositionMap PositionMap { get; } = new();
 
     protected const char Eof = '\0';
 
@@ -89,23 +93,6 @@ public abstract class BaseTokenizer
         ErrorMessage = message;
         CreateToken(out token, TokenType.Error, emptyLexeme);
     }
-
-    private int deltaStart = -1;
-
-    protected int PositionDelta
-    {
-        get
-        {
-            if (deltaStart == -1)
-                throw new InvalidOperationException("Call MarkDeltaStart() first before using PositionDelta");
-            return currentPos - deltaStart;
-        }
-    }
-
-    /// <summary>
-    /// Marks position on <see cref="startPos"/> to be used as start of the <see cref="PositionDelta"/>
-    /// </summary>
-    protected void MarkDeltaStart() => deltaStart = startPos;
 
     /// <summary>
     /// Moves current position to next character and sets properties <see cref="NextChar"/>,
@@ -166,6 +153,9 @@ public abstract class BaseTokenizer
         NextChar = next0 == '\r' ? '\n' : next0;
         TwoNextChar = next1 == '\r' ? '\n' : next1;
         ThreeNextChar = next2 == '\r' ? '\n' : next2;
+
+        if (NextChar == '\n')
+            PositionMap.Append(currentPos);
 
         return increaseLine;
     }
