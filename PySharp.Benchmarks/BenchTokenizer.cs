@@ -16,19 +16,7 @@ public class BenchTokenizer
     }
 
     [Benchmark]
-    public void TestTokenizeTriviaFalseFStrings()
-    {
-        var buffer = new StringBuffer(source_with_f_strings);
-        var sync = SynchronizationPoint.ClearPoint(buffer);
-
-        var tokenizer = new Tokenizer(sync, false);
-
-        while (!tokenizer.ShouldStop)
-            tokenizer.ReadNext();
-    }
-
-    [Benchmark]
-    public void TestTokenizeTriviaTrueFStrings()
+    public void TestTokenizeFStrings()
     {
         var buffer = new StringBuffer(source_with_f_strings);
         var sync = SynchronizationPoint.ClearPoint(buffer);
@@ -36,23 +24,11 @@ public class BenchTokenizer
         var tokenizer = new Tokenizer(sync, true);
 
         while (!tokenizer.ShouldStop)
-            tokenizer.ReadNext();
+            tokenizer.ReadNext(out _);
     }
 
     [Benchmark]
-    public void TestTokenizeTriviaFalseRegular()
-    {
-        var buffer = new StringBuffer(source_without_f_strings);
-        var sync = SynchronizationPoint.ClearPoint(buffer);
-
-        var tokenizer = new Tokenizer(sync, false);
-
-        while (!tokenizer.ShouldStop)
-            tokenizer.ReadNext();
-    }
-
-    [Benchmark]
-    public void TestTokenizeTriviaTrueRegular()
+    public void TestTokenizeRegular()
     {
         var buffer = new StringBuffer(source_without_f_strings);
         var sync = SynchronizationPoint.ClearPoint(buffer);
@@ -60,6 +36,6 @@ public class BenchTokenizer
         var tokenizer = new Tokenizer(sync, true);
 
         while (!tokenizer.ShouldStop)
-            tokenizer.ReadNext();
+            tokenizer.ReadNext(out _);
     }
 }

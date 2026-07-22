@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace PySharp.SyntaxAnalysis.Tokens;
@@ -7,7 +8,6 @@ namespace PySharp.SyntaxAnalysis.Tokens;
 public abstract class BaseTokenizer
 {
     protected IReadOnlyMemoryBuffer<char> Source = null!;
-    protected readonly bool SaveTrivia;
 
     protected char NextChar { get; private set; }
     protected char TwoNextChar { get; private set; }
@@ -51,10 +51,8 @@ public abstract class BaseTokenizer
         advance(Source.Span);
     }
 
-    protected BaseTokenizer(SynchronizationPoint sync, bool saveTrivia)
+    protected BaseTokenizer(SynchronizationPoint sync)
     {
-        SaveTrivia = saveTrivia;
-
         ReSync(sync);
     }
 
@@ -77,31 +75,37 @@ public abstract class BaseTokenizer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected Token CreateToken(TokenType type, bool emptyLexeme = false)
+    protected void CreateToken([NotNull] out Token? token, TokenType type, bool emptyLexeme = false)
     {
         var lexeme = emptyLexeme ? ReadOnlyMemory<char>.Empty
                                  : Source.Memory[startPos..currentPos];
 
-        var endPosition = new TokenPosition()
-        {
-            Line = currentLineNumber,
-            Column = currentColumn,
-        };
-        var startPosition = new TokenPosition()
-        {
-            Line = StartLineNumber,
-            Column = StartColumn,
-        };
-
-        return new(type, lexeme, startPosition, endPosition);
+        token = new(type, lexeme);
     }
 
-    protected Token ErrorToken(TokenizerError error, string message, bool emptyLexeme = false)
+    protected void ErrorToken([NotNull] out Token? token, TokenizerError error, string message, bool emptyLexeme = false)
     {
         Error = error;
         ErrorMessage = message;
-        return CreateToken(TokenType.Error, emptyLexeme);
+        CreateToken(out token, TokenType.Error, emptyLexeme);
     }
+
+    private int deltaStart = -1;
+
+    protected int PositionDelta
+    {
+        get
+        {
+            if (deltaStart == -1)
+                throw new InvalidOperationException("Call MarkDeltaStart() first before using PositionDelta");
+            return currentPos - deltaStart;
+        }
+    }
+
+    /// <summary>
+    /// Marks position on <see cref="startPos"/> to be used as start of the <see cref="PositionDelta"/>
+    /// </summary>
+    protected void MarkDeltaStart() => deltaStart = startPos;
 
     /// <summary>
     /// Moves current position to next character and sets properties <see cref="NextChar"/>,

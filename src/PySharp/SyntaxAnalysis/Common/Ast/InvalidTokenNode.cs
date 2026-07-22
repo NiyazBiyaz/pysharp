@@ -10,7 +10,8 @@ public record InvalidTokenNode : TokenNode
         in Token token,
         IEnumerable<TokenNode> leading,
         string? message,
-        TokenizerError error) : base(token, leading)
+        TokenizerError error)
+    : base(token, leading)
     {
         Error = error;
         ErrorMessage = message;

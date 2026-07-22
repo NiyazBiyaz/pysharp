@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PySharp.SyntaxAnalysis.Tokens;
 
@@ -68,8 +69,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
     /// </summary>
     private const int maximum_partial_strings_nesting = 5;
 
-    public Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines = true)
-        : base(syncPoint, saveTrivia)
+    public Tokenizer(SynchronizationPoint syncPoint, bool limitInterpolationLines = true)
+        : base(syncPoint)
     {
         indentStack = syncPoint.IndentStack;
         alternateIndentStack = syncPoint.AltIndentStack;
@@ -85,8 +86,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         isPartialString = false;
     }
 
-    private Tokenizer(SynchronizationPoint syncPoint, bool saveTrivia, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
-        : base(syncPoint, saveTrivia)
+    private Tokenizer(SynchronizationPoint syncPoint, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
+        : base(syncPoint)
     {
         // Setup synchronization point.
         indentStack = syncPoint.IndentStack;
@@ -122,47 +123,55 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         };
     }
 
-    public Token ReadNext()
+    public void ReadNext([NotNull] out Token? token)
     {
         if (ShouldStop)
             throw new InvalidOperationException("Buffer already was read. Check ShouldStop flag before calling.");
 
-        Token? maybeToken = tryPartial();
-        if (maybeToken is Token partial)
-            return partial;
+        if (tryPartial(out token))
+        {
+            return;
+        }
 
         var span = Source.Span;
 
         ResetStart();
-        maybeToken = tryNextLine(span) ?? tryIndentation();
-        if (maybeToken is Token token)
-            return token;
+        MarkDeltaStart();
+
+        if (tryNextLine(span, out token) || tryIndentation(out token))
+        {
+            return;
+        }
 
         ResetStart();
-        maybeToken = skipAndTryWhitespace(span);
-        if (maybeToken is Token whiteSpace)
-            return whiteSpace;
+        if (skipAndTryWhitespace(span, out token))
+        {
+            return;
+        }
 
         ResetStart();
-        maybeToken = tryComment(span);
-        if (maybeToken is Token comment)
-            return comment;
+        if (tryComment(span, out token))
+        {
+            return;
+        }
 
         ResetStart();
-        Token definitelyToken =
-            tryEof() ??
-            tryName(span) ??
-            tryLineFeed(span) ??
-            tryDotOrFraction(span) ??
-            tryNumber(span) ??
-            tryString(span) ??
-            tryLineContinuation(span) ??
-            readOperatorOrErrorToken(span);
+        if (tryEof(out token) ||
+            tryName(span, out token) ||
+            tryLineFeed(span, out token) ||
+            tryDotOrFraction(span, out token) ||
+            tryNumber(span, out token) ||
+            tryString(span, out token) ||
+            tryLineContinuation(span, out token))
+        {
+            return;
+        }
 
-        return definitelyToken;
+        readOperatorOrErrorToken(span, out token);
+        return;
     }
 
-    private Token? tryPartial()
+    private bool tryPartial([NotNullWhen(true)] out Token? token)
     {
         if (partialNestedTokenizer is not null)
         {
@@ -173,27 +182,29 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             }
             else
             {
-                var tokenFromNested = partialNestedTokenizer.tryNextPartialMode();
+                bool isNestedParsed = partialNestedTokenizer.tryNextPartialMode(out token);
 
                 // If nested tokenizer returns null, it means that it can't more read the characters
                 // but in some weird condition. So we need to delete it now and resume tokenizing.
-                if (tokenFromNested is null)
+                if (!isNestedParsed)
                 {
                     killNested();
-                    return null;
+                    token = null;
+                    return false;
                 }
 
                 // Throw out errors.
-                if (tokenFromNested.Value.Type is TokenType.Error)
+                if (token!.Value.Type is TokenType.Error)
                 {
                     Error = partialNestedTokenizer.Error;
                     ErrorMessage = partialNestedTokenizer.ErrorMessage;
                 }
-                return tokenFromNested;
+                return true;
             }
         }
 
-        return null;
+        token = null;
+        return false;
 
         void killNested()
         {
@@ -204,7 +215,7 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         }
     }
 
-    private Token? tryNextLine(ReadOnlySpan<char> span)
+    private bool tryNextLine(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (atLineBeginning)
         {
@@ -214,7 +225,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             if (bracketsLevel != 0 || atContinuedLine)
             {
                 atContinuedLine = false;
-                return null;
+                token = null;
+                return false;
             }
 
             int column = 0;
@@ -238,9 +250,9 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 else if (NextChar == '\\')
                 {
                     continuationColumn = continuationColumn != 0 ? continuationColumn : column;
-                    var lineCont = readLineContinuation(span);
-                    if (lineCont.Type is TokenType.Error)
-                        return lineCont;
+                    readLineContinuation(span, out token);
+                    if (token?.Type is TokenType.Error)
+                        return true;
                 }
                 else
                     break;
@@ -256,15 +268,25 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 if (column == indentStack.Peek())
                 {
                     if (alternateColumn != alternateIndentStack.Peek())
-                        return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
+                    {
+                        ErrorToken(out token, TokenizerError.IndentationError, tab_space_mixing_message, true);
+                        return true;
+                    }
 
                     if (alternateColumn != 0)
-                        return createWhiteSpaceToken();
+                    {
+                        CreateToken(out token, TokenType.WhiteSpace);
+                        return true;
+                    }
+
                 }
                 else if (column > indentStack.Peek())
                 {
                     if (alternateColumn <= alternateIndentStack.Peek())
-                        return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
+                    {
+                        ErrorToken(out token, TokenizerError.IndentationError, tab_space_mixing_message, true);
+                        return true;
+                    }
 
                     pendingIndentation++;
                     indentStack.Push(column);
@@ -272,26 +294,26 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 }
                 else if (column < indentStack.Peek())
                 {
-                    if (enqueueDedent(column, alternateColumn) is Token errTok)
-                        return errTok;
+                    if (tryEnqueueDedent(column, alternateColumn, out token))
+                        return true;
                 }
             }
             else if (alternateColumn != 0)
-                return createWhiteSpaceToken();
+            {
+                CreateToken(out token, TokenType.WhiteSpace);
+                return true;
+            }
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
     /// <summary>
     /// Reduces current indentation stack top element to <paramref name="column"/> and enqueues
     /// <see cref="TokenType.Dedent"/> tokens to <see cref="pendingIndentation"/>.
     /// </summary>
-    /// <param name="column">Target indentation.</param>
-    /// <param name="alternateColumn">Target alternate indentation, needed for indent consistency checks.</param>
-    /// <returns><see cref="null"/> on success; otherwise <see cref="TokenType.Error"/>.</returns>
-    /// <exception cref="ArgumentOutOfRangeException"/>
-    private Token? enqueueDedent(int column, int alternateColumn)
+    private bool tryEnqueueDedent(int column, int alternateColumn, [NotNullWhen(true)] out Token? token)
     {
         Debug.Assert(column < indentStack.Peek());
 
@@ -309,37 +331,43 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         if (column != indentStack.Peek())
         {
             pendingIndentation = 0;
-            return ErrorToken(TokenizerError.IndentationError, "Can dedent only on existing indentation level.", true);
+            ErrorToken(out token, TokenizerError.IndentationError, "Can dedent only on existing indentation level.", true);
+            return true;
         }
 
         if (alternateColumn != alternateIndentStack.Peek())
         {
             pendingIndentation = 0;
-            return ErrorToken(TokenizerError.IndentationError, tab_space_mixing_message, true);
+            ErrorToken(out token, TokenizerError.IndentationError, tab_space_mixing_message, true);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? tryIndentation()
+    private bool tryIndentation([NotNullWhen(true)] out Token? token)
     {
         if (pendingIndentation < 0)
         {
             pendingIndentation++;
             // Dedent tokens are empty with zero-width.
             ResetStart();
-            return CreateToken(TokenType.Dedent, true);
+            CreateToken(out token, TokenType.Dedent, true);
+            return true;
         }
         else if (pendingIndentation > 0)
         {
             pendingIndentation--;
-            return CreateToken(TokenType.Indent);
+            CreateToken(out token, TokenType.Indent);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? skipAndTryWhitespace(ReadOnlySpan<char> span)
+    private bool skipAndTryWhitespace(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         bool hasWhiteSpace = false;
         while (NextChar == ' ' || NextChar == '\t' || NextChar == '\f')
@@ -349,25 +377,16 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         }
 
         if (hasWhiteSpace)
-            return createWhiteSpaceToken();
+        {
+            CreateToken(out token, TokenType.WhiteSpace);
+            return true;
+        }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? createWhiteSpaceToken()
-    {
-        if (SaveTrivia)
-            return CreateToken(TokenType.WhiteSpace);
-
-        // Since some special characters may change behavior of the tokenizer
-        // after eating whitespace we need to read next token in partial mode
-        else if (isPartialString)
-            return tryNextPartialMode();
-
-        return null;
-    }
-
-    private Token? tryComment(ReadOnlySpan<char> span)
+    private bool tryComment(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (NextChar == '#')
         {
@@ -375,53 +394,55 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             while (NextChar != '\n')
                 Advance(span);
 
-            if (SaveTrivia)
-            {
-                isBlankLineWithComment = isBlankLine;
-                return CreateToken(TokenType.Comment);
-            }
+            isBlankLineWithComment = isBlankLine;
+            CreateToken(out token, TokenType.Comment);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? tryEof()
+    private bool tryEof([NotNullWhen(true)] out Token? token)
     {
         if (NextChar == Eof)
         {
             // If indentation stack is not empty, enqueue dedent and return it.
             if (indentStack.Count > 1)
             {
-                enqueueDedent(0, 0);
-                return tryIndentation();
+                tryEnqueueDedent(0, 0, out _);
+                return tryIndentation(out token);
             }
 
             // Request stop and return EOF.
             ShouldStop = true;
-            return CreateToken(TokenType.EndOfFile);
+            CreateToken(out token, TokenType.EndOfFile);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? tryName(ReadOnlySpan<char> span)
+    private bool tryName(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (isPotentialNameStart(NextChar))
         {
-            var maybeString = tryPrefixedString(span);
-            if (maybeString is not null)
-                return maybeString;
+            if (tryPrefixedString(span, out token))
+                return true;
 
             while (isPotentialNameChar(NextChar))
                 Advance(span);
 
-            return CreateToken(TokenType.Name);
+            CreateToken(out token, TokenType.Name);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? tryPrefixedString(ReadOnlySpan<char> span)
+    private bool tryPrefixedString(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         bool sawB, sawR, sawU, sawF, sawT;
 
@@ -432,15 +453,22 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         sawT = char.ToLower(NextChar) == 't';
 
         if (!(sawB || sawR || sawU || sawF || sawT))
-            return null;
+        {
+            token = null;
+            return false;
+        }
 
         if (isQuote(TwoNextChar))
         {
             if (sawF || sawT)
-                return readPartialStringStart(span, sawF ? StringType.Format : StringType.Template);
+            {
+                readPartialStringStart(span, out token, sawF ? StringType.Format : StringType.Template);
+                return true;
+            }
 
             Advance(span);
-            return readString(span);
+            readString(span, out token);
+            return true;
         }
 
         sawB = sawB || char.ToLower(TwoNextChar) == 'b';
@@ -458,25 +486,32 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 if (!sawF && !sawT)
                 {
                     // If it's not partial string, read string and put it in error token.
-                    return readString(span, prefixErrMsg);
+                    readString(span, out token, prefixErrMsg);
+                    return true;
                 }
                 else
                 {
-                    return ErrorToken(TokenizerError.InvalidLiteral, prefixErrMsg);
+                    ErrorToken(out token, TokenizerError.InvalidLiteral, prefixErrMsg);
+                    return true;
                 }
             }
             else
             {
                 if (sawF || sawT)
-                    return readPartialStringStart(span, sawF ? StringType.Format : StringType.Template);
+                {
+                    readPartialStringStart(span, out token, sawF ? StringType.Format : StringType.Template);
+                    return true;
+                }
 
                 Advance(span);
                 Advance(span);
-                return readString(span);
+                readString(span, out token);
+                return true;
             }
         }
 
-        return null;
+        token = null;
+        return false;
 
         static bool isPotentialPrefix(char ch) =>
             char.ToLower(ch) == 'r' ||
@@ -486,74 +521,67 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             char.ToLower(ch) == 't';
     }
 
-    private Token? tryLineFeed(ReadOnlySpan<char> span)
+    private bool tryLineFeed(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (NextChar == '\n')
         {
             atLineBeginning = true;
             bool increaseLine = Advance(span);
-            Token tok;
 
             if (isBlankLine || bracketsLevel > 0 || atContinuedLine)
             {
-                // If line is empty, try to save trivia new line.
-                if (SaveTrivia)
-                {
-                    if (isBlankLineWithComment)
-                        isBlankLineWithComment = false;
-                    tok = CreateToken(TokenType.TriviaNewLine);
-                }
-                // Or force reading next token (advance line before it).
-                else
-                {
-                    if (increaseLine)
-                        AdvanceLine();
-                    // Since some special characters may change behavior of the tokenizer
-                    // after eating whitespace we need to read next token in partial mode
-                    return isPartialString ? tryNextPartialMode() : ReadNext();
-                }
+                // If line is empty, save trivia new line.
+                if (isBlankLineWithComment)
+                    isBlankLineWithComment = false;
+                CreateToken(out token, TokenType.TriviaNewLine);
             }
             // If line is empty but with comment save trivia.
-            else if (isBlankLineWithComment && SaveTrivia)
+            else if (isBlankLineWithComment)
             {
                 isBlankLineWithComment = false;
-                tok = CreateToken(TokenType.TriviaNewLine);
+                CreateToken(out token, TokenType.TriviaNewLine);
             }
             // If we have valued new line
             else
-                tok = CreateToken(TokenType.NewLine);
+                CreateToken(out token, TokenType.NewLine);
 
             if (increaseLine)
                 AdvanceLine();
 
-            return tok;
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? tryDotOrFraction(ReadOnlySpan<char> span)
+    private bool tryDotOrFraction(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (NextChar == '.')
         {
             if (char.IsAsciiDigit(TwoNextChar))
-                return readDecimalNumber(span);
+            {
+                readDecimalNumber(span, out token);
+                return true;
+            }
 
             Advance(span);
             if (NextChar == '.' && TwoNextChar == '.')
             {
                 Advance(span);
                 Advance(span);
-                return CreateToken(TokenType.Ellipsis);
+                CreateToken(out token, TokenType.Ellipsis);
             }
 
-            return CreateToken(TokenType.Dot);
+            CreateToken(out token, TokenType.Dot);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token? tryNumber(ReadOnlySpan<char> span)
+    private bool tryNumber(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (char.IsAsciiDigit(NextChar))
         {
@@ -569,7 +597,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                         if (NextChar == '_')
                         {
                             if (!char.IsAsciiHexDigit(TwoNextChar))
-                                return errorInvalidNumber(span, NumberKind.Hexadecimal);
+                            {
+                                errorInvalidNumber(span, out token, NumberKind.Hexadecimal);
+                                return true;
+                            }
                         }
 
                         do
@@ -579,7 +610,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                     while (NextChar == '_');
 
                     if (isInvalidEndOfNumber(NextChar))
-                        return errorInvalidNumber(span, NumberKind.Hexadecimal);
+                    {
+                        errorInvalidNumber(span, out token, NumberKind.Hexadecimal);
+                        return true;
+                    }
                 }
                 // Octal.
                 else if (char.ToLower(NextChar) == 'o')
@@ -590,7 +624,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                         if (NextChar == '_')
                         {
                             if (!isAsciiOctDigit(TwoNextChar))
-                                return errorInvalidNumber(span, NumberKind.Octal);
+                            {
+                                errorInvalidNumber(span, out token, NumberKind.Octal);
+                                return true;
+                            }
                         }
 
                         do
@@ -600,7 +637,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                     while (NextChar == '_');
 
                     if (isInvalidEndOfNumber(NextChar))
-                        return errorInvalidNumber(span, NumberKind.Octal);
+                    {
+                        errorInvalidNumber(span, out token, NumberKind.Octal);
+                        return true;
+                    }
                 }
                 // Binary.
                 else if (char.ToLower(NextChar) == 'b')
@@ -611,7 +651,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                         if (NextChar == '_')
                         {
                             if (!isAsciiBinDigit(TwoNextChar))
-                                return errorInvalidNumber(span, NumberKind.Binary);
+                            {
+                                errorInvalidNumber(span, out token, NumberKind.Binary);
+                                return true;
+                            }
                         }
 
                         do
@@ -621,7 +664,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                     while (NextChar == '_');
 
                     if (isInvalidEndOfNumber(NextChar))
-                        return errorInvalidNumber(span, NumberKind.Binary);
+                    {
+                        errorInvalidNumber(span, out token, NumberKind.Binary);
+                        return true;
+                    }
                 }
 
                 // Decimal literal with leading zeros.
@@ -637,7 +683,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                         {
                             Advance(span);
                             if (!char.IsAsciiDigit(NextChar))
-                                return errorInvalidNumber(span, NumberKind.Decimal);
+                            {
+                                errorInvalidNumber(span, out token, NumberKind.Decimal);
+                                return true;
+                            }
                         }
                     }
 
@@ -646,37 +695,57 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                         nonZeros = true;
                         bool ok = moveWhileDecimal(span);
                         if (!ok)
-                            return errorInvalidNumber(span, NumberKind.Decimal);
+                        {
+                            errorInvalidNumber(span, out token, NumberKind.Decimal);
+                            return true;
+                        }
                     }
                     if (NextChar == '.')
-                        readDecimalNumber(span);
+                    {
+                        readDecimalNumber(span, out token);
+                        return true;
+                    }
 
-                    else if (nonZeros && !SaveTrivia)
-                        return errorInvalidNumber(span, """
+                    else if (nonZeros)
+                    {
+                        errorInvalidNumber(span, out token, """
                         Leading zeros in decimal integer are not permitted; use an '0o' prefix for octal numbers.
                         """);
+                        return true;
+                    }
 
                     if (isInvalidEndOfNumber(NextChar))
-                        return errorInvalidNumber(span, NumberKind.Decimal);
+                    {
+                        errorInvalidNumber(span, out token, NumberKind.Decimal);
+                        return true;
+                    }
                 }
 
-                return CreateToken(TokenType.Number);
+                CreateToken(out token, TokenType.Number);
+                return true;
             }
 
             else
-                return readDecimalNumber(span);
+            {
+                readDecimalNumber(span, out token);
+                return true;
+            }
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token readDecimalNumber(ReadOnlySpan<char> span)
+    private void readDecimalNumber(ReadOnlySpan<char> span, [NotNull] out Token? token)
     {
         // Eat integer part.
         {
             bool ok = moveWhileDecimal(span);
             if (!ok)
-                return errorInvalidNumber(span, NumberKind.Decimal);
+            {
+                errorInvalidNumber(span, out token, NumberKind.Decimal);
+                return;
+            }
         }
 
         // Eat fraction part.
@@ -684,7 +753,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         {
             bool ok = moveFractionPart(span);
             if (!ok)
-                return errorInvalidNumber(span, NumberKind.Decimal);
+            {
+                errorInvalidNumber(span, out token, NumberKind.Decimal);
+                return;
+            }
         }
 
         // Eat exponent part.
@@ -692,7 +764,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         {
             bool ok = moveExponentPart(span);
             if (!ok)
-                return errorInvalidNumber(span, NumberKind.Decimal, true);
+            {
+                errorInvalidNumber(span, out token, NumberKind.Decimal, true);
+                return;
+            }
         }
 
         // Eat imaginary part (just one symbol).
@@ -701,15 +776,21 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             Advance(span);
 
             if (isInvalidEndOfNumber(NextChar))
-                return errorInvalidNumber(span, NumberKind.Imaginary);
+            {
+                errorInvalidNumber(span, out token, NumberKind.Imaginary);
+                return;
+            }
         }
         else
         {
             if (isInvalidEndOfNumber(NextChar))
-                return errorInvalidNumber(span, NumberKind.Decimal);
+            {
+                errorInvalidNumber(span, out token, NumberKind.Decimal);
+                return;
+            }
         }
 
-        return CreateToken(TokenType.Number);
+        CreateToken(out token, TokenType.Number);
     }
 
     private enum NumberKind
@@ -762,7 +843,7 @@ public class Tokenizer : BaseTokenizer, ITokenizer
     /// </summary>
     /// <param name="kind">Kind of number that was trying to read.</param>
     /// <returns>Error token with <see cref="TokenizerError.InvalidLiteral"/> type.</returns>
-    private Token errorInvalidNumber(ReadOnlySpan<char> span, NumberKind kind, bool sawE = false)
+    private void errorInvalidNumber(ReadOnlySpan<char> span, [NotNull] out Token? token, NumberKind kind, bool sawE = false)
     {
         bool lastJ = false;
         bool sawPlusOrMinus = false;
@@ -790,7 +871,7 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             _ => throw new UnreachableException(),
         };
 
-        return ErrorToken(TokenizerError.InvalidLiteral, message);
+        ErrorToken(out token, TokenizerError.InvalidLiteral, message);
     }
 
     /// <summary>
@@ -798,12 +879,12 @@ public class Tokenizer : BaseTokenizer, ITokenizer
     /// </summary>
     /// <param name="message">Message that will be set to <see cref="ErrorMessage"/>.</param>
     /// <returns>Error token with <see cref="TokenizerError.InvalidLiteral"/> type.</returns>
-    private Token errorInvalidNumber(ReadOnlySpan<char> span, string message)
+    private void errorInvalidNumber(ReadOnlySpan<char> span, [NotNull] out Token? token, string message)
     {
         while (isCharToEatIfInvalidNumber(NextChar))
             Advance(span);
 
-        return ErrorToken(TokenizerError.InvalidLiteral, message);
+        ErrorToken(out token, TokenizerError.InvalidLiteral, message);
     }
 
     // Eat all characters, that can be interpreted as part of number and ASCII letters except plus and minus.
@@ -812,12 +893,24 @@ public class Tokenizer : BaseTokenizer, ITokenizer
 
     private static bool isQuote(char ch) => ch == '"' || ch == '\'';
 
-    private Token? tryString(ReadOnlySpan<char> span) => isQuote(NextChar) ? readString(span) : null;
-
-    private Token readPartialStringStart(ReadOnlySpan<char> span, StringType stringType)
+    private bool tryString(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
-        if (assertCanReadPartial() is Token err)
-            return err;
+        if (isQuote(NextChar))
+        {
+            readString(span, out token);
+            return true;
+        }
+
+        token = null;
+        return false;
+    }
+
+    private void readPartialStringStart(ReadOnlySpan<char> span, [NotNull] out Token? token, StringType stringType)
+    {
+        if (assertCanReadPartial(out token))
+        {
+            return;
+        }
 
         Advance(span); // First char always prefix.
 
@@ -845,17 +938,15 @@ public class Tokenizer : BaseTokenizer, ITokenizer
 
             Advance(span);
 
-            var tok = CreateToken(getStart(stringType));
+            CreateToken(out token, getStart(stringType));
 
-            partialNestedTokenizer = new Tokenizer(Synchronize(), SaveTrivia, limitInterpolationLines, partialCurrentGeneration, stringType, quote, quoteCount);
-
-            return tok;
+            partialNestedTokenizer = new Tokenizer(Synchronize(), limitInterpolationLines, partialCurrentGeneration, stringType, quote, quoteCount);
         }
         else
             throw new ArgumentException("Given source does not contains valid string start.");
     }
 
-    private Token readString(ReadOnlySpan<char> span, string? prefixErrMsg = null)
+    private void readString(ReadOnlySpan<char> span, [NotNull] out Token? token, string? prefixErrMsg = null)
     {
         Debug.Assert(isQuote(NextChar));
 
@@ -890,7 +981,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 if (NextChar == Eof)
                     unrecoverable = true;
 
-                return ErrorToken(TokenizerError.InvalidLiteral, message);
+                ErrorToken(out token, TokenizerError.InvalidLiteral, message);
+                return;
             }
             if (NextChar == quote)
                 closingQuoteCount++;
@@ -911,22 +1003,24 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         }
 
         if (prefixErrMsg is string msg)
-            return ErrorToken(TokenizerError.InvalidLiteral, msg);
+            ErrorToken(out token, TokenizerError.InvalidLiteral, msg);
 
-        return CreateToken(TokenType.StringLiteral);
+        CreateToken(out token, TokenType.StringLiteral);
     }
 
-    private Token? tryLineContinuation(ReadOnlySpan<char> span)
+    private bool tryLineContinuation(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         if (NextChar == '\\')
         {
-            return readLineContinuation(span);
+            readLineContinuation(span, out token);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
-    private Token readLineContinuation(ReadOnlySpan<char> span)
+    private void readLineContinuation(ReadOnlySpan<char> span, [NotNull] out Token? token)
     {
         Debug.Assert(NextChar == '\\');
 
@@ -935,20 +1029,19 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         if (NextChar != '\n')
         {
             if (NextChar == Eof)
-                return ErrorToken(TokenizerError.InvalidLineContinuation, "Expected new line.", true);
+                ErrorToken(out token, TokenizerError.InvalidLineContinuation, "Expected new line.", true);
             else
-                return ErrorToken(TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.", true);
+                ErrorToken(out token, TokenizerError.InvalidLineContinuation, "Any characters is not allowed after explicit line continuation.", true);
+            return;
         }
 
         atContinuedLine = true;
 
-        if (SaveTrivia)
-            return CreateToken(TokenType.BackSlash);
-
-        return ReadNext();
+        CreateToken(out token, TokenType.BackSlash);
+        return;
     }
 
-    private Token readOperatorOrErrorToken(ReadOnlySpan<char> span)
+    private void readOperatorOrErrorToken(ReadOnlySpan<char> span, [NotNull] out Token? token)
     {
         char prevChar;
         if (opTwoChars(prevChar = NextChar, TwoNextChar) is TokenType tok2Type)
@@ -958,11 +1051,13 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             {
                 Advance(span);
                 Advance(span);
-                return CreateToken(tok3Type);
+                CreateToken(out token, tok3Type);
+                return;
             }
 
             Advance(span);
-            return CreateToken(tok2Type);
+            CreateToken(out token, tok2Type);
+            return;
         }
 
         switch (NextChar)
@@ -983,7 +1078,14 @@ public class Tokenizer : BaseTokenizer, ITokenizer
 
         TokenType? tok = opOneChar(NextChar);
         Advance(span);
-        return tok is TokenType tok1Type ? CreateToken(tok1Type) : ErrorToken(TokenizerError.CharacterError, $"Unknown symbol: {NextChar}.");
+        if (tok is TokenType tok1Type)
+        {
+            CreateToken(out token, tok1Type);
+        }
+        else
+        {
+            ErrorToken(out token, TokenizerError.CharacterError, $"Unknown symbol: '{NextChar}'.");
+        }
     }
 
     private bool moveWhileDecimal(ReadOnlySpan<char> span)
@@ -1002,23 +1104,24 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         }
     }
 
-    private Token? tryNextPartialMode()
+    private bool tryNextPartialMode([NotNullWhen(true)] out Token? token)
     {
         if (pendingErrorTokens.TryDequeue(out var err))
         {
-            return err;
+            token = err;
+            return true;
         }
 
         var span = Source.Span;
 
         if (tokenizerMode is PartialTokenizerMode.MiddleString)
-            return tryMiddleString(span);
+            return tryMiddleString(span, out token);
 
         else
-            return tryExpression(span);
+            return tryExpression(span, out token);
     }
 
-    private Token? tryMiddleString(ReadOnlySpan<char> span)
+    private bool tryMiddleString(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
         // If false, next Middle string will not be emitted, because it's empty.
         bool isAdvanced = false;
@@ -1028,14 +1131,14 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         {
             if (NextChar == '{')
             {
-                // If shielded brace. It's not allowed in format it spec.
+                // If shielded brace. It's not allowed in format spec.
                 if (!formatSpec && TwoNextChar == '{')
                 {
                     // Take first brace, but ignore second.
                     Advance(span);
-                    var tokenWithoutSecondBrace = CreateToken(getMiddle(partialStringType));
+                    CreateToken(out token, getMiddle(partialStringType));
                     Advance(span);
-                    return tokenWithoutSecondBrace;
+                    return true;
                 }
                 // Else we need to switch to regular mode.
 
@@ -1048,9 +1151,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 setExprStartLine();
 
                 if (!isAdvanced)
-                    return tryNextPartialMode();
+                    return tryNextPartialMode(out token);
 
-                return CreateToken(getMiddle(partialStringType));
+                CreateToken(out token, getMiddle(partialStringType));
+                return true;
             }
             else if (NextChar == '}')
             {
@@ -1060,39 +1164,46 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                     tokenizerMode = PartialTokenizerMode.Regular;
                     setExprStartLine();
                     if (isAdvanced)
-                        return CreateToken(getMiddle(partialStringType));
+                    {
+                        CreateToken(out token, getMiddle(partialStringType));
+                        return true;
+                    }
                     else
-                        return tryNextPartialMode();
+                        return tryNextPartialMode(out token);
                 }
                 // In other we expecting shielded brace.
                 if (TwoNextChar != '}')
                 {
                     if (isAdvanced)
                     {
-                        var tokenWithValidPart = CreateToken(getMiddle(partialStringType));
+                        // Create with valid part.
+                        CreateToken(out token, getMiddle(partialStringType));
 
                         ResetStart();
                         Advance(span);
 
-                        var invalidBrace = ErrorToken(TokenizerError.InvalidLiteral, double_brackets_message);
-                        pendingErrorTokens.Enqueue(invalidBrace);
+                        // Create with invalid part.
+                        ErrorToken(out var invalid, TokenizerError.InvalidLiteral, double_brackets_message);
+                        pendingErrorTokens.Enqueue(invalid.Value);
 
                         if (isAdvanced)
-                            return tokenWithValidPart;
+                            return true;
                     }
                     else
                     {
                         Advance(span);
-                        return ErrorToken(TokenizerError.InvalidLiteral, double_brackets_message);
+                        ErrorToken(out token, TokenizerError.InvalidLiteral, double_brackets_message);
+                        return true;
                     }
                 }
                 // See above.
                 else if (TwoNextChar == '}')
                 {
+                    // Ignore second brace.
                     Advance(span);
-                    var tokenWithoutSecondBrace = CreateToken(getMiddle(partialStringType));
+                    CreateToken(out token, getMiddle(partialStringType));
                     Advance(span);
-                    return tokenWithoutSecondBrace;
+                    return true;
                 }
             }
             // Skip any escaped character.
@@ -1103,7 +1214,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             else if (!formatSpec && (NextChar == Eof || partialQuoteCount == 1 && NextChar == '\n'))
             {
                 ShouldStop = unrecoverable = true;
-                return ErrorToken(TokenizerError.InvalidLiteral, unterminated_string_message);
+                ErrorToken(out token, TokenizerError.InvalidLiteral, unterminated_string_message);
+                return true;
             }
             // If NextChar is quote, check that we can end string.
             // In format spec we are not done yet.
@@ -1118,7 +1230,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 {
                     // In next iteration we will point to the same symbols, but not advanced...
                     if (isAdvanced)
-                        return CreateToken(getMiddle(partialStringType));
+                    {
+                        CreateToken(out token, getMiddle(partialStringType));
+                        return true;
+                    }
 
                     // ...so we create end token.
                     else
@@ -1127,7 +1242,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                             Advance(span);
 
                         ShouldStop = true;
-                        return CreateToken(getEnd(partialStringType));
+                        {
+                            CreateToken(out token, getEnd(partialStringType));
+                            return true;
+                        }
                     }
                 }
             }
@@ -1142,12 +1260,11 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         void setExprStartLine() => expressionStartLine = StartLineNumber;
     }
 
-    private Token? tryExpression(ReadOnlySpan<char> span)
+    private bool tryExpression(ReadOnlySpan<char> span, out Token? token)
     {
         // Maybe another nested tokenizer.
-        Token? maybeToken = tryPartial();
-        if (maybeToken is Token partial)
-            return partial;
+        if (tryPartial(out token))
+            return true;
 
         ResetStart();
 
@@ -1165,9 +1282,12 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 if (debugSpec && NextChar != '{')
                 {
                     debugSpec = false;
-                    return CreateToken(TokenType.DebugSpecifierString, true)
-                    with
-                    { Lexeme = Source.Memory[debugSpecStringStart..CurrentPos] };
+                    CreateToken(out token, TokenType.DebugSpecifierString, true);
+                    token = token.Value with
+                    {
+                        Lexeme = Source.Memory[debugSpecStringStart..CurrentPos]
+                    };
+                    return true;
                 }
 
                 // Enable format spec string.
@@ -1199,7 +1319,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         if (NextChar == '=' && braceLevel - expressionStartBraceLevel == 1)
             debugSpec = true;
 
-        var next = ReadNext();
+        // TODO: readNext(out token);
+        ReadNext(out token);
 
         // Check the limit of the maximum lines in expression if no compatible mode enabled.
         if (!unrecoverable && limitInterpolationLines && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
@@ -1212,34 +1333,39 @@ public class Tokenizer : BaseTokenizer, ITokenizer
 
             ShouldStop = true;
             unrecoverable = true;
-            return ErrorToken(
+            ErrorToken(
+                out token,
                 TokenizerError.PartialTooLongExpression,
                 $"Interpolation exceeds maximum line limit. Allowed maximum {interpolation_maximum_lines} lines."
             );
+            return true;
         }
 
         // Nested tokenizers shouldn't return EOF token, only the root one.
-        if (next.Type is TokenType.EndOfFile)
+        if (token?.Type is TokenType.EndOfFile)
         {
             // If it's not unrecoverable error it's mean that expression is unclosed,
             // so we need to create such error token and in next iteration control will
             // comeback to root tokenizer.
             if (!unrecoverable)
             {
-                return ErrorToken(
+                ErrorToken(
+                    out token,
                     TokenizerError.PartialUnclosedExpression,
                     "Unexpected EOF in multi-line statement."
                 );
+                return true;
             }
 
             // ShouldStop already set to true.
-            return null;
+            token = null;
+            return false;
         }
 
-        return next;
+        return true;
     }
 
-    private Token? assertCanReadPartial()
+    private bool assertCanReadPartial([NotNullWhen(true)] out Token? token)
     {
         if (partialCurrentGeneration + 1 > maximum_partial_strings_nesting)
         {
@@ -1258,10 +1384,12 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                 partialStringType == StringType.Format ? 'f' : 't',
                 maximum_partial_strings_nesting);
 
-            return ErrorToken(TokenizerError.PartialNestingOverflow, message);
+            ErrorToken(out token, TokenizerError.PartialNestingOverflow, message);
+            return true;
         }
 
-        return null;
+        token = null;
+        return false;
     }
 
     private static bool isInvalidEndOfNumber(char ch)

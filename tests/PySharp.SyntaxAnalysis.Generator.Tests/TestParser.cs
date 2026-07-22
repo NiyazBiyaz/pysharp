@@ -28,7 +28,7 @@ public class TestParser
 
     private static GrammarView getView(string src)
     {
-        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')), true);
+        var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')));
         var tokenStream = new TokenNodeStream(tokenizer);
         var parser = new GrammarParser(tokenStream);
         var grammar = parser.Parse();

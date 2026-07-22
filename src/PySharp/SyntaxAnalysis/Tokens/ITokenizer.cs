@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace PySharp.SyntaxAnalysis.Tokens;
 
 public interface ITokenizer
@@ -7,5 +9,5 @@ public interface ITokenizer
     string? ErrorMessage { get; }
 
     SynchronizationPoint Synchronize();
-    Token ReadNext();
+    void ReadNext([NotNull] out Token? token);
 }
