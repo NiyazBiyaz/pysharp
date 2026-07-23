@@ -15,7 +15,7 @@ public class TextPositionMap
 
         if (linefeedPositions.Count > 0 && linefeed <= linefeedPositions[^1])
         {
-            throw new ArgumentOutOfRangeException(nameof(linefeed), "Append linefeed in ascending order.");
+            throw new ArgumentOutOfRangeException(nameof(linefeed), $"Append linefeed in ascending order ({linefeed}).");
         }
 
         linefeedPositions.Add(linefeed);
@@ -32,6 +32,26 @@ public class TextPositionMap
 
         int index = linefeedPositions.BinarySearch(position);
 
-        return index < 0 ? ~index : index;
+        return index < 0 ? ~index : index + 1;
     }
+
+    public int GetColumnForPosition(int position)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(position, nameof(position));
+
+        int index = linefeedPositions.BinarySearch(position);
+
+        return index switch
+        {
+            -1 => position,
+            < 0 => position - linefeedPositions[~index - 1],
+            _ => 0,
+        };
+    }
+
+    public Position2D GetPosition2D(int position) => new()
+    {
+        Line = GetLineForPosition(position),
+        Column = GetColumnForPosition(position),
+    };
 }

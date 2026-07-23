@@ -1,5 +1,4 @@
 using PySharp.SyntaxAnalysis.Common.Ast;
-using PySharp.SyntaxAnalysis.Tokens;
 using static PySharp.SyntaxAnalysis.Tokens.TokenType;
 
 namespace PySharp.Tests.SyntaxAnalysis.Common;
@@ -92,7 +91,5 @@ public class TestNodeTextRecovery()
     }
 
     // To avoid boilerplate for initialized it with zero all time.
-    private static TokenPosition o => new(0, 0);
-
     private static TokenNode tr(string value) => new(new(WhiteSpace, value), []);
 }

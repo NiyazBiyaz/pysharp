@@ -20,6 +20,28 @@ public abstract record GreenNode : IGreenNode
         }
     }
 
+    public virtual int? TriviaWidth
+    {
+        get
+        {
+            if (field == null && Children != null && Children.Count != 0)
+            {
+                for (int i = 0; i < Children.Count; i++)
+                {
+                    if (Children[i].TriviaWidth is not null)
+                    {
+                        field = Children[i].TriviaWidth;
+                        break;
+                    }
+                }
+            }
+
+            field ??= 0;
+
+            return field;
+        }
+    }
+
     public abstract IRedView GetView(int position, IRedView? parent);
 
     public virtual INodeArray<IGreenNode>? Children { get; init; }

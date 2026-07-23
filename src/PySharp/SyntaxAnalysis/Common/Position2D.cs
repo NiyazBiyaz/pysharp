@@ -1,19 +1,20 @@
 using System.Diagnostics;
 
-namespace PySharp.SyntaxAnalysis.Tokens;
+namespace PySharp.SyntaxAnalysis.Common;
 
-[DebuggerDisplay("({Line},{Column})")]
-public readonly record struct TokenPosition(int Line, int Column)
+[DebuggerDisplay("Position({Line},{Column})")]
+public readonly record struct Position2D(int Line, int Column)
 {
-    public static readonly TokenPosition StartOfFile = new(0, 0);
+    public static readonly Position2D StartOfFile = new(0, 0);
 
-    public static bool operator <(TokenPosition left, TokenPosition right) =>
+    public static bool operator <(Position2D left, Position2D right) =>
         left.Line < right.Line || left.Line == right.Line && left.Column < right.Column;
-    public static bool operator >(TokenPosition left, TokenPosition right) =>
+
+    public static bool operator >(Position2D left, Position2D right) =>
         left.Line > right.Line || left.Line == right.Line && left.Column > right.Column;
 
-    public static TokenPosition operator +(TokenPosition left, TokenPosition right) => left.AddDelta(right);
-    public static TokenPosition operator -(TokenPosition left, TokenPosition right)
+    public static Position2D operator +(Position2D left, Position2D right) => left.AddDelta(right);
+    public static Position2D operator -(Position2D left, Position2D right)
     {
         if (left < right)
             throw new ArgumentException("TokenPosition cannot be negative, but right operand is greater than left.");
@@ -21,7 +22,7 @@ public readonly record struct TokenPosition(int Line, int Column)
         return left.Delta(right);
     }
 
-    public readonly TokenPosition Delta(TokenPosition other)
+    public readonly Position2D Delta(Position2D other)
     {
         if (this == other)
             return StartOfFile;
@@ -44,7 +45,7 @@ public readonly record struct TokenPosition(int Line, int Column)
         }
     }
 
-    public readonly TokenPosition AddDelta(TokenPosition other)
+    public readonly Position2D AddDelta(Position2D other)
     {
         if (other == StartOfFile)
             return this;

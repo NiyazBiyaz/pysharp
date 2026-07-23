@@ -49,7 +49,7 @@ internal class Program
             string grammar = grammarFile.OpenText().ReadToEnd();
 
             var gramBuffer = new StringBuffer(grammar);
-            var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(gramBuffer), true);
+            var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(gramBuffer));
             var tokenStream = new TokenNodeStream(tokenizer);
             var parser = new GrammarParser(tokenStream);
 

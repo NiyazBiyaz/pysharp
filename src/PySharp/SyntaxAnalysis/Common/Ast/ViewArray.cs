@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Diagnostics;
 
 namespace PySharp.SyntaxAnalysis.Common.Ast;
 
@@ -16,22 +15,34 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, int posit
 
     public IRedView? Parent { get; } = parent;
 
-    public int Position { get; } = position;
-
-    public int EndPosition => Position + greens.FullWidth;
+    public int FullPosition { get; } = position;
 
     public int Count => views.Length;
 
+    public SyntaxViewTree SyntaxTree => throw new NotSupportedException($"Using syntax tree for the {nameof(ViewArray<>)} is not allowed.");
+
+    public Position2D FullPosition2D => throw new NotImplementedException();
+
+    public int Position => throw new NotImplementedException();
+
+    public int EndPosition => throw new NotImplementedException();
+
+    public Position2D Position2D => throw new NotImplementedException();
+
+    public Position2D EndPosition2D => throw new NotImplementedException();
+
     private TView ensureViewOnIndex(int index)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(index, nameof(index));
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, views.Length, nameof(index));
+
         if (views[index] == null)
         {
-            int position = Position;
+            int position = FullPosition;
             for (int indexBeforeChild = 0; indexBeforeChild < index; indexBeforeChild++)
             {
                 position += greens[indexBeforeChild].FullWidth;
             }
-            Debugger.Break();
 
             views[index] = (TView)greens[index].GetView(position, Parent);
         }
@@ -41,7 +52,7 @@ public readonly struct ViewArray<TView>(INodeArray<IGreenNode> greens, int posit
 
     private void ensureViews()
     {
-        int positionAccumulator = Position;
+        int positionAccumulator = FullPosition;
         for (int index = 0; index < views.Length; index++)
         {
             if (views[index] == null)

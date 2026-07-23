@@ -12,6 +12,9 @@ public static class TokenTypeExtensions
             TokenType.Comment => true,
             _ => false,
         };
+
+        public bool IsNewLine => type == TokenType.NewLine || type == TokenType.TriviaNewLine;
+
         public bool IsError => type == TokenType.Error;
 
         public static bool TryGetDelimiterByString(ReadOnlySpan<char> value, out TokenType tokenType)

@@ -9,6 +9,11 @@ public class TokenNodeStream(ITokenizer tokenizer) : ITokenNodeStream
     private readonly List<TokenNode> tokens = [];
     private readonly ITokenizer tokenizer = tokenizer;
 
+    // Not in tokenizer because it may fall to the nested and positions would be wrong
+    public TextPositionMap PositionMap { get; } = new();
+
+    private int currentPosition = 0;
+
     public int Index
     {
         get;
@@ -58,6 +63,11 @@ public class TokenNodeStream(ITokenizer tokenizer) : ITokenNodeStream
                 {
                     node = new(tok, trivias);
                 }
+
+                currentPosition += node.Width;
+
+                if (node.Type.IsNewLine)
+                    PositionMap.Append(currentPosition);
             }
             while (node.Type.IsTrivia || node.Type.IsError);
 

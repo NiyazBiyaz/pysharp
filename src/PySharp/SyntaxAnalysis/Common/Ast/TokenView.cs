@@ -9,12 +9,16 @@ public sealed class TokenView : RedView
 
     public ViewArray<TokenView> LeadingTrivia { get; }
 
+    public int Width => token.Width;
+
+    public int FullWidth => token.FullWidth;
+
     public TokenView(TokenNode node, int position, IRedView? parent)
         : base(node, position, parent)
     {
         Debug.Assert(!parent?.IsArray ?? true, "Arrays cannot be used as parent.");
 
-        LeadingTrivia = new(token.Leading, Position, this);
+        LeadingTrivia = new(token.Leading, FullPosition, this);
     }
 
     public TokenType Type => token.Type;

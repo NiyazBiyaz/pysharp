@@ -58,6 +58,31 @@ public class NodeArray<TNode> : INodeArray<TNode>, IEquatable<NodeArray<TNode>>
         init => throw new UnreachableException("Children for the node array should never be initialized. Use regular constructor instead.");
     }
 
+    public int? TriviaWidth
+    {
+        get
+        {
+            if (nodes.IsDefaultOrEmpty)
+                return null;
+
+            if (field == null)
+            {
+                foreach (var node in nodes)
+                {
+                    if (node.TriviaWidth != null)
+                    {
+                        field = node.TriviaWidth;
+                        break;
+                    }
+                }
+            }
+
+            field ??= 0;
+
+            return field;
+        }
+    }
+
     public bool Equals(NodeArray<TNode>? other)
     {
         if (other is null || Count != other.Count)

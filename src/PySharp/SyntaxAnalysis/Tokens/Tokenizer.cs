@@ -38,7 +38,6 @@ public class Tokenizer : BaseTokenizer, ITokenizer
 
     // Partial strings stuff.
     private Tokenizer? partialNestedTokenizer;
-    private readonly bool isPartialString;
     private readonly char partialQuote;
     private readonly int partialQuoteCount;
     private readonly int partialCurrentGeneration;
@@ -83,7 +82,6 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         partialQuote = Eof;
         partialQuoteCount = -1;
         partialCurrentGeneration = 0;
-        isPartialString = false;
     }
 
     private Tokenizer(SynchronizationPoint syncPoint, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
@@ -106,7 +104,6 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         partialCurrentGeneration = oldGeneration + 1;
         tokenizerMode = PartialTokenizerMode.MiddleString;
         pendingErrorTokens = new(1);
-        isPartialString = true;
     }
 
     public override SynchronizationPoint Synchronize()

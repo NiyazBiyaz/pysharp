@@ -5,6 +5,9 @@ namespace PySharp.SyntaxAnalysis.Common.Ast;
 public interface IGreenNode
 {
     int FullWidth { get; }
+
+    int? TriviaWidth { get; }
+
     INodeArray<IGreenNode>? Children { get; init; }
 
     bool IsArray { get; }

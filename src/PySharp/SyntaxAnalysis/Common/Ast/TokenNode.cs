@@ -12,6 +12,8 @@ public record TokenNode : GreenNode
     public NodeArray<TokenNode> Leading { get; }
     public string RawString { get; }
 
+    public override int? TriviaWidth => FullWidth - Width;
+
     public TokenNode(in Token token, IEnumerable<TokenNode> leading)
     {
         Type = token.Type;

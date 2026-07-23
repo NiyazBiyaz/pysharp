@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using PySharp.SyntaxAnalysis.Common;
 
 namespace PySharp.SyntaxAnalysis.Tokens;
 
@@ -32,9 +31,6 @@ public abstract class BaseTokenizer
     protected int StartLineNumber { get; private set; }
 
     private bool skipNextCrlf = false;
-
-    // Integrate it to the synchronization mechanism.
-    public TextPositionMap PositionMap { get; } = new();
 
     protected const char Eof = '\0';
 
@@ -153,9 +149,6 @@ public abstract class BaseTokenizer
         NextChar = next0 == '\r' ? '\n' : next0;
         TwoNextChar = next1 == '\r' ? '\n' : next1;
         ThreeNextChar = next2 == '\r' ? '\n' : next2;
-
-        if (NextChar == '\n')
-            PositionMap.Append(currentPos);
 
         return increaseLine;
     }
