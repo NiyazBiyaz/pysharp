@@ -605,11 +605,7 @@ TStringFormatSpec:
     | TStringMiddle -> TStringFormatLiteral(Value=t_string_middle)
     | TStringReplacementField -> TStringFormatReplacement(Value=t_string_replacement_field)
 
-# TODO: Maybe remove it because now i can recover text of the expressions.
-# Maybe not because i can extend DebugSpecifierNode and override RecoverText
-# that will skippa skippa this hacky-wacky token.
-# Any solution of these is a little bit of hack, Python wtf?
-DebugSpecifier: '=' DebugSpecifierString -> new(Value=debug_specifier_string)
+DebugSpecifier: '=' -> new()
 
 Conversion: '!' Name -> new(Value=name)
 

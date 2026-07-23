@@ -48,7 +48,6 @@ public static class TokenTypeExtensions
             TokenType.TStringStart or
             TokenType.TStringMiddle or
             TokenType.TStringEnd or
-            TokenType.DebugSpecifierString or
             TokenType.Comment or
             TokenType.WhiteSpace or
             TokenType.Indent or

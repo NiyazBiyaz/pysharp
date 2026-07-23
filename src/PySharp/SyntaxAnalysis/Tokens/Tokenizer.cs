@@ -47,8 +47,6 @@ public class Tokenizer : BaseTokenizer, ITokenizer
     private int braceLevel = 0;
     private int expressionStartBraceLevel = -1;
     private int expressionStartLine;
-    private int debugSpecStringStart = -1;
-    private bool debugSpec = false;
     private bool formatSpec = false;
     private readonly Queue<Token> pendingErrorTokens = null!;
 
@@ -1127,7 +1125,7 @@ public class Tokenizer : BaseTokenizer, ITokenizer
         {
             if (NextChar == '{')
             {
-                // If shielded brace. It's not allowed in format spec.
+                // Shielded brace is not allowed in format spec.
                 if (!formatSpec && TwoNextChar == '{')
                 {
                     // Take first brace, but ignore second.
@@ -1136,12 +1134,8 @@ public class Tokenizer : BaseTokenizer, ITokenizer
                     Advance(span);
                     return true;
                 }
+
                 // Else we need to switch to regular mode.
-
-                // If it's expression start, set debug string start next to opening brace.
-                if (expressionStartBraceLevel == -1)
-                    debugSpecStringStart = CurrentPos + 1;
-
                 expressionStartBraceLevel++;
                 tokenizerMode = PartialTokenizerMode.Regular;
                 setExprStartLine();
@@ -1270,22 +1264,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             // This code block executes before braceLevel incremented by opening brace '{'
             // so for ensuring we are on the level 0 we need to adjust it manually.
             int level = braceLevel - (NextChar != '{' ? 1 : 0);
-            bool atLevelWithMeaningfulPunctuation = (level == 1 && (debugSpec || formatSpec)) || level == 0;
+            bool atLevelWithMeaningfulPunctuation = (level == 1 && formatSpec) || level == 0;
 
             if (atLevelWithMeaningfulPunctuation)
             {
-                // If debug spec enabled, dump DebugSpecString.
-                if (debugSpec && NextChar != '{')
-                {
-                    debugSpec = false;
-                    CreateToken(out token, TokenType.DebugSpecifierString, true);
-                    token = token.Value with
-                    {
-                        Lexeme = Source.Memory[debugSpecStringStart..CurrentPos]
-                    };
-                    return true;
-                }
-
                 // Enable format spec string.
                 if (NextChar == ':')
                 {
@@ -1306,16 +1288,10 @@ public class Tokenizer : BaseTokenizer, ITokenizer
             {
                 expressionStartBraceLevel--;
                 tokenizerMode = PartialTokenizerMode.MiddleString;
-                debugSpec = false;
                 formatSpec = expressionStartBraceLevel >= 0;
             }
         }
 
-        // If at top of the expression, we can enable debug spec.
-        if (NextChar == '=' && braceLevel - expressionStartBraceLevel == 1)
-            debugSpec = true;
-
-        // TODO: readNext(out token);
         ReadNext(out token);
 
         // Check the limit of the maximum lines in expression if no compatible mode enabled.

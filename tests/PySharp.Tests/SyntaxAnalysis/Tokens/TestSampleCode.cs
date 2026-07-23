@@ -41,7 +41,7 @@ public class TestSampleCode
         {
             tokenizer.ReadNext(out var token);
             // CPython does not generate whitespace tokens.
-            if (token.Value.Type != TokenType.WhiteSpace && token.Value.Type != TokenType.DebugSpecifierString)
+            if (token.Value.Type != TokenType.WhiteSpace)
                 tokens.Add(token.Value);
         }
 

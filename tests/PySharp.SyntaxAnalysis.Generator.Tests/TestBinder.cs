@@ -901,9 +901,16 @@ public class TestBinder
     private static GrammarView getView(string src)
     {
         var tokenizer = new Tokenizer(SynchronizationPoint.ClearPoint(new StringBuffer(src + '\n')));
-        var parser = new GrammarParser(new TokenNodeStream(tokenizer));
+        var stream = new TokenNodeStream(tokenizer);
+        var parser = new GrammarParser(stream);
         var node = parser.Parse();
         Debug.Assert(node is not null, "Given syntax is not valid.");
-        return node.GetView(0, null);
+        var view = node.GetView(0, null);
+        view.SyntaxTree = new()
+        {
+            Root = view,
+            PositionMap = stream.PositionMap
+        };
+        return view;
     }
 }
