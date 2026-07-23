@@ -40,14 +40,17 @@ internal class Binder
                     parserName = StringParser.ParseQuoted(meta.Value.RawString);
                     break;
                 default:
-                    throw new InvalidNameException($"Unexpected metadata name: {meta.Key}.");
+                    throw new InvalidNameException($"Unexpected metadata name: {meta.Key}.")
+                    {
+                        Line = meta.Position2D.Line,
+                    };
             }
         }
 
         if (userHeader is null)
-            throw new IncompleteMetadataException(meta_header);
+            throw new IncompleteMetadataException(meta_header) { Line = metadata.Last().EndPosition2D.Line };
         if (parserName is null)
-            throw new IncompleteMetadataException(meta_parser_name);
+            throw new IncompleteMetadataException(meta_parser_name) { Line = metadata.Last().EndPosition2D.Line };
 
         Grammar.UserHeader = userHeader;
         Grammar.ParserName = parserName;
@@ -68,15 +71,21 @@ internal class Binder
             string name = astRule.Name.RawString;
 
             if (Rules.ContainsKey(name))
-                throw new InvalidNameException($"Name {name} was used twice.");
+                throw new InvalidNameException($"Name {name} was used twice.") { Line = astRule.Name.Position2D.Line };
 
             if (Enum.TryParse<TokenType>(name, out _))
-                throw new InvalidNameException($"Cannot create such rule: name '{name}' is reserved for token types.");
+                throw new InvalidNameException($"Cannot create such rule: name '{name}' is reserved for token types.")
+                {
+                    Line = astRule.Name.Position2D.Line,
+                };
 
             var decorators = astRule.Decorators.Select(d => d.Value.RawString);
 
             if (decorators.Contains(decor_union) && decorators.Contains(decor_token_union))
-                throw new CompilationException($"Rule cannot be marked as '{decor_union}' and '{decor_token_union}' both in one time.");
+                throw new CompilationException($"Rule cannot be marked as '{decor_union}' and '{decor_token_union}' both in one time.")
+                {
+                    Line = astRule.Decorators.Position2D.Line,
+                };
 
             var kind = decorators.Contains(decor_union) ? RuleKind.Union
                     : decorators.Contains(decor_token_union) ? RuleKind.TokenUnion
@@ -107,6 +116,7 @@ internal class Binder
                 Type = type,
                 IsGroup = false,
                 EnableMemoization = decorators.Contains(decor_memo),
+                LineCreated = astRule.Position2D.Line,
             };
             Rules[rule.Name] = rule;
             Grammar.Rules.Add(rule);
@@ -121,7 +131,10 @@ internal class Binder
             if (decorators.Contains(decor_main))
             {
                 if (Grammar.MainRule is not null)
-                    throw new CompilationException($"Cannot have two rules marked as main at one time: {Grammar.MainRule.Name}, {rule.Name}");
+                    throw new CompilationException($"Cannot have two rules marked as main at one time: {Grammar.MainRule.Name}, {rule.Name}")
+                    {
+                        Line = rule.LineCreated,
+                    };
 
                 Grammar.MainRule = rule;
                 Grammar.TopLevelNodeName = rule.Type.Name;
@@ -131,7 +144,10 @@ internal class Binder
         }
 
         if (Grammar.MainRule is null)
-            throw new CompilationException("Grammar should contain one rule declared with `@main` decorator.");
+            throw new CompilationException("Grammar should contain one rule declared with `@main` decorator.")
+            {
+                Line = rules.First().Position2D.Line,
+            };
 
         stage = BinderStage.CreatedRules;
     }
@@ -159,14 +175,20 @@ internal class Binder
             if (dec.Value.RawString == decor_token_union)
             {
                 if (astGroup.Alternatives.Any(a => a.Action != null))
-                    throw new CompilationException("Inline groups cannot contain arms with the actions.");
+                    throw new CompilationException("Inline groups cannot contain arms with the actions.")
+                    {
+                        Line = astGroup.Position2D.Line,
+                    };
 
                 type = BoundType.TokenNodeType;
                 isInline = true;
             }
             else
             {
-                throw new CompilationException($"Unsupported decorator type: '{dec.Value.RawString}'");
+                throw new CompilationException($"Unsupported decorator type: '{dec.Value.RawString}'")
+                {
+                    Line = astGroup.Decorator.Position2D.Line,
+                };
             }
         }
 
@@ -186,6 +208,7 @@ internal class Binder
             Kind = isInline ? RuleKind.TokenUnion : RuleKind.Type,
             IsGroup = true,
             EnableMemoization = false, // Groups cannot use memo.
+            LineCreated = astGroup.Position2D.Line,
         };
 
         if (!groupRules.ContainsKey(astGroup.Identifier))
@@ -238,13 +261,22 @@ internal class Binder
                 if (rule.Kind != RuleKind.Type)
                 {
                     if (alt.Variables.Count() != 1)
-                        throw new InvalidUnionException($"should have exactly one variable entry: '{astAlt.Molecules.RecoverText()}'. Consider using lookahead because they do not produce variables.");
+                        throw new InvalidUnionException($"should have exactly one variable entry: '{astAlt.Molecules.RecoverText()}'. Consider using lookahead because they do not produce variables.")
+                        {
+                            Line = rule.LineCreated,
+                        };
 
                     if (rule.Kind == RuleKind.TokenUnion && alt.Variables.First() is not BoundTokenAlternativeEntry and not BoundStringAlternativeEntry)
-                        throw new CompilationException($"Token union rules cannot have non-token entry as variable: '{astAlt.Molecules.RecoverText()}'");
+                        throw new CompilationException($"Token union rules cannot have non-token entry as variable: '{astAlt.Molecules.RecoverText()}'")
+                        {
+                            Line = rule.LineCreated,
+                        };
 
                     if (rule.Kind == RuleKind.Union && alt.Variables.First() is not BoundRuleAlternativeEntry)
-                        throw new CompilationException($"Union rules cannot have non-rule entry as variable: '{astAlt.Molecules.RecoverText()}'");
+                        throw new CompilationException($"Union rules cannot have non-rule entry as variable: '{astAlt.Molecules.RecoverText()}'")
+                        {
+                            Line = rule.LineCreated,
+                        };
                 }
 
                 rule.Alternatives.Add(alt);
@@ -381,7 +413,10 @@ internal class Binder
             string ruleName => new BoundRuleAlternativeEntry
             {
                 Name = nameScope.NextName(ruleName) + quant.AddSuffix(count),
-                Value = Rules.GetValueOrDefault(ruleName) ?? throw new InvalidNameException($"Rule '{ruleName}' is not defined."),
+                Value = Rules.GetValueOrDefault(ruleName) ?? throw new InvalidNameException($"Rule '{ruleName}' is not defined.")
+                {
+                    Line = atom.Position2D.Line,
+                },
                 Quantifier = quant,
                 MinRepeatCount = count,
                 Positiveness = positive,
@@ -404,8 +439,11 @@ internal class Binder
         {
             if (rule.Kind != RuleKind.Type)
             {
-                if (rule.AstAlternatives.Any(a => a.Action is not null))
-                    throw new InvalidUnionException($"cannot have actions: '{rule.Name}'");
+                if (rule.AstAlternatives.FirstOrDefault(a => a.Action is not null) is AlternativeView alt)
+                    throw new InvalidUnionException($"cannot have actions: '{rule.Name}'")
+                    {
+                        Line = alt.Position2D.Line,
+                    };
 
                 continue;
             }
@@ -438,12 +476,18 @@ internal class Binder
                             });
 
                             if (fieldNames.Contains(fieldName))
-                                throw new InvalidNameException($"Field name '{fieldName}' used twice.");
+                                throw new InvalidNameException($"Field name '{fieldName}' used twice.")
+                                {
+                                    Line = astAlt.Position2D.Line,
+                                };
 
                             fieldNames.Add(fieldName);
                         }
                         else
-                            throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.");
+                            throw new InvalidNameException($"Name `{argument.Variable.RawString}` does not exists in this context.")
+                            {
+                                Line = astAlt.Position2D.Line,
+                            };
                     }
                 }
                 else // If action is null, use all variables as captured variables.
@@ -460,7 +504,10 @@ internal class Binder
 
                 if (astAlt.Action is InferredActionView && rule.Alternatives.Count > 1)
                 {
-                    throw new CompilationException("Cannot use `new` keyword for rule that have more than 1 arm.");
+                    throw new CompilationException("Cannot use `new` keyword for rule that have more than 1 arm.")
+                    {
+                        Line = astAlt.Position2D.Line,
+                    };
                 }
 
                 BoundRuleType? type = null;
@@ -469,7 +516,10 @@ internal class Binder
                     string name = namedAction.Name.RawString;
 
                     if (typeNames.Contains(name))
-                        throw new InvalidNameException($"Type name {name} used twice in the grammar.");
+                        throw new InvalidNameException($"Type name {name} used twice in the grammar.")
+                        {
+                            Line = astAlt.Position2D.Line,
+                        };
 
                     typeNames.Add(name);
 
@@ -530,8 +580,11 @@ internal class Binder
                     {
                         var fields = rule.Alternatives[0].Action!.CapturedVariables.Select(createField);
 
-                        if (!rule.IsGroup && rule.AstAlternatives[0].Action is NamedActionView)
-                            throw new CompilationException($"Using name for the rule with single arm is not allowed: {rule.Name}");
+                        if (!rule.IsGroup && rule.AstAlternatives[0].Action is NamedActionView action)
+                            throw new CompilationException($"Using name for the rule with single arm is not allowed: {rule.Name}")
+                            {
+                                Line = action.Position2D.Line,
+                            };
 
                         ((BoundRuleType)rule.Type).Fields = fields.ToList();
                         Grammar.Types.Add(rule.Type);

@@ -64,6 +64,11 @@ internal class Program
             var binder = new Binder();
 
             var grammarView = grammarParsed.GetView(0, null);
+            grammarView.SyntaxTree = new SyntaxViewTree
+            {
+                Root = grammarView,
+                PositionMap = tokenStream.PositionMap,
+            };
 
             try
             {

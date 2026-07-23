@@ -39,11 +39,11 @@ internal class BoundRule
     internal required IReadOnlyList<AlternativeView> AstAlternatives { get; init; }
     internal required string SourceText { get; init; }
     internal required BoundType Type { get; init; }
+    internal required int LineCreated { get; init; }
     internal List<BoundAlternative> Alternatives { get; } = [];
     internal required bool IsGroup { get; init; }
     internal required bool EnableMemoization { get; init; }
     internal bool IsEntryPoint { get; set; }
-    internal int LineCreated { get; init; }
     internal bool IsLeftRecursive { get; set; } = false;
     internal bool WasUsed { get; set; } = false;
 
