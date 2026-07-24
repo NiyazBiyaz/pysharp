@@ -1,0 +1,73 @@
+@header '''\
+using PySharp.SyntaxAnalysis.Tokens;
+using PySharp.SyntaxAnalysis.Common;
+using PySharp.SyntaxAnalysis.Common.Ast;
+
+namespace PySharp.SyntaxAnalysis;
+'''
+@parser_name 'ToyParser'
+
+# Left-union-decorator pattern.
+
+# Main idea is to convert grammar expressions of the 'ordinary' PEG (like pegen) to the more 
+# plain structure that can be used as AST.
+
+# Direct translation from CPython's pegen to PegenNet caused issue that AST nesting was 
+# extremely high. To get token `"Bau Bau!"` from __hello__.pysharp you have needed to 
+# jump over than 40 AST objects starting from root. Seeing that AST is a reference objects,
+# it was should to be an absolute nightmare for CPU cache.
+
+# pegen also allows to use *actions*, so using grammar that have that much nesting does not
+# hurts your CPU: you just creating new BinaryAstNode and setting parameter Kind or using 
+# operator token to detect which binary expression you're seeing. 
+# But PegenNet doesn't allow actions. So we need to change our approach.
+
+# Now, instead of using arms of the rules that have actions and as follows creates new
+# AST node, we are using union-rules with the 'decorated' rule that used as first union-arm.
+# This 'decorated' rule as first entry calls it's decorator again, so now it's left-recursive
+# cycle that can be resolved using Seed&Grow algorithm.
+# As second union-arm used another left-union-decorator rule with the same idea or terminal rule.
+
+# With this it still can parse same expressions, but without creating dozens of 'direct' nodes.
+# Now to see same `"Bau Bau!"` token you need to do only a 12 steps from the root node!
+
+# 'Toy' example of the Left-union-decorator pattern:
+
+@main
+File: Statement* EndOfFile -> new(Statements = statement_Star)
+
+Statement: Expression ';' NewLine -> new(Expression = expression)
+
+@union
+Expression:
+    | SumExpression
+
+@union
+@memo
+SumExpression:
+    | Sum
+    | TermExpression
+
+Sum: SumExpression '+' TermExpression -> new(Left = sum_expression, Right = term_expression)
+
+@union
+@memo
+TermExpression:
+    | Term
+    | PowerExpression
+
+Term: TermExpression '*' PowerExpression -> new(Left = term_expression, Right = power_expression)
+
+@union
+@memo
+PowerExpression:
+    | Power
+    | Primary
+
+Power: PowerExpression '**' Primary -> new(Left = power_expression, Right = primary)
+
+@memo
+Primary:
+    | Primary '.' Name -> DotOperationPrimary(Left = primary, Right = name)
+    | Name -> NamePrimary(Value = name)
+    | Number -> NumberPrimary(Value = number)
