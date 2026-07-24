@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using PySharp.SyntaxAnalysis.Common;
 
 namespace PySharp.Tests.SyntaxAnalysis.Common;
@@ -24,6 +23,7 @@ public class TestTextPositionMap
         ];
 
         var textMap = new TextPositionMap();
+        // +1 because we need 'end of the char'
         foreach (int linefeed in lines.Index().Where(c => c.Item == '\n').Select(c => c.Index + 1))
         {
             textMap.Append(linefeed);
@@ -57,6 +57,7 @@ public class TestTextPositionMap
         ];
 
         var textMap = new TextPositionMap();
+        // +1 because we need 'end of the char'
         foreach (int linefeed in lines.Index().Where(c => c.Item == '\n').Select(c => c.Index + 1))
         {
             textMap.Append(linefeed);
@@ -66,7 +67,6 @@ public class TestTextPositionMap
         {
             foreach (int charIndex in endsOfCharsOnLines[line])
             {
-                Debug.WriteLine($"col % 4={charIndex % 4}; textMap.GetColumnForPosition(charIndex)={textMap.GetColumnForPosition(charIndex)}");
                 Assert.Equal(charIndex % 4, textMap.GetColumnForPosition(charIndex));
             }
         }
@@ -89,6 +89,7 @@ public class TestTextPositionMap
         ];
 
         var textMap = new TextPositionMap();
+        // +1 because we need 'end of the char'
         foreach (int linefeed in lines.Index().Where(c => c.Item == '\n').Select(c => c.Index + 1))
         {
             textMap.Append(linefeed);

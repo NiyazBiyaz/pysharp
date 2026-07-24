@@ -1886,9 +1886,6 @@ public class TestTokenizer
     {
         Debug.WriteLine($"Testing:\n{code}");
 
-        if (code == "f'''content")
-            Debugger.Break();
-
         var sync = SynchronizationPoint.ClearPoint(new StringBuffer(code));
 
         var tokenizer = new Tokenizer(sync);
