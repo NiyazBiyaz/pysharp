@@ -68,7 +68,7 @@ public class TestParser
         var view = grammar.GetView(0, null);
         view.SyntaxTree = new SyntaxViewTree
         {
-            PositionMap = tokenStream.PositionMap,
+            PositionMap = tokenizer.PositionMap,
             Root = view,
         };
         return view;

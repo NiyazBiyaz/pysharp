@@ -67,7 +67,7 @@ internal class Program
             grammarView.SyntaxTree = new SyntaxViewTree
             {
                 Root = grammarView,
-                PositionMap = tokenStream.PositionMap,
+                PositionMap = tokenizer.PositionMap,
             };
 
             try
@@ -80,13 +80,13 @@ internal class Program
             }
             catch (CompilationException e)
             {
-                Console.Error.WriteLine($"Error at line {e.Line}: {e.Message}");
+                Console.Error.WriteLine($"Error at line {e.Line + 1}: {e.Message}");
                 Environment.Exit(1);
             }
 
             foreach (var warn in binder.Warnings)
             {
-                Console.WriteLine($"Warning at line {warn.Line}: {warn.Message}");
+                Console.WriteLine($"Warning at line {warn.Line + 1}: {warn.Message}");
             }
 
             var boundGrammar = binder.Grammar;

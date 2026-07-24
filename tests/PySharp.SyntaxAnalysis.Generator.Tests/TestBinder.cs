@@ -909,7 +909,7 @@ public class TestBinder
         view.SyntaxTree = new()
         {
             Root = view,
-            PositionMap = stream.PositionMap
+            PositionMap = tokenizer.PositionMap
         };
         return view;
     }
