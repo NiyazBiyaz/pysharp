@@ -45,6 +45,7 @@ internal class BoundRule
     internal required bool EnableMemoization { get; init; }
     internal bool IsEntryPoint { get; set; }
     internal bool IsLeftRecursive { get; set; } = false;
+    internal bool EnableSeedNGrow { get; set; } = false;
     internal bool WasUsed { get; set; } = false;
 
     // Override to be able to use in the HashSet<BoundRule> when InspectRules in Binder.
@@ -80,8 +81,8 @@ internal class BoundRule
         SourceText,
         Name,
         Kind,
-        EnableMemoization,
-        IsLeftRecursive,
+        EnableMemoization && !IsLeftRecursive,
+        IsLeftRecursive && EnableSeedNGrow,
         Alternatives.Select(a => a.ToIr(Kind != RuleKind.Type)));
 
     internal IEnumerable<BoundRule> GetPotentialLeftRecursive(List<CompilationWarning> warnings) =>

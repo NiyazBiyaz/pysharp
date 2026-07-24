@@ -44,43 +44,43 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
     protected void Reset(int index) => tokenStream.Index = index;
 
     private const string parser_verbose = "PARSER_VERBOSE";
-    private const string log_indent_string = "-";
+    private const string log_indent_string = "  ";
 
     [Conditional(parser_verbose)]
-    protected void LogRuleEntered(string ruleName) => logIndent($"Entering rule {ruleName}");
+    protected void LogRuleEntered(string ruleName) => logIndent($"Entering rule `{ruleName}`");
 
     [Conditional(parser_verbose)]
-    protected void LogRuleFailed(string ruleName) => logIndent($"Rule {ruleName} is failed (null will be returned)");
+    protected void LogRuleFailed(string ruleName) => logIndent($"Rule `{ruleName}` is failed (null will be returned)");
 
     [Conditional(parser_verbose)]
     protected void LogRuleMemoUsed<T>(string ruleName, int position, MemoEntry<T> memo)
         where T : IGreenNode
     {
         string nullInfo = memo.Cache == null ? "null" : "not null";
-        logIndent($"Rule {ruleName} used memoized cache for position {position} ({nullInfo}); memo end position is {memo.EndPosition}");
+        logIndent($"Rule `{ruleName}` used memoized cache for position {position} ({nullInfo}); memo end position is {memo.EndPosition}");
     }
 
     [Conditional(parser_verbose)]
     protected void LogRuleMemoCreated(string ruleName, int position, bool isNull)
     {
         string nullInfo = isNull ? " (null)" : "";
-        logIndent($"Rule {ruleName} created memoization cache on position {position}{nullInfo}");
+        logIndent($"Rule `{ruleName}` created memoization cache on position {position}{nullInfo}");
     }
 
     [Conditional(parser_verbose)]
-    protected void LogRuleExiting(string ruleName) => logIndent($"Exiting rule {ruleName}");
+    protected void LogRuleExiting(string ruleName) => logIndent($"Exiting rule `{ruleName}`");
 
     [Conditional(parser_verbose)]
     protected void LogAlternativeEntered(string alternativeSourceText)
-        => logIndent($"Trying to match: {alternativeSourceText}");
+        => logIndent($"Trying to match: \"{alternativeSourceText}\"");
 
     [Conditional(parser_verbose)]
     protected void LogAlternativeFailed(string alternativeSourceText)
-        => logIndent($"Not matched: {alternativeSourceText}");
+        => logIndent($"Not matched: \"{alternativeSourceText}\"");
 
     [Conditional(parser_verbose)]
     protected void LogAlternativeSucceed(string alternativeSourceText)
-        => logIndent($"Matched: {alternativeSourceText}");
+        => logIndent($"Matched: \"{alternativeSourceText}\"");
 
     [Conditional(parser_verbose)]
     protected void LogIncreaseLevel() => logIndentationLevel++;
@@ -89,30 +89,34 @@ public abstract class BaseParser<TStartNode>(ITokenNodeStream tokenNodeStream)
     protected void LogDecreaseLevel() => logIndentationLevel--;
 
     [Conditional(parser_verbose)]
-    protected void LogStartGrow(string ruleName) => logIndent($"Starting to grow {ruleName}; first memo set to null");
+    protected void LogStartGrow(string ruleName) => logIndent($"Starting to grow `{ruleName}`; first memo set to null");
 
     [Conditional(parser_verbose)]
-    protected void LogNextGrow(string ruleName) => logIndent($"Next grow iteration of the {ruleName}");
+    protected void LogNextGrow(string ruleName) => logIndent($"Next grow iteration of the `{ruleName}`");
 
     [Conditional(parser_verbose)]
     protected void LogEndGrow(string ruleName, bool isNull)
     {
         string result = isNull ? "null" : "succeed";
-        logIndent($"End to grow {ruleName}, result: {result}");
+        logIndent($"End to grow `{ruleName}`, result: {result}");
     }
 
     [Conditional(parser_verbose)]
     protected void LogLeftRecursionRuleEntered(string ruleName)
-        => logIndent($"The wrapper for {ruleName} is entered");
+        => logIndent($"The wrapper for `{ruleName}` is entered");
 
     private int logIndentationLevel = 0;
 
     private void logIndent(string message)
     {
+#if PARSER_VERBOSE
+        Console.Write($"[{logIndentationLevel,3}]");
         for (int i = 0; i < logIndentationLevel; i++)
         {
             Console.Write(log_indent_string);
         }
-        Console.WriteLine($"{message}; ({tokenStream.Index})");
+        var token = tokenStream.PeekOrDefault();
+        Console.WriteLine($"{message}; ({tokenStream.Index}: {token?.Type.ToString() ?? "None"}-'{token?.RawString}')");
+#endif
     }
 }

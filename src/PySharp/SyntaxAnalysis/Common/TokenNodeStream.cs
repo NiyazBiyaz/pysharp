@@ -66,4 +66,16 @@ public class TokenNodeStream(ITokenizer tokenizer) : ITokenNodeStream
 
         return tokens[Index];
     }
+
+#if PARSER_VERBOSE
+    public TokenNode? PeekOrDefault()
+    {
+        if (Index == tokens.Count)
+        {
+            return null;
+        }
+
+        return tokens[Index];
+    }
+#endif
 }

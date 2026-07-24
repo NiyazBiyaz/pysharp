@@ -689,6 +689,15 @@ internal class Binder
             });
         }
 
+        var ruleLeftRecursiveGraph = Rules.Values
+            .Select(r =>
+            {
+                var edges = r.GetPotentialLeftRecursive([]).ToHashSet();
+                return new KeyValuePair<BoundRule, HashSet<BoundRule>>(r, edges);
+            })
+            .ToDictionary();
+
+        var sccHandled = new List<HashSet<BoundRule>>();
 
         foreach (var rule in Rules.Values)
         {
@@ -721,10 +730,8 @@ internal class Binder
                 }
             }
 
-            var sccHandled = new List<HashSet<BoundRule>>();
-
             // Process SCCs.
-            var sccIterator = searchStronglyConnectedComponents(rule);
+            var sccIterator = searchStronglyConnectedComponents(rule, Warnings);
             foreach (var scc in sccIterator)
             {
                 // Skip already handled SCCs
@@ -737,23 +744,47 @@ internal class Binder
                         throw new UnreachableException("SCC cannot have 0 elements.");
 
                     case 1:
-                        if (rule.GetPotentialLeftRecursive([]).Contains(rule))
+                        var singleScc = scc.First();
+                        if (singleScc.GetPotentialLeftRecursive([]).Contains(singleScc))
                         {
-                            rule.IsLeftRecursive = true;
+                            singleScc.IsLeftRecursive = true;
+                            singleScc.EnableSeedNGrow = true;
 
-                            if (!rule.EnableMemoization)
-                                throw new CompilationException($"Rule '{rule.Name}' is left recursive and should have explicit memoization tag.")
+                            if (!singleScc.EnableMemoization)
+                                throw new CompilationException(
+                                    $"Rule '{singleScc.Name}' is left recursive and should have explicit memoization tag.")
                                 {
                                     Line = rule.LineCreated,
                                 };
                         }
+
                         break;
 
                     default:
-                        throw new NotImplementedException("Implement cycle finding algorithm.");
+                        HashSet<BoundRule> leaders = [.. scc];
+                        foreach (var vertex in scc)
+                        {
+                            vertex.IsLeftRecursive = true;
+                            foreach (var cycle in computeCycles(ruleLeftRecursiveGraph, scc, vertex))
+                            {
+                                leaders.ExceptWith(scc.Except(cycle));
+                                if (leaders.Count == 0)
+                                {
+                                    string sccString = "{ " + string.Join(", ", scc.Select(r => r.Name)) + " }";
+                                    throw new CompilationException(
+                                        $"Indirectly left-recursive rules {sccString} has no grow&seed candidate (no element included in all cycles).")
+                                    {
+                                        Line = scc.First().LineCreated, // Lets point at least on one rule from the scc.
+                                    };
+                                }
+                            }
+                        }
+                        leaders.First().EnableSeedNGrow = true;
+
+                        break;
                 }
 
-                sccHandled.Add(scc);
+                sccHandled.Add([.. scc]);
             }
         }
     }
@@ -778,7 +809,7 @@ internal class Binder
     /// </remarks>
     /// <param name="vertex">Rule to search on left recursion.</param>
     /// <returns>Sets of the rules that creates SCC.</returns>
-    private IEnumerable<HashSet<BoundRule>> searchStronglyConnectedComponents(BoundRule vertex)
+    private static IEnumerable<HashSet<BoundRule>> searchStronglyConnectedComponents(BoundRule vertex, List<CompilationWarning> warnings)
     {
         var identified = new HashSet<BoundRule>();
         var stack = new List<BoundRule>();
@@ -791,7 +822,7 @@ internal class Binder
             stack.Add(vertex);
             boundaries.Push(index[vertex]);
 
-            foreach (var edge in vertex.GetPotentialLeftRecursive(Warnings))
+            foreach (var edge in vertex.GetPotentialLeftRecursive(warnings))
             {
                 if (!index.TryGetValue(edge, out int edgeIndex))
                 {
@@ -844,5 +875,43 @@ internal class Binder
                 yield return grandChild;
             }
         }
+    }
+
+    private static IEnumerable<List<BoundRule>> computeCycles(
+        Dictionary<BoundRule, HashSet<BoundRule>> graph,
+        HashSet<BoundRule> scc,
+        BoundRule startVertex)
+    {
+        // Shrink graph to elements from scc only.
+        var reducedGraph = graph
+            .Where(kv => scc.Contains(kv.Key))
+            .Select(kv =>
+            {
+                var edges = kv.Value.Where(e => scc.Contains(e)).ToHashSet();
+                return new KeyValuePair<BoundRule, HashSet<BoundRule>>(kv.Key, edges);
+            })
+            .ToDictionary();
+
+        IEnumerable<List<BoundRule>> deepFirstSearch(BoundRule vertex, IEnumerable<BoundRule> path)
+        {
+            // This is quadratic, but probably it's okay because SCCs usually not that big.
+            if (path.Contains(vertex))
+            {
+                yield return path.Prepend(vertex).ToList();
+            }
+            else
+            {
+                path = path.Prepend(vertex);
+                foreach (var child in reducedGraph[vertex])
+                {
+                    foreach (var cycle in deepFirstSearch(child, path))
+                    {
+                        yield return cycle;
+                    }
+                }
+            }
+        }
+
+        return deepFirstSearch(startVertex, []);
     }
 }

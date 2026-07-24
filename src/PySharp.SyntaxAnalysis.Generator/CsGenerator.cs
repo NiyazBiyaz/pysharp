@@ -263,7 +263,7 @@ internal class CsGenerator
     {
         AddLine($"#region {ir.Name}");
 
-        if (ir.IsMemoEnabled)
+        if (ir.EnableMemo || ir.IsLeftRecursive)
         {
             AddLine($"private readonly IMemoContainer<{typeName}> _memo_{ir.Name} = CreateContainer<{typeName}>();");
         }
@@ -332,7 +332,7 @@ internal class CsGenerator
 
         AddLine("int _mark = base.Mark();");
 
-        if (ir.IsMemoEnabled && !ir.IsLeftRecursive)
+        if (ir.EnableMemo)
         {
             addLines($$"""
             if (_memo_{{ir.Name}}.TryGetCache(_mark, out var _memoized))
@@ -374,7 +374,7 @@ internal class CsGenerator
         AddLine($@"base.LogRuleFailed(""{ir.Name}"");");
 
         indentation--;
-        if (ir.IsMemoEnabled && !ir.IsLeftRecursive)
+        if (ir.EnableMemo)
         {
             addLines($"""
             _Return:
@@ -557,7 +557,7 @@ internal class CsGenerator
 
         if (!ir.IsAbstract.Value)
         {
-            AddLine($"public override {typeViewName} GetView(TokenPosition position, IRedView? parent)");
+            AddLine($"public override {typeViewName} GetView(int position, IRedView? parent)");
             AddLine($"    => new {typeViewName}(this, position, parent);");
         }
 
@@ -579,7 +579,7 @@ internal class CsGenerator
         open();
 
         addLines($$"""
-        {{modifierName}} {{typeViewName}}({{typeNodeName}} green, TokenPosition position, IRedView? parent)
+        {{modifierName}} {{typeViewName}}({{typeNodeName}} green, int position, IRedView? parent)
             : base(green, position, parent)
         {
         }

@@ -8,4 +8,8 @@ public interface ITokenNodeStream
 
     TokenNode GetAndAdvance();
     TokenNode PeekToken();
+
+#if PARSER_VERBOSE
+    TokenNode? PeekOrDefault();
+#endif
 }

@@ -6,7 +6,7 @@ internal record RuleIr(
     string SourceText,
     string Name,
     RuleKind Kind,
-    bool IsMemoEnabled,
+    bool EnableMemo,
     bool IsLeftRecursive,
     IEnumerable<AlternativeIr> Alternatives);
 
