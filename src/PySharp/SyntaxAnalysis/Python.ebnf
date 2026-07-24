@@ -379,6 +379,7 @@ TypeParameterStarredDefault: '=' StarExpression -> new(Value=star_expression)
 Expression:
     | IfExpression
     | Disjunction
+    | BitwiseOrExpression
     # NSY | LambdaDef
 
 IfExpression: Disjunction 'if' Disjunction 'else' Expression
@@ -389,14 +390,18 @@ YieldExpression:
 
 StarExpressions: StarExpression+.',' -',' -> new(Values=star_expression_Gather)
 
+@union
 @memo
 StarExpression:
-    | '*' BitwiseOr -> NormalStarExpression(Value=bitwise_or)
-    | Expression -> WithoutStarExpression(Value=expression)
+    | StarBitwiseOrExpression
+    | Expression
 
+StarBitwiseOrExpression: '*' BitwiseOrExpression -> new(Value=bitwise_or_expression)
+
+@union
 StarNamedExpression:
-    | '*' BitwiseOr -> NormalStarNamedExpression(Value=bitwise_or)
-    | NamedExpression -> WithoutStarNamedExpression(Value=named_expression)
+    | StarBitwiseOrExpression
+    | NamedExpression
 
 StarNamedExpressions: StarNamedExpression+.',' -',' -> new(Items=star_named_expression_Gather)
 
@@ -411,55 +416,70 @@ NamedExpression:
 Disjunction: Conjunction+.'or' -> new(Values=conjunction_Gather)
 
 @memo
-Conjunction: Inversion+.'and' -> new(Values=inversion_Gather)
+Conjunction: InversionExpression+.'and' -> new(Values=inversion_expression_Gather)
 
+@union
 @memo
-Inversion:
-    | 'not' Inversion -> NotInversion(Value=inversion)
-    | Comparison -> DirectInversion(Value=comparison)
+InversionExpression:
+    | Inversion
+    | Comparison
+
+Inversion: 'not' InversionExpression -> new(Value=inversion_expression)
 
 # Comparison operators
 # --------------------
 
-Comparison:
-    | BitwiseOr CompareOperation+ -> ManyValueComparison(First=bitwise_or, Rest=compare_operation_Plus)
-    | BitwiseOr -> SingleValueComparison(First=bitwise_or)
+Comparison: BitwiseOrExpression CompareOperation+ -> new(
+    First=bitwise_or_expression, Rest=compare_operation_Plus)
 
 # Cannot use `@inline` because some operators is 2 tokens wide.
 CompareOperation:
-    | '==' BitwiseOr        -> EqOperation(Right=bitwise_or)
-    | '!=' BitwiseOr        -> NotEqOperation(Right=bitwise_or)
-    | '<=' BitwiseOr        -> LtEqOperation(Right=bitwise_or)
-    | '<' BitwiseOr         -> LtOperation(Right=bitwise_or)
-    | '>=' BitwiseOr        -> GtEqOperation(Right=bitwise_or)
-    | '>' BitwiseOr         -> GtOperation(Right=bitwise_or)
-    | 'not' 'in' BitwiseOr  -> NotInOperation(Right=bitwise_or)
-    | 'in' BitwiseOr        -> InOperation(Right=bitwise_or)
-    | 'is' 'not' BitwiseOr  -> IsNotOperation(Right=bitwise_or)
-    | 'is' BitwiseOr        -> IsOperation(Right=bitwise_or)
+    | '==' BitwiseOrExpression        -> EqOperation(Right=bitwise_or_expression)
+    | '!=' BitwiseOrExpression        -> NotEqOperation(Right=bitwise_or_expression)
+    | '<=' BitwiseOrExpression        -> LtEqOperation(Right=bitwise_or_expression)
+    | '<' BitwiseOrExpression         -> LtOperation(Right=bitwise_or_expression)
+    | '>=' BitwiseOrExpression        -> GtEqOperation(Right=bitwise_or_expression)
+    | '>' BitwiseOrExpression         -> GtOperation(Right=bitwise_or_expression)
+    | 'not' 'in' BitwiseOrExpression  -> NotInOperation(Right=bitwise_or_expression)
+    | 'in' BitwiseOrExpression        -> InOperation(Right=bitwise_or_expression)
+    | 'is' 'not' BitwiseOrExpression  -> IsNotOperation(Right=bitwise_or_expression)
+    | 'is' BitwiseOrExpression        -> IsOperation(Right=bitwise_or_expression)
 
 # Bitwise operators
 # -----------------
 
+@union
 @memo
-BitwiseOr:
-    | BitwiseOr '|' BitwiseXor -> BinaryBitwiseOr(Left=bitwise_or, Right=bitwise_xor)
-    | BitwiseXor -> DirectBitwiseOr(Value=bitwise_xor)
+BitwiseOrExpression:
+    | BitwiseOr
+    | BitwiseXorExpression
 
-@memo
-BitwiseXor:
-    | BitwiseXor '^' BitwiseAnd -> BinaryBitwiseXor(Left=bitwise_xor, Right=bitwise_and)
-    | BitwiseAnd -> DirectBitwiseXor(Value=bitwise_and)
+BitwiseOr: BitwiseOrExpression '|' BitwiseXorExpression -> new(Left=bitwise_or_expression, Right=bitwise_xor_expression)
 
+@union
 @memo
-BitwiseAnd:
-    | BitwiseAnd '&' BitShift -> BinaryBitwiseAnd(Left=bitwise_and, Right=bit_shift)
-    | BitShift -> DirectBitwiseAnd(Value=bit_shift)
+BitwiseXorExpression:
+    | BitwiseXor
+    | BitwiseAndExpression
 
+BitwiseXor: BitwiseXorExpression '^' BitwiseAndExpression -> new(Left=bitwise_xor_expression, Right=bitwise_and_expression)
+
+@union
 @memo
-BitShift:
-    | BitShift BitShiftOperator Sum -> BinaryBitShift(Left=bit_shift, Right=sum, Operator=bit_shift_operator)
-    | Sum -> DirectBitShift(Value=sum)
+BitwiseAndExpression:
+    | BitwiseAnd
+    | BitShiftExpression
+
+BitwiseAnd: BitwiseAndExpression '&' BitShiftExpression -> new(Left=bitwise_and_expression, Right=bit_shift_expression)
+
+@union
+@memo
+BitShiftExpression:
+    | BitShift
+    | SumExpression
+
+BitShift: BitShiftExpression BitShiftOperator SumExpression -> new(
+    Left=bit_shift_expression, Right=sum_expression, Operator=bit_shift_operator)
 
 @inline
 BitShiftOperator:
@@ -469,20 +489,27 @@ BitShiftOperator:
 # Arithmetic operators
 # --------------------
 
+@union
 @memo
-Sum:
-    | Sum SumOperator Term -> BinarySum(Left=sum, Right=term, Operator=sum_operator)
-    | Term -> DirectSum(Value=term)
+SumExpression:
+    | Sum
+    | TermExpression
+
+Sum: SumExpression SumOperator TermExpression -> new(Left=sum_expression, Right=term_expression, Operator=sum_operator)
 
 @inline
 SumOperator:
     | '+'
     | '-'
 
+@union
 @memo
-Term:
-    | Term TermOperator Factor -> BinaryTerm(Left=term, Right=factor, Operator=term_operator)
-    | Factor -> DirectTerm(Value=factor)
+TermExpression:
+    | Term
+    | FactorExpression
+
+Term: TermExpression TermOperator FactorExpression -> new(
+    Left=term_expression, Right=factor_expression, Operator=term_operator)
 
 @inline
 TermOperator:
@@ -492,10 +519,13 @@ TermOperator:
     | '%'
     | '@'
 
+@union
 @memo
-Factor:
-    | FactorOperator Factor -> UnaryFactor(Operator=factor_operator, Value=factor)
-    | Power -> DirectFactor(Value=power)
+FactorExpression:
+    | Factor
+    | PowerExpression
+
+Factor: FactorOperator FactorExpression -> new(Operator=factor_operator, Value=factor_expression)
 
 @inline
 FactorOperator:
@@ -503,10 +533,13 @@ FactorOperator:
     | '-'
     | '~'
 
+@union
 @memo
-Power:
-    | Primary '**' Factor -> BinaryPower(Left=primary, Right=factor)
-    | Primary -> DirectPower(Value=primary)
+PowerExpression:
+    | Power
+    | Primary  # Terminal
+
+Power: Primary '**' FactorExpression -> new(Left=primary, Right=factor_expression)
 
 # Primary elements
 # ----------------
@@ -635,7 +668,7 @@ Dict: '{' -StarredOrKeyValues '}' -> new(KeyValuePairs=starred_or_key_values)
 StarredOrKeyValues: StarredOrKeyValue+.',' -',' -> new(Items=starred_or_key_value_Gather)
 
 StarredOrKeyValue:
-    | '**' BitwiseOr -> DoubleStarred(Value=bitwise_or)
+    | '**' BitwiseOrExpression -> DoubleStarred(Value=bitwise_or_expression)
     | Expression ':' Expression -> KeyValuePair(Key=expression, Value=expression1)
 
 # Comprehensions and Generators
