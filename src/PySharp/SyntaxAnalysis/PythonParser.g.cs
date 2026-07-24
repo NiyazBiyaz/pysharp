@@ -28,7 +28,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // Statement* EndOfFile -> new(Statements=statement_Star)
             base.LogAlternativeEntered("Statement* EndOfFile");
-            INodeArray<StatementNode>? statement_Star;
+            INodeArray<IStatementNode>? statement_Star;
             IGreenNode? end_of_file;
             if ((statement_Star = _RepeatHelper_statement_Star()) is not null
                 &&
@@ -39,18 +39,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new FileNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(statement_Star),
+                        statement_Star,
                         end_of_file,
                     ]),
                 };
                 goto _Return;
             }
             base.LogAlternativeFailed("Statement* EndOfFile");
-            NodeArray<StatementNode>? _RepeatHelper_statement_Star()
+            NodeArray<IStatementNode>? _RepeatHelper_statement_Star()
             {
-                StatementNode? _node = rule_Statement();
+                IStatementNode? _node = rule_Statement();
                 if (_node == null) return [];
-                global::System.Collections.Generic.List<StatementNode> _result = [_node];
+                global::System.Collections.Generic.List<IStatementNode> _result = [_node];
                 while ((_node = rule_Statement()) != null)
                 {
                     _result.Add(_node);
@@ -72,12 +72,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Statement:
     //     | CompoundStatement
     //     | SimpleStatements
-    StatementNode? rule_Statement()
+    IStatementNode? rule_Statement()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Statement");
         int _mark = base.Mark();
-        StatementNode? _res = null;
+        IStatementNode? _res = null;
         {
             // CompoundStatement
             base.LogAlternativeEntered("CompoundStatement");
@@ -85,7 +85,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             if ((compound_statement = rule_CompoundStatement()) is not null)
             {
                 base.LogAlternativeSucceed("CompoundStatement");
-                _res = (CompoundStatementNode?)compound_statement;
+                _res = (ICompoundStatementNode?)compound_statement;
                 goto _Return;
             }
             base.LogAlternativeFailed("CompoundStatement");
@@ -171,7 +171,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new SeparatedSimpleStatementsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(simple_statement_Gather),
+                        simple_statement_Gather,
                         semicolon ?? VoidNode.Instance,
                         new_line,
                     ]),
@@ -228,12 +228,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | &'continue'   ContinueStatement
     //     | &'global'     GlobalStatement
     //     | &'nonlocal'   NonlocalStatement
-    SimpleStatementNode? rule_SimpleStatement()
+    ISimpleStatementNode? rule_SimpleStatement()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("SimpleStatement");
         int _mark = base.Mark();
-        SimpleStatementNode? _res = null;
+        ISimpleStatementNode? _res = null;
         {
             // Assignment
             base.LogAlternativeEntered("Assignment");
@@ -293,7 +293,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("&ImportStart  ImportStatement");
-                _res = (ImportStatementNode?)import_statement;
+                _res = (IImportStatementNode?)import_statement;
                 goto _Return;
             }
             base.LogAlternativeFailed("&ImportStart  ImportStatement");
@@ -624,12 +624,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     //
     //
-    CompoundStatementNode? rule_CompoundStatement()
+    ICompoundStatementNode? rule_CompoundStatement()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("CompoundStatement");
         int _mark = base.Mark();
-        CompoundStatementNode? _res = null;
+        ICompoundStatementNode? _res = null;
         {
             // &(@inline 'def' | '@' | 'async') FunctionDef
             base.LogAlternativeEntered("&(@inline 'def' | '@' | 'async') FunctionDef");
@@ -1119,7 +1119,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new CascadeAssignmentNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(assignment_target_Plus),
+                        assignment_target_Plus,
                         annotated_rhs,
                     ]),
                 };
@@ -1470,12 +1470,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // AnnotatedRhs:
     //     | YieldExpression
     //     | StarExpressions
-    AnnotatedRhsNode? rule_AnnotatedRhs()
+    IAnnotatedRhsNode? rule_AnnotatedRhs()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("AnnotatedRhs");
         int _mark = base.Mark();
-        AnnotatedRhsNode? _res = null;
+        IAnnotatedRhsNode? _res = null;
         {
             // YieldExpression
             base.LogAlternativeEntered("YieldExpression");
@@ -1765,7 +1765,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(name_Gather),
+                        name_Gather,
                     ]),
                 };
                 goto _Return;
@@ -1826,7 +1826,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(name_Gather),
+                        name_Gather,
                     ]),
                 };
                 goto _Return;
@@ -1892,7 +1892,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(delete_target_Gather),
+                        delete_target_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -2097,7 +2097,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     #endregion // AssertMessage
 
     #region ImportStatement
-    private readonly IMemoContainer<ImportStatementNode> _memo_ImportStatement = CreateContainer<ImportStatementNode>();
+    private readonly IMemoContainer<IImportStatementNode> _memo_ImportStatement = CreateContainer<IImportStatementNode>();
     // @union
     // @memo
     // ImportStatement:
@@ -2111,7 +2111,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //
     //
     //
-    ImportStatementNode? rule_ImportStatement()
+    IImportStatementNode? rule_ImportStatement()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("ImportStatement");
@@ -2123,7 +2123,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        ImportStatementNode? _res = null;
+        IImportStatementNode? _res = null;
         {
             // ImportName
             base.LogAlternativeEntered("ImportName");
@@ -2209,7 +2209,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(dotted_as_name_Gather),
+                        dotted_as_name_Gather,
                     ]),
                 };
                 goto _Return;
@@ -2274,7 +2274,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         _string_token1,
-                        new NodeList(dotted_as_name_Gather),
+                        dotted_as_name_Gather,
                     ]),
                 };
                 goto _Return;
@@ -2350,7 +2350,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(relative_import_dots_Star),
+                        relative_import_dots_Star,
                         dotted_name,
                         _string_token1,
                         import_from_targets,
@@ -2394,7 +2394,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(relative_import_dots_Plus),
+                        relative_import_dots_Plus,
                         _string_token1,
                         import_from_targets,
                     ]),
@@ -2465,8 +2465,8 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         _string_token1,
-                        new NodeList(relative_import_dots_Star),
-                        new NodeList(dotted_as_name_Gather),
+                        relative_import_dots_Star,
+                        dotted_as_name_Gather,
                         _string_token2,
                         import_from_targets,
                     ]),
@@ -2535,7 +2535,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         _string_token1,
-                        new NodeList(relative_import_dots_Plus),
+                        relative_import_dots_Plus,
                         _string_token2,
                         import_from_targets,
                     ]),
@@ -2641,7 +2641,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         left_paren,
-                        new NodeList(import_from_as_name_Gather),
+                        import_from_as_name_Gather,
                         comma ?? VoidNode.Instance,
                         right_paren,
                     ]),
@@ -2686,7 +2686,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new ImportFromFlatTargetsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(import_from_as_name_Gather),
+                        import_from_as_name_Gather,
                     ]),
                 };
                 goto _Return;
@@ -2994,7 +2994,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             base.LogAlternativeEntered("NewLine Indent Statement+ Dedent");
             IGreenNode? new_line;
             IGreenNode? indent;
-            INodeArray<StatementNode>? statement_Plus;
+            INodeArray<IStatementNode>? statement_Plus;
             IGreenNode? dedent;
             if ((new_line = Expect(TokenType.NewLine)) is not null
                 &&
@@ -3011,18 +3011,18 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         new_line,
                         indent,
-                        new NodeList(statement_Plus),
+                        statement_Plus,
                         dedent,
                     ]),
                 };
                 goto _Return;
             }
             base.LogAlternativeFailed("NewLine Indent Statement+ Dedent");
-            NodeArray<StatementNode>? _RepeatHelper_statement_Plus()
+            NodeArray<IStatementNode>? _RepeatHelper_statement_Plus()
             {
-                StatementNode? _node = rule_Statement();
+                IStatementNode? _node = rule_Statement();
                 if (_node == null) return null;
-                global::System.Collections.Generic.List<StatementNode> _result = [_node];
+                global::System.Collections.Generic.List<IStatementNode> _result = [_node];
                 while ((_node = rule_Statement()) != null)
                 {
                     _result.Add(_node);
@@ -3126,7 +3126,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new DecoratedClassDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(decorator_Star),
+                        decorator_Star,
                         class_def_raw,
                     ]),
                 };
@@ -3302,7 +3302,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new DecoratedFunctionDefNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(decorator_Star),
+                        decorator_Star,
                         function_def_raw,
                     ]),
                 };
@@ -3551,12 +3551,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("SlashNoDefault ParamNoDefault* ParamWithDefault* -StarEtc");
-                _res = new ParametersNode_Derived0()
+                _res = new Parameters_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         slash_no_default,
-                        new NodeList(param_no_default_Star),
-                        new NodeList(param_with_default_Star),
+                        param_no_default_Star,
+                        param_with_default_Star,
                         star_etc ?? VoidNode.Instance,
                     ]),
                 };
@@ -3601,11 +3601,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("SlashWithDefault ParamWithDefault* -StarEtc");
-                _res = new ParametersNode_Derived1()
+                _res = new Parameters_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         slash_with_default,
-                        new NodeList(param_with_default_Star),
+                        param_with_default_Star,
                         star_etc ?? VoidNode.Instance,
                     ]),
                 };
@@ -3639,11 +3639,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamNoDefault+ ParamWithDefault* -StarEtc");
-                _res = new ParametersNode_Derived2()
+                _res = new Parameters_Derived2Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(param_no_default_Plus),
-                        new NodeList(param_with_default_Star),
+                        param_no_default_Plus,
+                        param_with_default_Star,
                         star_etc ?? VoidNode.Instance,
                     ]),
                 };
@@ -3685,10 +3685,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamWithDefault* -StarEtc");
-                _res = new ParametersNode_Derived3()
+                _res = new Parameters_Derived3Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(param_with_default_Star),
+                        param_with_default_Star,
                         star_etc ?? VoidNode.Instance,
                     ]),
                 };
@@ -3715,7 +3715,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             if ((star_etc = rule_StarEtc()) is not null)
             {
                 base.LogAlternativeSucceed("StarEtc");
-                _res = new ParametersNode_Derived4()
+                _res = new Parameters_Derived4Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         star_etc,
@@ -3758,10 +3758,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamNoDefault+ '/' ','");
-                _res = new SlashNoDefaultNode_Derived0()
+                _res = new SlashNoDefault_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(param_no_default_Plus),
+                        param_no_default_Plus,
                         slash,
                         comma,
                     ]),
@@ -3795,10 +3795,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamNoDefault+ '/' &')'");
-                _res = new SlashNoDefaultNode_Derived1()
+                _res = new SlashNoDefault_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(param_no_default_Plus),
+                        param_no_default_Plus,
                         slash,
                     ]),
                 };
@@ -3860,11 +3860,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamNoDefault* ParamWithDefault+ '/' ','");
-                _res = new SlashWithDefaultNode_Derived0()
+                _res = new SlashWithDefault_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(param_no_default_Star),
-                        new NodeList(param_with_default_Plus),
+                        param_no_default_Star,
+                        param_with_default_Plus,
                         slash,
                         comma,
                     ]),
@@ -3912,11 +3912,11 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamNoDefault* ParamWithDefault+ '/' &')'");
-                _res = new SlashWithDefaultNode_Derived1()
+                _res = new SlashWithDefault_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(param_no_default_Star),
-                        new NodeList(param_with_default_Plus),
+                        param_no_default_Star,
+                        param_with_default_Plus,
                         slash,
                     ]),
                 };
@@ -3991,12 +3991,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("'*' ParamNoDefault ParamMaybeDefault* -Keywords");
-                _res = new StarEtcNode_Derived0()
+                _res = new StarEtc_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         star,
                         param_no_default,
-                        new NodeList(param_maybe_default_Star),
+                        param_maybe_default_Star,
                         keywords ?? VoidNode.Instance,
                     ]),
                 };
@@ -4033,12 +4033,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("'*' ParamNoDefaultStarAnnotation ParamMaybeDefault* -Keywords");
-                _res = new StarEtcNode_Derived1()
+                _res = new StarEtc_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         star,
                         param_no_default_star_annotation,
-                        new NodeList(param_maybe_default_Star),
+                        param_maybe_default_Star,
                         keywords ?? VoidNode.Instance,
                     ]),
                 };
@@ -4075,12 +4075,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("'*' ',' ParamMaybeDefault+ -Keywords");
-                _res = new StarEtcNode_Derived2()
+                _res = new StarEtc_Derived2Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         star,
                         comma,
-                        new NodeList(param_maybe_default_Plus),
+                        param_maybe_default_Plus,
                         keywords ?? VoidNode.Instance,
                     ]),
                 };
@@ -4107,7 +4107,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             if ((keywords = rule_Keywords()) is not null)
             {
                 base.LogAlternativeSucceed("Keywords");
-                _res = new StarEtcNode_Derived3()
+                _res = new StarEtc_Derived3Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         keywords,
@@ -4186,7 +4186,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Param ','");
-                _res = new ParamNoDefaultNode_Derived0()
+                _res = new ParamNoDefault_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param,
@@ -4208,7 +4208,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Param &')'");
-                _res = new ParamNoDefaultNode_Derived1()
+                _res = new ParamNoDefault_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param,
@@ -4255,7 +4255,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamStarAnnotation ','");
-                _res = new ParamNoDefaultStarAnnotationNode_Derived0()
+                _res = new ParamNoDefaultStarAnnotation_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param_star_annotation,
@@ -4277,7 +4277,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("ParamStarAnnotation &')'");
-                _res = new ParamNoDefaultStarAnnotationNode_Derived1()
+                _res = new ParamNoDefaultStarAnnotation_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param_star_annotation,
@@ -4327,7 +4327,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Param DefaultValue ','");
-                _res = new ParamWithDefaultNode_Derived0()
+                _res = new ParamWithDefault_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param,
@@ -4353,7 +4353,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Param DefaultValue &')'");
-                _res = new ParamWithDefaultNode_Derived1()
+                _res = new ParamWithDefault_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param,
@@ -4404,7 +4404,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Param -DefaultValue ','");
-                _res = new ParamMaybeDefaultNode_Derived0()
+                _res = new ParamMaybeDefault_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param,
@@ -4430,7 +4430,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Param -DefaultValue &')'");
-                _res = new ParamMaybeDefaultNode_Derived1()
+                _res = new ParamMaybeDefault_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         param,
@@ -5096,7 +5096,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         left_paren,
-                        new NodeList(with_item_Gather),
+                        with_item_Gather,
                         comma ?? VoidNode.Instance,
                         right_paren,
                         colon,
@@ -5151,7 +5151,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(with_item_Gather),
+                        with_item_Gather,
                         colon,
                         block,
                     ]),
@@ -5218,7 +5218,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         _string_token,
                         _string_token1,
                         left_paren,
-                        new NodeList(with_item_Gather),
+                        with_item_Gather,
                         comma ?? VoidNode.Instance,
                         right_paren,
                         colon,
@@ -5277,7 +5277,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         _string_token1,
-                        new NodeList(with_item_Gather),
+                        with_item_Gather,
                         colon,
                         block,
                     ]),
@@ -5523,7 +5523,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         _string_token,
                         colon,
                         block,
-                        new NodeList(except_block_Plus),
+                        except_block_Plus,
                         else_block ?? VoidNode.Instance,
                         finally_block ?? VoidNode.Instance,
                     ]),
@@ -5574,7 +5574,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         _string_token,
                         colon,
                         block,
-                        new NodeList(except_star_block_Plus),
+                        except_star_block_Plus,
                         else_block ?? VoidNode.Instance,
                         finally_block ?? VoidNode.Instance,
                     ]),
@@ -5709,7 +5709,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        new NodeList(expression_Gather),
+                        expression_Gather,
                         comma ?? VoidNode.Instance,
                         colon,
                         block,
@@ -5894,7 +5894,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         star,
-                        new NodeList(expression_Gather),
+                        expression_Gather,
                         comma ?? VoidNode.Instance,
                         colon,
                         block,
@@ -6058,7 +6058,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         left_square_bracket,
-                        new NodeList(type_parameter_Gather),
+                        type_parameter_Gather,
                         comma ?? VoidNode.Instance,
                         right_square_bracket,
                     ]),
@@ -6132,7 +6132,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Name -TypeParameterBound -TypeParameterDefault");
-                _res = new TypeParameterNode_Derived0()
+                _res = new TypeParameter_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         name,
@@ -6159,7 +6159,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Name '*' -TypeParameterStarredDefault");
-                _res = new TypeParameterNode_Derived1()
+                _res = new TypeParameter_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         name,
@@ -6186,7 +6186,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Name '**' -TypeParameterDefault");
-                _res = new TypeParameterNode_Derived2()
+                _res = new TypeParameter_Derived2Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         name,
@@ -6327,14 +6327,15 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     #endregion // TypeParameterStarredDefault
 
     #region Expression
-    private readonly IMemoContainer<ExpressionNode> _memo_Expression = CreateContainer<ExpressionNode>();
+    private readonly IMemoContainer<IExpressionNode> _memo_Expression = CreateContainer<IExpressionNode>();
     // @union
     // @memo
     // Expression:
     //     | IfExpression
     //     | Disjunction
+    //     | BitwiseOrExpression
     //
-    ExpressionNode? rule_Expression()
+    IExpressionNode? rule_Expression()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Expression");
@@ -6346,7 +6347,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        ExpressionNode? _res = null;
+        IExpressionNode? _res = null;
         {
             // IfExpression
             base.LogAlternativeEntered("IfExpression");
@@ -6371,6 +6372,19 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 goto _Return;
             }
             base.LogAlternativeFailed("Disjunction");
+        }
+        base.Reset(_mark);
+        {
+            // BitwiseOrExpression
+            base.LogAlternativeEntered("BitwiseOrExpression");
+            IGreenNode? bitwise_or_expression;
+            if ((bitwise_or_expression = rule_BitwiseOrExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("BitwiseOrExpression");
+                _res = (IBitwiseOrExpressionNode?)bitwise_or_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitwiseOrExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("Expression");
@@ -6524,7 +6538,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new StarExpressionsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(star_expression_Gather),
+                        star_expression_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -6533,7 +6547,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             base.LogAlternativeFailed("StarExpression+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_star_expression_Gather()
             {
-                GreenNode? _node = rule_StarExpression();
+                IGreenNode? _node = rule_StarExpression();
                 GreenNode? _separator;
                 if (_node == null) return null;
                 global::System.Collections.Generic.List<GreenNode> _gathered = [(GreenNode)_node];
@@ -6564,12 +6578,13 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     #endregion // StarExpressions
 
     #region StarExpression
-    private readonly IMemoContainer<StarExpressionNode> _memo_StarExpression = CreateContainer<StarExpressionNode>();
+    private readonly IMemoContainer<IStarExpressionNode> _memo_StarExpression = CreateContainer<IStarExpressionNode>();
+    // @union
     // @memo
     // StarExpression:
-    //     | '*' BitwiseOr -> NormalStarExpression(Value=bitwise_or)
-    //     | Expression -> WithoutStarExpression(Value=expression)
-    StarExpressionNode? rule_StarExpression()
+    //     | StarBitwiseOrExpression
+    //     | Expression
+    IStarExpressionNode? rule_StarExpression()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("StarExpression");
@@ -6581,43 +6596,28 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        StarExpressionNode? _res = null;
+        IStarExpressionNode? _res = null;
         {
-            // '*' BitwiseOr -> NormalStarExpression(Value=bitwise_or)
-            base.LogAlternativeEntered("'*' BitwiseOr");
-            IGreenNode? star;
-            IGreenNode? bitwise_or;
-            if ((star = Expect(TokenType.Star)) is not null
-                &&
-                (bitwise_or = rule_BitwiseOr()) is not null
-            )
+            // StarBitwiseOrExpression
+            base.LogAlternativeEntered("StarBitwiseOrExpression");
+            IGreenNode? star_bitwise_or_expression;
+            if ((star_bitwise_or_expression = rule_StarBitwiseOrExpression()) is not null)
             {
-                base.LogAlternativeSucceed("'*' BitwiseOr");
-                _res = new NormalStarExpressionNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        star,
-                        bitwise_or,
-                    ]),
-                };
+                base.LogAlternativeSucceed("StarBitwiseOrExpression");
+                _res = (StarBitwiseOrExpressionNode?)star_bitwise_or_expression;
                 goto _Return;
             }
-            base.LogAlternativeFailed("'*' BitwiseOr");
+            base.LogAlternativeFailed("StarBitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // Expression -> WithoutStarExpression(Value=expression)
+            // Expression
             base.LogAlternativeEntered("Expression");
             IGreenNode? expression;
             if ((expression = rule_Expression()) is not null)
             {
                 base.LogAlternativeSucceed("Expression");
-                _res = new WithoutStarExpressionNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        expression,
-                    ]),
-                };
+                _res = (IExpressionNode?)expression;
                 goto _Return;
             }
             base.LogAlternativeFailed("Expression");
@@ -6633,52 +6633,77 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // StarExpression
 
-    #region StarNamedExpression
-    // StarNamedExpression:
-    //     | '*' BitwiseOr -> NormalStarNamedExpression(Value=bitwise_or)
-    //     | NamedExpression -> WithoutStarNamedExpression(Value=named_expression)
-    StarNamedExpressionNode? rule_StarNamedExpression()
+    #region StarBitwiseOrExpression
+    // StarBitwiseOrExpression: '*' BitwiseOrExpression -> new(Value=bitwise_or_expression)
+    StarBitwiseOrExpressionNode? rule_StarBitwiseOrExpression()
     {
         base.LogIncreaseLevel();
-        base.LogRuleEntered("StarNamedExpression");
+        base.LogRuleEntered("StarBitwiseOrExpression");
         int _mark = base.Mark();
-        StarNamedExpressionNode? _res = null;
+        StarBitwiseOrExpressionNode? _res = null;
         {
-            // '*' BitwiseOr -> NormalStarNamedExpression(Value=bitwise_or)
-            base.LogAlternativeEntered("'*' BitwiseOr");
+            // '*' BitwiseOrExpression -> new(Value=bitwise_or_expression)
+            base.LogAlternativeEntered("'*' BitwiseOrExpression");
             IGreenNode? star;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((star = Expect(TokenType.Star)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'*' BitwiseOr");
-                _res = new NormalStarNamedExpressionNode()
+                base.LogAlternativeSucceed("'*' BitwiseOrExpression");
+                _res = new StarBitwiseOrExpressionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         star,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'*' BitwiseOr");
+            base.LogAlternativeFailed("'*' BitwiseOrExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("StarBitwiseOrExpression");
+    _Return:
+        base.LogRuleExiting("StarBitwiseOrExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // StarBitwiseOrExpression
+
+    #region StarNamedExpression
+    // @union
+    // StarNamedExpression:
+    //     | StarBitwiseOrExpression
+    //     | NamedExpression
+    IStarNamedExpressionNode? rule_StarNamedExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("StarNamedExpression");
+        int _mark = base.Mark();
+        IStarNamedExpressionNode? _res = null;
+        {
+            // StarBitwiseOrExpression
+            base.LogAlternativeEntered("StarBitwiseOrExpression");
+            IGreenNode? star_bitwise_or_expression;
+            if ((star_bitwise_or_expression = rule_StarBitwiseOrExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("StarBitwiseOrExpression");
+                _res = (StarBitwiseOrExpressionNode?)star_bitwise_or_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("StarBitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // NamedExpression -> WithoutStarNamedExpression(Value=named_expression)
+            // NamedExpression
             base.LogAlternativeEntered("NamedExpression");
             IGreenNode? named_expression;
             if ((named_expression = rule_NamedExpression()) is not null)
             {
                 base.LogAlternativeSucceed("NamedExpression");
-                _res = new WithoutStarNamedExpressionNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        named_expression,
-                    ]),
-                };
+                _res = (INamedExpressionNode?)named_expression;
                 goto _Return;
             }
             base.LogAlternativeFailed("NamedExpression");
@@ -6714,7 +6739,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new StarNamedExpressionsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(star_named_expression_Gather),
+                        star_named_expression_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -6723,7 +6748,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             base.LogAlternativeFailed("StarNamedExpression+.',' -','");
             NodeArray<GreenNode>? _GatherHelper_star_named_expression_Gather()
             {
-                GreenNode? _node = rule_StarNamedExpression();
+                IGreenNode? _node = rule_StarNamedExpression();
                 GreenNode? _separator;
                 if (_node == null) return null;
                 global::System.Collections.Generic.List<GreenNode> _gathered = [(GreenNode)_node];
@@ -6809,12 +6834,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // NamedExpression:
     //     | AssignmentExpression
     //     | Expression !':='
-    NamedExpressionNode? rule_NamedExpression()
+    INamedExpressionNode? rule_NamedExpression()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("NamedExpression");
         int _mark = base.Mark();
-        NamedExpressionNode? _res = null;
+        INamedExpressionNode? _res = null;
         {
             // AssignmentExpression
             base.LogAlternativeEntered("AssignmentExpression");
@@ -6838,7 +6863,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("Expression !':='");
-                _res = (ExpressionNode?)expression;
+                _res = (IExpressionNode?)expression;
                 goto _Return;
             }
             base.LogAlternativeFailed("Expression !':='");
@@ -6886,7 +6911,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new DisjunctionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(conjunction_Gather),
+                        conjunction_Gather,
                     ]),
                 };
                 goto _Return;
@@ -6929,7 +6954,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     #region Conjunction
     private readonly IMemoContainer<ConjunctionNode> _memo_Conjunction = CreateContainer<ConjunctionNode>();
     // @memo
-    // Conjunction: Inversion+.'and' -> new(Values=inversion_Gather)
+    // Conjunction: InversionExpression+.'and' -> new(Values=inversion_expression_Gather)
     ConjunctionNode? rule_Conjunction()
     {
         base.LogIncreaseLevel();
@@ -6944,24 +6969,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         }
         ConjunctionNode? _res = null;
         {
-            // Inversion+.'and' -> new(Values=inversion_Gather)
-            base.LogAlternativeEntered("Inversion+.'and'");
-            INodeArray<GreenNode>? inversion_Gather;
-            if ((inversion_Gather = _GatherHelper_inversion_Gather()) is not null)
+            // InversionExpression+.'and' -> new(Values=inversion_expression_Gather)
+            base.LogAlternativeEntered("InversionExpression+.'and'");
+            INodeArray<GreenNode>? inversion_expression_Gather;
+            if ((inversion_expression_Gather = _GatherHelper_inversion_expression_Gather()) is not null)
             {
-                base.LogAlternativeSucceed("Inversion+.'and'");
+                base.LogAlternativeSucceed("InversionExpression+.'and'");
                 _res = new ConjunctionNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(inversion_Gather),
+                        inversion_expression_Gather,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("Inversion+.'and'");
-            NodeArray<GreenNode>? _GatherHelper_inversion_Gather()
+            base.LogAlternativeFailed("InversionExpression+.'and'");
+            NodeArray<GreenNode>? _GatherHelper_inversion_expression_Gather()
             {
-                GreenNode? _node = rule_Inversion();
+                IGreenNode? _node = rule_InversionExpression();
                 GreenNode? _separator;
                 if (_node == null) return null;
                 global::System.Collections.Generic.List<GreenNode> _gathered = [(GreenNode)_node];
@@ -6970,7 +6995,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     int _mark = base.Mark();
                     _separator = Expect("and");
                     if (_separator == null) break;
-                    _node = rule_Inversion();
+                    _node = rule_InversionExpression();
                     if (_node == null)
                     {
                         base.Reset(_mark);
@@ -6993,85 +7018,104 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // Conjunction
 
-    #region Inversion
-    private readonly IMemoContainer<InversionNode> _memo_Inversion = CreateContainer<InversionNode>();
+    #region InversionExpression
+    private readonly IMemoContainer<IInversionExpressionNode> _memo_InversionExpression = CreateContainer<IInversionExpressionNode>();
+    // @union
     // @memo
-    // Inversion:
-    //     | 'not' Inversion -> NotInversion(Value=inversion)
-    //     | Comparison -> DirectInversion(Value=comparison)
-    //
-    //
-    //
-    InversionNode? rule_Inversion()
+    // InversionExpression:
+    //     | Inversion
+    //     | Comparison
+    IInversionExpressionNode? rule_InversionExpression()
     {
         base.LogIncreaseLevel();
-        base.LogRuleEntered("Inversion");
+        base.LogRuleEntered("InversionExpression");
         int _mark = base.Mark();
-        if (_memo_Inversion.TryGetCache(_mark, out var _memoized))
+        if (_memo_InversionExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("Inversion", _mark, _memoized);
+            base.LogRuleMemoUsed("InversionExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        InversionNode? _res = null;
+        IInversionExpressionNode? _res = null;
         {
-            // 'not' Inversion -> NotInversion(Value=inversion)
-            base.LogAlternativeEntered("'not' Inversion");
-            IGreenNode? _string_token;
+            // Inversion
+            base.LogAlternativeEntered("Inversion");
             IGreenNode? inversion;
-            if ((_string_token = Expect("not")) is not null
-                &&
-                (inversion = rule_Inversion()) is not null
-            )
+            if ((inversion = rule_Inversion()) is not null)
             {
-                base.LogAlternativeSucceed("'not' Inversion");
-                _res = new NotInversionNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        _string_token,
-                        inversion,
-                    ]),
-                };
+                base.LogAlternativeSucceed("Inversion");
+                _res = (InversionNode?)inversion;
                 goto _Return;
             }
-            base.LogAlternativeFailed("'not' Inversion");
+            base.LogAlternativeFailed("Inversion");
         }
         base.Reset(_mark);
         {
-            // Comparison -> DirectInversion(Value=comparison)
+            // Comparison
             base.LogAlternativeEntered("Comparison");
             IGreenNode? comparison;
             if ((comparison = rule_Comparison()) is not null)
             {
                 base.LogAlternativeSucceed("Comparison");
-                _res = new DirectInversionNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        comparison,
-                    ]),
-                };
+                _res = (ComparisonNode?)comparison;
                 goto _Return;
             }
             base.LogAlternativeFailed("Comparison");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("InversionExpression");
+    _Return:
+        base.LogRuleMemoCreated("InversionExpression", _mark, _res == null);
+        base.LogRuleExiting("InversionExpression");
+        base.LogDecreaseLevel();
+        _memo_InversionExpression.AddCache(_mark, base.Mark(), _res);
+        return _res;
+    }
+    #endregion // InversionExpression
+
+    #region Inversion
+    // Inversion: 'not' InversionExpression -> new(Value=inversion_expression)
+    InversionNode? rule_Inversion()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Inversion");
+        int _mark = base.Mark();
+        InversionNode? _res = null;
+        {
+            // 'not' InversionExpression -> new(Value=inversion_expression)
+            base.LogAlternativeEntered("'not' InversionExpression");
+            IGreenNode? _string_token;
+            IGreenNode? inversion_expression;
+            if ((_string_token = Expect("not")) is not null
+                &&
+                (inversion_expression = rule_InversionExpression()) is not null
+            )
+            {
+                base.LogAlternativeSucceed("'not' InversionExpression");
+                _res = new InversionNode()
+                {
+                    Children = new NodeArray<IGreenNode>([
+                        _string_token,
+                        inversion_expression,
+                    ]),
+                };
+                goto _Return;
+            }
+            base.LogAlternativeFailed("'not' InversionExpression");
+        }
+        base.Reset(_mark);
         base.LogRuleFailed("Inversion");
     _Return:
-        base.LogRuleMemoCreated("Inversion", _mark, _res == null);
         base.LogRuleExiting("Inversion");
         base.LogDecreaseLevel();
-        _memo_Inversion.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Inversion
 
     #region Comparison
-    // Comparison:
-    //     | BitwiseOr CompareOperation+ -> ManyValueComparison(First=bitwise_or, Rest=compare_operation_Plus)
-    //     | BitwiseOr -> SingleValueComparison(First=bitwise_or)
-    //
-    //
+    // Comparison: BitwiseOrExpression CompareOperation+ -> new(
+    //     First=bitwise_or_expression, Rest=compare_operation_Plus)
     ComparisonNode? rule_Comparison()
     {
         base.LogIncreaseLevel();
@@ -7079,26 +7123,27 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         int _mark = base.Mark();
         ComparisonNode? _res = null;
         {
-            // BitwiseOr CompareOperation+ -> ManyValueComparison(First=bitwise_or, Rest=compare_operation_Plus)
-            base.LogAlternativeEntered("BitwiseOr CompareOperation+");
-            IGreenNode? bitwise_or;
+            // BitwiseOrExpression CompareOperation+ -> new(
+            //     First=bitwise_or_expression, Rest=compare_operation_Plus)
+            base.LogAlternativeEntered("BitwiseOrExpression CompareOperation+");
+            IGreenNode? bitwise_or_expression;
             INodeArray<CompareOperationNode>? compare_operation_Plus;
-            if ((bitwise_or = rule_BitwiseOr()) is not null
+            if ((bitwise_or_expression = rule_BitwiseOrExpression()) is not null
                 &&
                 (compare_operation_Plus = _RepeatHelper_compare_operation_Plus()) is not null
             )
             {
-                base.LogAlternativeSucceed("BitwiseOr CompareOperation+");
-                _res = new ManyValueComparisonNode()
+                base.LogAlternativeSucceed("BitwiseOrExpression CompareOperation+");
+                _res = new ComparisonNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        bitwise_or,
-                        new NodeList(compare_operation_Plus),
+                        bitwise_or_expression,
+                        compare_operation_Plus,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("BitwiseOr CompareOperation+");
+            base.LogAlternativeFailed("BitwiseOrExpression CompareOperation+");
             NodeArray<CompareOperationNode>? _RepeatHelper_compare_operation_Plus()
             {
                 CompareOperationNode? _node = rule_CompareOperation();
@@ -7112,24 +7157,6 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             }
         }
         base.Reset(_mark);
-        {
-            // BitwiseOr -> SingleValueComparison(First=bitwise_or)
-            base.LogAlternativeEntered("BitwiseOr");
-            IGreenNode? bitwise_or;
-            if ((bitwise_or = rule_BitwiseOr()) is not null)
-            {
-                base.LogAlternativeSucceed("BitwiseOr");
-                _res = new SingleValueComparisonNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        bitwise_or,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("BitwiseOr");
-        }
-        base.Reset(_mark);
         base.LogRuleFailed("Comparison");
     _Return:
         base.LogRuleExiting("Comparison");
@@ -7140,16 +7167,16 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
 
     #region CompareOperation
     // CompareOperation:
-    //     | '==' BitwiseOr        -> EqOperation(Right=bitwise_or)
-    //     | '!=' BitwiseOr        -> NotEqOperation(Right=bitwise_or)
-    //     | '<=' BitwiseOr        -> LtEqOperation(Right=bitwise_or)
-    //     | '<' BitwiseOr         -> LtOperation(Right=bitwise_or)
-    //     | '>=' BitwiseOr        -> GtEqOperation(Right=bitwise_or)
-    //     | '>' BitwiseOr         -> GtOperation(Right=bitwise_or)
-    //     | 'not' 'in' BitwiseOr  -> NotInOperation(Right=bitwise_or)
-    //     | 'in' BitwiseOr        -> InOperation(Right=bitwise_or)
-    //     | 'is' 'not' BitwiseOr  -> IsNotOperation(Right=bitwise_or)
-    //     | 'is' BitwiseOr        -> IsOperation(Right=bitwise_or)
+    //     | '==' BitwiseOrExpression        -> EqOperation(Right=bitwise_or_expression)
+    //     | '!=' BitwiseOrExpression        -> NotEqOperation(Right=bitwise_or_expression)
+    //     | '<=' BitwiseOrExpression        -> LtEqOperation(Right=bitwise_or_expression)
+    //     | '<' BitwiseOrExpression         -> LtOperation(Right=bitwise_or_expression)
+    //     | '>=' BitwiseOrExpression        -> GtEqOperation(Right=bitwise_or_expression)
+    //     | '>' BitwiseOrExpression         -> GtOperation(Right=bitwise_or_expression)
+    //     | 'not' 'in' BitwiseOrExpression  -> NotInOperation(Right=bitwise_or_expression)
+    //     | 'in' BitwiseOrExpression        -> InOperation(Right=bitwise_or_expression)
+    //     | 'is' 'not' BitwiseOrExpression  -> IsNotOperation(Right=bitwise_or_expression)
+    //     | 'is' BitwiseOrExpression        -> IsOperation(Right=bitwise_or_expression)
     //
     //
     //
@@ -7160,241 +7187,241 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         int _mark = base.Mark();
         CompareOperationNode? _res = null;
         {
-            // '==' BitwiseOr        -> EqOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'==' BitwiseOr");
+            // '==' BitwiseOrExpression        -> EqOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'==' BitwiseOrExpression");
             IGreenNode? eq_equal;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((eq_equal = Expect(TokenType.EqEqual)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'==' BitwiseOr");
+                base.LogAlternativeSucceed("'==' BitwiseOrExpression");
                 _res = new EqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         eq_equal,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'==' BitwiseOr");
+            base.LogAlternativeFailed("'==' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // '!=' BitwiseOr        -> NotEqOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'!=' BitwiseOr");
+            // '!=' BitwiseOrExpression        -> NotEqOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'!=' BitwiseOrExpression");
             IGreenNode? not_equal;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((not_equal = Expect(TokenType.NotEqual)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'!=' BitwiseOr");
+                base.LogAlternativeSucceed("'!=' BitwiseOrExpression");
                 _res = new NotEqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         not_equal,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'!=' BitwiseOr");
+            base.LogAlternativeFailed("'!=' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // '<=' BitwiseOr        -> LtEqOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'<=' BitwiseOr");
+            // '<=' BitwiseOrExpression        -> LtEqOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'<=' BitwiseOrExpression");
             IGreenNode? less_equal;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((less_equal = Expect(TokenType.LessEqual)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'<=' BitwiseOr");
+                base.LogAlternativeSucceed("'<=' BitwiseOrExpression");
                 _res = new LtEqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         less_equal,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'<=' BitwiseOr");
+            base.LogAlternativeFailed("'<=' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // '<' BitwiseOr         -> LtOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'<' BitwiseOr");
+            // '<' BitwiseOrExpression         -> LtOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'<' BitwiseOrExpression");
             IGreenNode? less;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((less = Expect(TokenType.Less)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'<' BitwiseOr");
+                base.LogAlternativeSucceed("'<' BitwiseOrExpression");
                 _res = new LtOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         less,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'<' BitwiseOr");
+            base.LogAlternativeFailed("'<' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // '>=' BitwiseOr        -> GtEqOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'>=' BitwiseOr");
+            // '>=' BitwiseOrExpression        -> GtEqOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'>=' BitwiseOrExpression");
             IGreenNode? greater_equal;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((greater_equal = Expect(TokenType.GreaterEqual)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'>=' BitwiseOr");
+                base.LogAlternativeSucceed("'>=' BitwiseOrExpression");
                 _res = new GtEqOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         greater_equal,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'>=' BitwiseOr");
+            base.LogAlternativeFailed("'>=' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // '>' BitwiseOr         -> GtOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'>' BitwiseOr");
+            // '>' BitwiseOrExpression         -> GtOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'>' BitwiseOrExpression");
             IGreenNode? greater;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((greater = Expect(TokenType.Greater)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'>' BitwiseOr");
+                base.LogAlternativeSucceed("'>' BitwiseOrExpression");
                 _res = new GtOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         greater,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'>' BitwiseOr");
+            base.LogAlternativeFailed("'>' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // 'not' 'in' BitwiseOr  -> NotInOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'not' 'in' BitwiseOr");
+            // 'not' 'in' BitwiseOrExpression  -> NotInOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'not' 'in' BitwiseOrExpression");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((_string_token = Expect("not")) is not null
                 &&
                 (_string_token1 = Expect("in")) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'not' 'in' BitwiseOr");
+                base.LogAlternativeSucceed("'not' 'in' BitwiseOrExpression");
                 _res = new NotInOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         _string_token1,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'not' 'in' BitwiseOr");
+            base.LogAlternativeFailed("'not' 'in' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // 'in' BitwiseOr        -> InOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'in' BitwiseOr");
+            // 'in' BitwiseOrExpression        -> InOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'in' BitwiseOrExpression");
             IGreenNode? _string_token;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((_string_token = Expect("in")) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'in' BitwiseOr");
+                base.LogAlternativeSucceed("'in' BitwiseOrExpression");
                 _res = new InOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'in' BitwiseOr");
+            base.LogAlternativeFailed("'in' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // 'is' 'not' BitwiseOr  -> IsNotOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'is' 'not' BitwiseOr");
+            // 'is' 'not' BitwiseOrExpression  -> IsNotOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'is' 'not' BitwiseOrExpression");
             IGreenNode? _string_token;
             IGreenNode? _string_token1;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((_string_token = Expect("is")) is not null
                 &&
                 (_string_token1 = Expect("not")) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'is' 'not' BitwiseOr");
+                base.LogAlternativeSucceed("'is' 'not' BitwiseOrExpression");
                 _res = new IsNotOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
                         _string_token1,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'is' 'not' BitwiseOr");
+            base.LogAlternativeFailed("'is' 'not' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
-            // 'is' BitwiseOr        -> IsOperation(Right=bitwise_or)
-            base.LogAlternativeEntered("'is' BitwiseOr");
+            // 'is' BitwiseOrExpression        -> IsOperation(Right=bitwise_or_expression)
+            base.LogAlternativeEntered("'is' BitwiseOrExpression");
             IGreenNode? _string_token;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((_string_token = Expect("is")) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'is' BitwiseOr");
+                base.LogAlternativeSucceed("'is' BitwiseOrExpression");
                 _res = new IsOperationNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         _string_token,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'is' BitwiseOr");
+            base.LogAlternativeFailed("'is' BitwiseOrExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("CompareOperation");
@@ -7405,29 +7432,29 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // CompareOperation
 
-    #region BitwiseOr
-    private readonly IMemoContainer<BitwiseOrNode> _memo_BitwiseOr = CreateContainer<BitwiseOrNode>();
-    BitwiseOrNode? rule_BitwiseOr()
+    #region BitwiseOrExpression
+    private readonly IMemoContainer<IBitwiseOrExpressionNode> _memo_BitwiseOrExpression = CreateContainer<IBitwiseOrExpressionNode>();
+    IBitwiseOrExpressionNode? rule_BitwiseOrExpression()
     {
         base.LogIncreaseLevel();
-        base.LogLeftRecursionRuleEntered("BitwiseOr");
-        BitwiseOrNode? _res = null;
+        base.LogLeftRecursionRuleEntered("BitwiseOrExpression");
+        IBitwiseOrExpressionNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
-        if (_memo_BitwiseOr.TryGetCache(_mark, out var _memoized))
+        if (_memo_BitwiseOrExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("BitwiseOr", _mark, _memoized);
+            base.LogRuleMemoUsed("BitwiseOrExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        base.LogStartGrow("BitwiseOr");
+        base.LogStartGrow("BitwiseOrExpression");
         while (true)
         {
-            _memo_BitwiseOr.UpdateCache(_mark, base.Mark(), _res);
+            _memo_BitwiseOrExpression.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
-            base.LogNextGrow("BitwiseOr");
-            var _rawResult = raw_rule_BitwiseOr();
+            base.LogNextGrow("BitwiseOrExpression");
+            var _rawResult = raw_rule_BitwiseOrExpression();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
                 break;
@@ -7436,63 +7463,88 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
-        base.LogEndGrow("BitwiseOr", _res == null);
+        base.LogEndGrow("BitwiseOrExpression", _res == null);
         base.LogDecreaseLevel();
         return _res;
     }
+    // @union
     // @memo
-    // BitwiseOr:
-    //     | BitwiseOr '|' BitwiseXor -> BinaryBitwiseOr(Left=bitwise_or, Right=bitwise_xor)
-    //     | BitwiseXor -> DirectBitwiseOr(Value=bitwise_xor)
-    BitwiseOrNode? raw_rule_BitwiseOr()
+    // BitwiseOrExpression:
+    //     | BitwiseOr
+    //     | BitwiseXorExpression
+    IBitwiseOrExpressionNode? raw_rule_BitwiseOrExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitwiseOrExpression");
+        int _mark = base.Mark();
+        IBitwiseOrExpressionNode? _res = null;
+        {
+            // BitwiseOr
+            base.LogAlternativeEntered("BitwiseOr");
+            IGreenNode? bitwise_or;
+            if ((bitwise_or = rule_BitwiseOr()) is not null)
+            {
+                base.LogAlternativeSucceed("BitwiseOr");
+                _res = (BitwiseOrNode?)bitwise_or;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitwiseOr");
+        }
+        base.Reset(_mark);
+        {
+            // BitwiseXorExpression
+            base.LogAlternativeEntered("BitwiseXorExpression");
+            IGreenNode? bitwise_xor_expression;
+            if ((bitwise_xor_expression = rule_BitwiseXorExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("BitwiseXorExpression");
+                _res = (IBitwiseXorExpressionNode?)bitwise_xor_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitwiseXorExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("BitwiseOrExpression");
+    _Return:
+        base.LogRuleExiting("BitwiseOrExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // BitwiseOrExpression
+
+    #region BitwiseOr
+    // BitwiseOr: BitwiseOrExpression '|' BitwiseXorExpression -> new(Left=bitwise_or_expression, Right=bitwise_xor_expression)
+    BitwiseOrNode? rule_BitwiseOr()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("BitwiseOr");
         int _mark = base.Mark();
         BitwiseOrNode? _res = null;
         {
-            // BitwiseOr '|' BitwiseXor -> BinaryBitwiseOr(Left=bitwise_or, Right=bitwise_xor)
-            base.LogAlternativeEntered("BitwiseOr '|' BitwiseXor");
-            IGreenNode? bitwise_or;
+            // BitwiseOrExpression '|' BitwiseXorExpression -> new(Left=bitwise_or_expression, Right=bitwise_xor_expression)
+            base.LogAlternativeEntered("BitwiseOrExpression '|' BitwiseXorExpression");
+            IGreenNode? bitwise_or_expression;
             IGreenNode? vert_bar;
-            IGreenNode? bitwise_xor;
-            if ((bitwise_or = rule_BitwiseOr()) is not null
+            IGreenNode? bitwise_xor_expression;
+            if ((bitwise_or_expression = rule_BitwiseOrExpression()) is not null
                 &&
                 (vert_bar = Expect(TokenType.VertBar)) is not null
                 &&
-                (bitwise_xor = rule_BitwiseXor()) is not null
+                (bitwise_xor_expression = rule_BitwiseXorExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("BitwiseOr '|' BitwiseXor");
-                _res = new BinaryBitwiseOrNode()
+                base.LogAlternativeSucceed("BitwiseOrExpression '|' BitwiseXorExpression");
+                _res = new BitwiseOrNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        bitwise_or,
+                        bitwise_or_expression,
                         vert_bar,
-                        bitwise_xor,
+                        bitwise_xor_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("BitwiseOr '|' BitwiseXor");
-        }
-        base.Reset(_mark);
-        {
-            // BitwiseXor -> DirectBitwiseOr(Value=bitwise_xor)
-            base.LogAlternativeEntered("BitwiseXor");
-            IGreenNode? bitwise_xor;
-            if ((bitwise_xor = rule_BitwiseXor()) is not null)
-            {
-                base.LogAlternativeSucceed("BitwiseXor");
-                _res = new DirectBitwiseOrNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        bitwise_xor,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("BitwiseXor");
+            base.LogAlternativeFailed("BitwiseOrExpression '|' BitwiseXorExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("BitwiseOr");
@@ -7503,29 +7555,29 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // BitwiseOr
 
-    #region BitwiseXor
-    private readonly IMemoContainer<BitwiseXorNode> _memo_BitwiseXor = CreateContainer<BitwiseXorNode>();
-    BitwiseXorNode? rule_BitwiseXor()
+    #region BitwiseXorExpression
+    private readonly IMemoContainer<IBitwiseXorExpressionNode> _memo_BitwiseXorExpression = CreateContainer<IBitwiseXorExpressionNode>();
+    IBitwiseXorExpressionNode? rule_BitwiseXorExpression()
     {
         base.LogIncreaseLevel();
-        base.LogLeftRecursionRuleEntered("BitwiseXor");
-        BitwiseXorNode? _res = null;
+        base.LogLeftRecursionRuleEntered("BitwiseXorExpression");
+        IBitwiseXorExpressionNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
-        if (_memo_BitwiseXor.TryGetCache(_mark, out var _memoized))
+        if (_memo_BitwiseXorExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("BitwiseXor", _mark, _memoized);
+            base.LogRuleMemoUsed("BitwiseXorExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        base.LogStartGrow("BitwiseXor");
+        base.LogStartGrow("BitwiseXorExpression");
         while (true)
         {
-            _memo_BitwiseXor.UpdateCache(_mark, base.Mark(), _res);
+            _memo_BitwiseXorExpression.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
-            base.LogNextGrow("BitwiseXor");
-            var _rawResult = raw_rule_BitwiseXor();
+            base.LogNextGrow("BitwiseXorExpression");
+            var _rawResult = raw_rule_BitwiseXorExpression();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
                 break;
@@ -7534,63 +7586,88 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
-        base.LogEndGrow("BitwiseXor", _res == null);
+        base.LogEndGrow("BitwiseXorExpression", _res == null);
         base.LogDecreaseLevel();
         return _res;
     }
+    // @union
     // @memo
-    // BitwiseXor:
-    //     | BitwiseXor '^' BitwiseAnd -> BinaryBitwiseXor(Left=bitwise_xor, Right=bitwise_and)
-    //     | BitwiseAnd -> DirectBitwiseXor(Value=bitwise_and)
-    BitwiseXorNode? raw_rule_BitwiseXor()
+    // BitwiseXorExpression:
+    //     | BitwiseXor
+    //     | BitwiseAndExpression
+    IBitwiseXorExpressionNode? raw_rule_BitwiseXorExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitwiseXorExpression");
+        int _mark = base.Mark();
+        IBitwiseXorExpressionNode? _res = null;
+        {
+            // BitwiseXor
+            base.LogAlternativeEntered("BitwiseXor");
+            IGreenNode? bitwise_xor;
+            if ((bitwise_xor = rule_BitwiseXor()) is not null)
+            {
+                base.LogAlternativeSucceed("BitwiseXor");
+                _res = (BitwiseXorNode?)bitwise_xor;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitwiseXor");
+        }
+        base.Reset(_mark);
+        {
+            // BitwiseAndExpression
+            base.LogAlternativeEntered("BitwiseAndExpression");
+            IGreenNode? bitwise_and_expression;
+            if ((bitwise_and_expression = rule_BitwiseAndExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("BitwiseAndExpression");
+                _res = (IBitwiseAndExpressionNode?)bitwise_and_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitwiseAndExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("BitwiseXorExpression");
+    _Return:
+        base.LogRuleExiting("BitwiseXorExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // BitwiseXorExpression
+
+    #region BitwiseXor
+    // BitwiseXor: BitwiseXorExpression '^' BitwiseAndExpression -> new(Left=bitwise_xor_expression, Right=bitwise_and_expression)
+    BitwiseXorNode? rule_BitwiseXor()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("BitwiseXor");
         int _mark = base.Mark();
         BitwiseXorNode? _res = null;
         {
-            // BitwiseXor '^' BitwiseAnd -> BinaryBitwiseXor(Left=bitwise_xor, Right=bitwise_and)
-            base.LogAlternativeEntered("BitwiseXor '^' BitwiseAnd");
-            IGreenNode? bitwise_xor;
+            // BitwiseXorExpression '^' BitwiseAndExpression -> new(Left=bitwise_xor_expression, Right=bitwise_and_expression)
+            base.LogAlternativeEntered("BitwiseXorExpression '^' BitwiseAndExpression");
+            IGreenNode? bitwise_xor_expression;
             IGreenNode? circumflex;
-            IGreenNode? bitwise_and;
-            if ((bitwise_xor = rule_BitwiseXor()) is not null
+            IGreenNode? bitwise_and_expression;
+            if ((bitwise_xor_expression = rule_BitwiseXorExpression()) is not null
                 &&
                 (circumflex = Expect(TokenType.Circumflex)) is not null
                 &&
-                (bitwise_and = rule_BitwiseAnd()) is not null
+                (bitwise_and_expression = rule_BitwiseAndExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("BitwiseXor '^' BitwiseAnd");
-                _res = new BinaryBitwiseXorNode()
+                base.LogAlternativeSucceed("BitwiseXorExpression '^' BitwiseAndExpression");
+                _res = new BitwiseXorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        bitwise_xor,
+                        bitwise_xor_expression,
                         circumflex,
-                        bitwise_and,
+                        bitwise_and_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("BitwiseXor '^' BitwiseAnd");
-        }
-        base.Reset(_mark);
-        {
-            // BitwiseAnd -> DirectBitwiseXor(Value=bitwise_and)
-            base.LogAlternativeEntered("BitwiseAnd");
-            IGreenNode? bitwise_and;
-            if ((bitwise_and = rule_BitwiseAnd()) is not null)
-            {
-                base.LogAlternativeSucceed("BitwiseAnd");
-                _res = new DirectBitwiseXorNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        bitwise_and,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("BitwiseAnd");
+            base.LogAlternativeFailed("BitwiseXorExpression '^' BitwiseAndExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("BitwiseXor");
@@ -7601,29 +7678,29 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // BitwiseXor
 
-    #region BitwiseAnd
-    private readonly IMemoContainer<BitwiseAndNode> _memo_BitwiseAnd = CreateContainer<BitwiseAndNode>();
-    BitwiseAndNode? rule_BitwiseAnd()
+    #region BitwiseAndExpression
+    private readonly IMemoContainer<IBitwiseAndExpressionNode> _memo_BitwiseAndExpression = CreateContainer<IBitwiseAndExpressionNode>();
+    IBitwiseAndExpressionNode? rule_BitwiseAndExpression()
     {
         base.LogIncreaseLevel();
-        base.LogLeftRecursionRuleEntered("BitwiseAnd");
-        BitwiseAndNode? _res = null;
+        base.LogLeftRecursionRuleEntered("BitwiseAndExpression");
+        IBitwiseAndExpressionNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
-        if (_memo_BitwiseAnd.TryGetCache(_mark, out var _memoized))
+        if (_memo_BitwiseAndExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("BitwiseAnd", _mark, _memoized);
+            base.LogRuleMemoUsed("BitwiseAndExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        base.LogStartGrow("BitwiseAnd");
+        base.LogStartGrow("BitwiseAndExpression");
         while (true)
         {
-            _memo_BitwiseAnd.UpdateCache(_mark, base.Mark(), _res);
+            _memo_BitwiseAndExpression.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
-            base.LogNextGrow("BitwiseAnd");
-            var _rawResult = raw_rule_BitwiseAnd();
+            base.LogNextGrow("BitwiseAndExpression");
+            var _rawResult = raw_rule_BitwiseAndExpression();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
                 break;
@@ -7632,63 +7709,88 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
-        base.LogEndGrow("BitwiseAnd", _res == null);
+        base.LogEndGrow("BitwiseAndExpression", _res == null);
         base.LogDecreaseLevel();
         return _res;
     }
+    // @union
     // @memo
-    // BitwiseAnd:
-    //     | BitwiseAnd '&' BitShift -> BinaryBitwiseAnd(Left=bitwise_and, Right=bit_shift)
-    //     | BitShift -> DirectBitwiseAnd(Value=bit_shift)
-    BitwiseAndNode? raw_rule_BitwiseAnd()
+    // BitwiseAndExpression:
+    //     | BitwiseAnd
+    //     | BitShiftExpression
+    IBitwiseAndExpressionNode? raw_rule_BitwiseAndExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitwiseAndExpression");
+        int _mark = base.Mark();
+        IBitwiseAndExpressionNode? _res = null;
+        {
+            // BitwiseAnd
+            base.LogAlternativeEntered("BitwiseAnd");
+            IGreenNode? bitwise_and;
+            if ((bitwise_and = rule_BitwiseAnd()) is not null)
+            {
+                base.LogAlternativeSucceed("BitwiseAnd");
+                _res = (BitwiseAndNode?)bitwise_and;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitwiseAnd");
+        }
+        base.Reset(_mark);
+        {
+            // BitShiftExpression
+            base.LogAlternativeEntered("BitShiftExpression");
+            IGreenNode? bit_shift_expression;
+            if ((bit_shift_expression = rule_BitShiftExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("BitShiftExpression");
+                _res = (IBitShiftExpressionNode?)bit_shift_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitShiftExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("BitwiseAndExpression");
+    _Return:
+        base.LogRuleExiting("BitwiseAndExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // BitwiseAndExpression
+
+    #region BitwiseAnd
+    // BitwiseAnd: BitwiseAndExpression '&' BitShiftExpression -> new(Left=bitwise_and_expression, Right=bit_shift_expression)
+    BitwiseAndNode? rule_BitwiseAnd()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("BitwiseAnd");
         int _mark = base.Mark();
         BitwiseAndNode? _res = null;
         {
-            // BitwiseAnd '&' BitShift -> BinaryBitwiseAnd(Left=bitwise_and, Right=bit_shift)
-            base.LogAlternativeEntered("BitwiseAnd '&' BitShift");
-            IGreenNode? bitwise_and;
+            // BitwiseAndExpression '&' BitShiftExpression -> new(Left=bitwise_and_expression, Right=bit_shift_expression)
+            base.LogAlternativeEntered("BitwiseAndExpression '&' BitShiftExpression");
+            IGreenNode? bitwise_and_expression;
             IGreenNode? ampersand;
-            IGreenNode? bit_shift;
-            if ((bitwise_and = rule_BitwiseAnd()) is not null
+            IGreenNode? bit_shift_expression;
+            if ((bitwise_and_expression = rule_BitwiseAndExpression()) is not null
                 &&
                 (ampersand = Expect(TokenType.Ampersand)) is not null
                 &&
-                (bit_shift = rule_BitShift()) is not null
+                (bit_shift_expression = rule_BitShiftExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("BitwiseAnd '&' BitShift");
-                _res = new BinaryBitwiseAndNode()
+                base.LogAlternativeSucceed("BitwiseAndExpression '&' BitShiftExpression");
+                _res = new BitwiseAndNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        bitwise_and,
+                        bitwise_and_expression,
                         ampersand,
-                        bit_shift,
+                        bit_shift_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("BitwiseAnd '&' BitShift");
-        }
-        base.Reset(_mark);
-        {
-            // BitShift -> DirectBitwiseAnd(Value=bit_shift)
-            base.LogAlternativeEntered("BitShift");
-            IGreenNode? bit_shift;
-            if ((bit_shift = rule_BitShift()) is not null)
-            {
-                base.LogAlternativeSucceed("BitShift");
-                _res = new DirectBitwiseAndNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        bit_shift,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("BitShift");
+            base.LogAlternativeFailed("BitwiseAndExpression '&' BitShiftExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("BitwiseAnd");
@@ -7699,29 +7801,29 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // BitwiseAnd
 
-    #region BitShift
-    private readonly IMemoContainer<BitShiftNode> _memo_BitShift = CreateContainer<BitShiftNode>();
-    BitShiftNode? rule_BitShift()
+    #region BitShiftExpression
+    private readonly IMemoContainer<IBitShiftExpressionNode> _memo_BitShiftExpression = CreateContainer<IBitShiftExpressionNode>();
+    IBitShiftExpressionNode? rule_BitShiftExpression()
     {
         base.LogIncreaseLevel();
-        base.LogLeftRecursionRuleEntered("BitShift");
-        BitShiftNode? _res = null;
+        base.LogLeftRecursionRuleEntered("BitShiftExpression");
+        IBitShiftExpressionNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
-        if (_memo_BitShift.TryGetCache(_mark, out var _memoized))
+        if (_memo_BitShiftExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("BitShift", _mark, _memoized);
+            base.LogRuleMemoUsed("BitShiftExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        base.LogStartGrow("BitShift");
+        base.LogStartGrow("BitShiftExpression");
         while (true)
         {
-            _memo_BitShift.UpdateCache(_mark, base.Mark(), _res);
+            _memo_BitShiftExpression.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
-            base.LogNextGrow("BitShift");
-            var _rawResult = raw_rule_BitShift();
+            base.LogNextGrow("BitShiftExpression");
+            var _rawResult = raw_rule_BitShiftExpression();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
                 break;
@@ -7730,63 +7832,90 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
-        base.LogEndGrow("BitShift", _res == null);
+        base.LogEndGrow("BitShiftExpression", _res == null);
         base.LogDecreaseLevel();
         return _res;
     }
+    // @union
     // @memo
-    // BitShift:
-    //     | BitShift BitShiftOperator Sum -> BinaryBitShift(Left=bit_shift, Right=sum, Operator=bit_shift_operator)
-    //     | Sum -> DirectBitShift(Value=sum)
-    BitShiftNode? raw_rule_BitShift()
+    // BitShiftExpression:
+    //     | BitShift
+    //     | SumExpression
+    IBitShiftExpressionNode? raw_rule_BitShiftExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("BitShiftExpression");
+        int _mark = base.Mark();
+        IBitShiftExpressionNode? _res = null;
+        {
+            // BitShift
+            base.LogAlternativeEntered("BitShift");
+            IGreenNode? bit_shift;
+            if ((bit_shift = rule_BitShift()) is not null)
+            {
+                base.LogAlternativeSucceed("BitShift");
+                _res = (BitShiftNode?)bit_shift;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("BitShift");
+        }
+        base.Reset(_mark);
+        {
+            // SumExpression
+            base.LogAlternativeEntered("SumExpression");
+            IGreenNode? sum_expression;
+            if ((sum_expression = rule_SumExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("SumExpression");
+                _res = (ISumExpressionNode?)sum_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("SumExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("BitShiftExpression");
+    _Return:
+        base.LogRuleExiting("BitShiftExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // BitShiftExpression
+
+    #region BitShift
+    // BitShift: BitShiftExpression BitShiftOperator SumExpression -> new(
+    //     Left=bit_shift_expression, Right=sum_expression, Operator=bit_shift_operator)
+    BitShiftNode? rule_BitShift()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("BitShift");
         int _mark = base.Mark();
         BitShiftNode? _res = null;
         {
-            // BitShift BitShiftOperator Sum -> BinaryBitShift(Left=bit_shift, Right=sum, Operator=bit_shift_operator)
-            base.LogAlternativeEntered("BitShift BitShiftOperator Sum");
-            IGreenNode? bit_shift;
+            // BitShiftExpression BitShiftOperator SumExpression -> new(
+            //     Left=bit_shift_expression, Right=sum_expression, Operator=bit_shift_operator)
+            base.LogAlternativeEntered("BitShiftExpression BitShiftOperator SumExpression");
+            IGreenNode? bit_shift_expression;
             IGreenNode? bit_shift_operator;
-            IGreenNode? sum;
-            if ((bit_shift = rule_BitShift()) is not null
+            IGreenNode? sum_expression;
+            if ((bit_shift_expression = rule_BitShiftExpression()) is not null
                 &&
                 (bit_shift_operator = rule_BitShiftOperator()) is not null
                 &&
-                (sum = rule_Sum()) is not null
+                (sum_expression = rule_SumExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("BitShift BitShiftOperator Sum");
-                _res = new BinaryBitShiftNode()
+                base.LogAlternativeSucceed("BitShiftExpression BitShiftOperator SumExpression");
+                _res = new BitShiftNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        bit_shift,
+                        bit_shift_expression,
                         bit_shift_operator,
-                        sum,
+                        sum_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("BitShift BitShiftOperator Sum");
-        }
-        base.Reset(_mark);
-        {
-            // Sum -> DirectBitShift(Value=sum)
-            base.LogAlternativeEntered("Sum");
-            IGreenNode? sum;
-            if ((sum = rule_Sum()) is not null)
-            {
-                base.LogAlternativeSucceed("Sum");
-                _res = new DirectBitShiftNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        sum,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("Sum");
+            base.LogAlternativeFailed("BitShiftExpression BitShiftOperator SumExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("BitShift");
@@ -7845,29 +7974,29 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // BitShiftOperator
 
-    #region Sum
-    private readonly IMemoContainer<SumNode> _memo_Sum = CreateContainer<SumNode>();
-    SumNode? rule_Sum()
+    #region SumExpression
+    private readonly IMemoContainer<ISumExpressionNode> _memo_SumExpression = CreateContainer<ISumExpressionNode>();
+    ISumExpressionNode? rule_SumExpression()
     {
         base.LogIncreaseLevel();
-        base.LogLeftRecursionRuleEntered("Sum");
-        SumNode? _res = null;
+        base.LogLeftRecursionRuleEntered("SumExpression");
+        ISumExpressionNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
-        if (_memo_Sum.TryGetCache(_mark, out var _memoized))
+        if (_memo_SumExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("Sum", _mark, _memoized);
+            base.LogRuleMemoUsed("SumExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        base.LogStartGrow("Sum");
+        base.LogStartGrow("SumExpression");
         while (true)
         {
-            _memo_Sum.UpdateCache(_mark, base.Mark(), _res);
+            _memo_SumExpression.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
-            base.LogNextGrow("Sum");
-            var _rawResult = raw_rule_Sum();
+            base.LogNextGrow("SumExpression");
+            var _rawResult = raw_rule_SumExpression();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
                 break;
@@ -7876,63 +8005,88 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
-        base.LogEndGrow("Sum", _res == null);
+        base.LogEndGrow("SumExpression", _res == null);
         base.LogDecreaseLevel();
         return _res;
     }
+    // @union
     // @memo
-    // Sum:
-    //     | Sum SumOperator Term -> BinarySum(Left=sum, Right=term, Operator=sum_operator)
-    //     | Term -> DirectSum(Value=term)
-    SumNode? raw_rule_Sum()
+    // SumExpression:
+    //     | Sum
+    //     | TermExpression
+    ISumExpressionNode? raw_rule_SumExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("SumExpression");
+        int _mark = base.Mark();
+        ISumExpressionNode? _res = null;
+        {
+            // Sum
+            base.LogAlternativeEntered("Sum");
+            IGreenNode? sum;
+            if ((sum = rule_Sum()) is not null)
+            {
+                base.LogAlternativeSucceed("Sum");
+                _res = (SumNode?)sum;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("Sum");
+        }
+        base.Reset(_mark);
+        {
+            // TermExpression
+            base.LogAlternativeEntered("TermExpression");
+            IGreenNode? term_expression;
+            if ((term_expression = rule_TermExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("TermExpression");
+                _res = (ITermExpressionNode?)term_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("TermExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("SumExpression");
+    _Return:
+        base.LogRuleExiting("SumExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // SumExpression
+
+    #region Sum
+    // Sum: SumExpression SumOperator TermExpression -> new(Left=sum_expression, Right=term_expression, Operator=sum_operator)
+    SumNode? rule_Sum()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Sum");
         int _mark = base.Mark();
         SumNode? _res = null;
         {
-            // Sum SumOperator Term -> BinarySum(Left=sum, Right=term, Operator=sum_operator)
-            base.LogAlternativeEntered("Sum SumOperator Term");
-            IGreenNode? sum;
+            // SumExpression SumOperator TermExpression -> new(Left=sum_expression, Right=term_expression, Operator=sum_operator)
+            base.LogAlternativeEntered("SumExpression SumOperator TermExpression");
+            IGreenNode? sum_expression;
             IGreenNode? sum_operator;
-            IGreenNode? term;
-            if ((sum = rule_Sum()) is not null
+            IGreenNode? term_expression;
+            if ((sum_expression = rule_SumExpression()) is not null
                 &&
                 (sum_operator = rule_SumOperator()) is not null
                 &&
-                (term = rule_Term()) is not null
+                (term_expression = rule_TermExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("Sum SumOperator Term");
-                _res = new BinarySumNode()
+                base.LogAlternativeSucceed("SumExpression SumOperator TermExpression");
+                _res = new SumNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        sum,
+                        sum_expression,
                         sum_operator,
-                        term,
+                        term_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("Sum SumOperator Term");
-        }
-        base.Reset(_mark);
-        {
-            // Term -> DirectSum(Value=term)
-            base.LogAlternativeEntered("Term");
-            IGreenNode? term;
-            if ((term = rule_Term()) is not null)
-            {
-                base.LogAlternativeSucceed("Term");
-                _res = new DirectSumNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        term,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("Term");
+            base.LogAlternativeFailed("SumExpression SumOperator TermExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("Sum");
@@ -7988,29 +8142,29 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // SumOperator
 
-    #region Term
-    private readonly IMemoContainer<TermNode> _memo_Term = CreateContainer<TermNode>();
-    TermNode? rule_Term()
+    #region TermExpression
+    private readonly IMemoContainer<ITermExpressionNode> _memo_TermExpression = CreateContainer<ITermExpressionNode>();
+    ITermExpressionNode? rule_TermExpression()
     {
         base.LogIncreaseLevel();
-        base.LogLeftRecursionRuleEntered("Term");
-        TermNode? _res = null;
+        base.LogLeftRecursionRuleEntered("TermExpression");
+        ITermExpressionNode? _res = null;
         int _mark = base.Mark();
         int _lastMark = base.Mark();
-        if (_memo_Term.TryGetCache(_mark, out var _memoized))
+        if (_memo_TermExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("Term", _mark, _memoized);
+            base.LogRuleMemoUsed("TermExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        base.LogStartGrow("Term");
+        base.LogStartGrow("TermExpression");
         while (true)
         {
-            _memo_Term.UpdateCache(_mark, base.Mark(), _res);
+            _memo_TermExpression.UpdateCache(_mark, base.Mark(), _res);
             base.Reset(_mark);
-            base.LogNextGrow("Term");
-            var _rawResult = raw_rule_Term();
+            base.LogNextGrow("TermExpression");
+            var _rawResult = raw_rule_TermExpression();
             if (_rawResult == null || base.Mark() <= _lastMark)
             {
                 break;
@@ -8019,63 +8173,90 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             _res = _rawResult;
         }
         base.Reset(_lastMark);
-        base.LogEndGrow("Term", _res == null);
+        base.LogEndGrow("TermExpression", _res == null);
         base.LogDecreaseLevel();
         return _res;
     }
+    // @union
     // @memo
-    // Term:
-    //     | Term TermOperator Factor -> BinaryTerm(Left=term, Right=factor, Operator=term_operator)
-    //     | Factor -> DirectTerm(Value=factor)
-    TermNode? raw_rule_Term()
+    // TermExpression:
+    //     | Term
+    //     | FactorExpression
+    ITermExpressionNode? raw_rule_TermExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("TermExpression");
+        int _mark = base.Mark();
+        ITermExpressionNode? _res = null;
+        {
+            // Term
+            base.LogAlternativeEntered("Term");
+            IGreenNode? term;
+            if ((term = rule_Term()) is not null)
+            {
+                base.LogAlternativeSucceed("Term");
+                _res = (TermNode?)term;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("Term");
+        }
+        base.Reset(_mark);
+        {
+            // FactorExpression
+            base.LogAlternativeEntered("FactorExpression");
+            IGreenNode? factor_expression;
+            if ((factor_expression = rule_FactorExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("FactorExpression");
+                _res = (IFactorExpressionNode?)factor_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("FactorExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("TermExpression");
+    _Return:
+        base.LogRuleExiting("TermExpression");
+        base.LogDecreaseLevel();
+        return _res;
+    }
+    #endregion // TermExpression
+
+    #region Term
+    // Term: TermExpression TermOperator FactorExpression -> new(
+    //     Left=term_expression, Right=factor_expression, Operator=term_operator)
+    TermNode? rule_Term()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Term");
         int _mark = base.Mark();
         TermNode? _res = null;
         {
-            // Term TermOperator Factor -> BinaryTerm(Left=term, Right=factor, Operator=term_operator)
-            base.LogAlternativeEntered("Term TermOperator Factor");
-            IGreenNode? term;
+            // TermExpression TermOperator FactorExpression -> new(
+            //     Left=term_expression, Right=factor_expression, Operator=term_operator)
+            base.LogAlternativeEntered("TermExpression TermOperator FactorExpression");
+            IGreenNode? term_expression;
             IGreenNode? term_operator;
-            IGreenNode? factor;
-            if ((term = rule_Term()) is not null
+            IGreenNode? factor_expression;
+            if ((term_expression = rule_TermExpression()) is not null
                 &&
                 (term_operator = rule_TermOperator()) is not null
                 &&
-                (factor = rule_Factor()) is not null
+                (factor_expression = rule_FactorExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("Term TermOperator Factor");
-                _res = new BinaryTermNode()
+                base.LogAlternativeSucceed("TermExpression TermOperator FactorExpression");
+                _res = new TermNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        term,
+                        term_expression,
                         term_operator,
-                        factor,
+                        factor_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("Term TermOperator Factor");
-        }
-        base.Reset(_mark);
-        {
-            // Factor -> DirectTerm(Value=factor)
-            base.LogAlternativeEntered("Factor");
-            IGreenNode? factor;
-            if ((factor = rule_Factor()) is not null)
-            {
-                base.LogAlternativeSucceed("Factor");
-                _res = new DirectTermNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        factor,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("Factor");
+            base.LogAlternativeFailed("TermExpression TermOperator FactorExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("Term");
@@ -8173,72 +8354,97 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // TermOperator
 
-    #region Factor
-    private readonly IMemoContainer<FactorNode> _memo_Factor = CreateContainer<FactorNode>();
+    #region FactorExpression
+    private readonly IMemoContainer<IFactorExpressionNode> _memo_FactorExpression = CreateContainer<IFactorExpressionNode>();
+    // @union
     // @memo
-    // Factor:
-    //     | FactorOperator Factor -> UnaryFactor(Operator=factor_operator, Value=factor)
-    //     | Power -> DirectFactor(Value=power)
+    // FactorExpression:
+    //     | Factor
+    //     | PowerExpression
+    IFactorExpressionNode? rule_FactorExpression()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("FactorExpression");
+        int _mark = base.Mark();
+        if (_memo_FactorExpression.TryGetCache(_mark, out var _memoized))
+        {
+            base.LogRuleMemoUsed("FactorExpression", _mark, _memoized);
+            base.LogDecreaseLevel();
+            base.Reset(_memoized.EndPosition);
+            return _memoized.Cache;
+        }
+        IFactorExpressionNode? _res = null;
+        {
+            // Factor
+            base.LogAlternativeEntered("Factor");
+            IGreenNode? factor;
+            if ((factor = rule_Factor()) is not null)
+            {
+                base.LogAlternativeSucceed("Factor");
+                _res = (FactorNode?)factor;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("Factor");
+        }
+        base.Reset(_mark);
+        {
+            // PowerExpression
+            base.LogAlternativeEntered("PowerExpression");
+            IGreenNode? power_expression;
+            if ((power_expression = rule_PowerExpression()) is not null)
+            {
+                base.LogAlternativeSucceed("PowerExpression");
+                _res = (IPowerExpressionNode?)power_expression;
+                goto _Return;
+            }
+            base.LogAlternativeFailed("PowerExpression");
+        }
+        base.Reset(_mark);
+        base.LogRuleFailed("FactorExpression");
+    _Return:
+        base.LogRuleMemoCreated("FactorExpression", _mark, _res == null);
+        base.LogRuleExiting("FactorExpression");
+        base.LogDecreaseLevel();
+        _memo_FactorExpression.AddCache(_mark, base.Mark(), _res);
+        return _res;
+    }
+    #endregion // FactorExpression
+
+    #region Factor
+    // Factor: FactorOperator FactorExpression -> new(Operator=factor_operator, Value=factor_expression)
     FactorNode? rule_Factor()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Factor");
         int _mark = base.Mark();
-        if (_memo_Factor.TryGetCache(_mark, out var _memoized))
-        {
-            base.LogRuleMemoUsed("Factor", _mark, _memoized);
-            base.LogDecreaseLevel();
-            base.Reset(_memoized.EndPosition);
-            return _memoized.Cache;
-        }
         FactorNode? _res = null;
         {
-            // FactorOperator Factor -> UnaryFactor(Operator=factor_operator, Value=factor)
-            base.LogAlternativeEntered("FactorOperator Factor");
+            // FactorOperator FactorExpression -> new(Operator=factor_operator, Value=factor_expression)
+            base.LogAlternativeEntered("FactorOperator FactorExpression");
             IGreenNode? factor_operator;
-            IGreenNode? factor;
+            IGreenNode? factor_expression;
             if ((factor_operator = rule_FactorOperator()) is not null
                 &&
-                (factor = rule_Factor()) is not null
+                (factor_expression = rule_FactorExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("FactorOperator Factor");
-                _res = new UnaryFactorNode()
+                base.LogAlternativeSucceed("FactorOperator FactorExpression");
+                _res = new FactorNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         factor_operator,
-                        factor,
+                        factor_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("FactorOperator Factor");
-        }
-        base.Reset(_mark);
-        {
-            // Power -> DirectFactor(Value=power)
-            base.LogAlternativeEntered("Power");
-            IGreenNode? power;
-            if ((power = rule_Power()) is not null)
-            {
-                base.LogAlternativeSucceed("Power");
-                _res = new DirectFactorNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        power,
-                    ]),
-                };
-                goto _Return;
-            }
-            base.LogAlternativeFailed("Power");
+            base.LogAlternativeFailed("FactorOperator FactorExpression");
         }
         base.Reset(_mark);
         base.LogRuleFailed("Factor");
     _Return:
-        base.LogRuleMemoCreated("Factor", _mark, _res == null);
         base.LogRuleExiting("Factor");
         base.LogDecreaseLevel();
-        _memo_Factor.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Factor
@@ -8302,79 +8508,101 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     }
     #endregion // FactorOperator
 
-    #region Power
-    private readonly IMemoContainer<PowerNode> _memo_Power = CreateContainer<PowerNode>();
+    #region PowerExpression
+    private readonly IMemoContainer<IPowerExpressionNode> _memo_PowerExpression = CreateContainer<IPowerExpressionNode>();
+    // @union
     // @memo
-    // Power:
-    //     | Primary '**' Factor -> BinaryPower(Left=primary, Right=factor)
-    //     | Primary -> DirectPower(Value=primary)
-    //
-    //
-    //
-    PowerNode? rule_Power()
+    // PowerExpression:
+    //     | Power
+    //     | Primary  
+    IPowerExpressionNode? rule_PowerExpression()
     {
         base.LogIncreaseLevel();
-        base.LogRuleEntered("Power");
+        base.LogRuleEntered("PowerExpression");
         int _mark = base.Mark();
-        if (_memo_Power.TryGetCache(_mark, out var _memoized))
+        if (_memo_PowerExpression.TryGetCache(_mark, out var _memoized))
         {
-            base.LogRuleMemoUsed("Power", _mark, _memoized);
+            base.LogRuleMemoUsed("PowerExpression", _mark, _memoized);
             base.LogDecreaseLevel();
             base.Reset(_memoized.EndPosition);
             return _memoized.Cache;
         }
-        PowerNode? _res = null;
+        IPowerExpressionNode? _res = null;
         {
-            // Primary '**' Factor -> BinaryPower(Left=primary, Right=factor)
-            base.LogAlternativeEntered("Primary '**' Factor");
-            IGreenNode? primary;
-            IGreenNode? double_star;
-            IGreenNode? factor;
-            if ((primary = rule_Primary()) is not null
-                &&
-                (double_star = Expect(TokenType.DoubleStar)) is not null
-                &&
-                (factor = rule_Factor()) is not null
-            )
+            // Power
+            base.LogAlternativeEntered("Power");
+            IGreenNode? power;
+            if ((power = rule_Power()) is not null)
             {
-                base.LogAlternativeSucceed("Primary '**' Factor");
-                _res = new BinaryPowerNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        primary,
-                        double_star,
-                        factor,
-                    ]),
-                };
+                base.LogAlternativeSucceed("Power");
+                _res = (PowerNode?)power;
                 goto _Return;
             }
-            base.LogAlternativeFailed("Primary '**' Factor");
+            base.LogAlternativeFailed("Power");
         }
         base.Reset(_mark);
         {
-            // Primary -> DirectPower(Value=primary)
+            // Primary
             base.LogAlternativeEntered("Primary");
             IGreenNode? primary;
             if ((primary = rule_Primary()) is not null)
             {
                 base.LogAlternativeSucceed("Primary");
-                _res = new DirectPowerNode()
-                {
-                    Children = new NodeArray<IGreenNode>([
-                        primary,
-                    ]),
-                };
+                _res = (IPrimaryNode?)primary;
                 goto _Return;
             }
             base.LogAlternativeFailed("Primary");
         }
         base.Reset(_mark);
+        base.LogRuleFailed("PowerExpression");
+    _Return:
+        base.LogRuleMemoCreated("PowerExpression", _mark, _res == null);
+        base.LogRuleExiting("PowerExpression");
+        base.LogDecreaseLevel();
+        _memo_PowerExpression.AddCache(_mark, base.Mark(), _res);
+        return _res;
+    }
+    #endregion // PowerExpression
+
+    #region Power
+    // Power: Primary '**' FactorExpression -> new(Left=primary, Right=factor_expression)
+    PowerNode? rule_Power()
+    {
+        base.LogIncreaseLevel();
+        base.LogRuleEntered("Power");
+        int _mark = base.Mark();
+        PowerNode? _res = null;
+        {
+            // Primary '**' FactorExpression -> new(Left=primary, Right=factor_expression)
+            base.LogAlternativeEntered("Primary '**' FactorExpression");
+            IGreenNode? primary;
+            IGreenNode? double_star;
+            IGreenNode? factor_expression;
+            if ((primary = rule_Primary()) is not null
+                &&
+                (double_star = Expect(TokenType.DoubleStar)) is not null
+                &&
+                (factor_expression = rule_FactorExpression()) is not null
+            )
+            {
+                base.LogAlternativeSucceed("Primary '**' FactorExpression");
+                _res = new PowerNode()
+                {
+                    Children = new NodeArray<IGreenNode>([
+                        primary,
+                        double_star,
+                        factor_expression,
+                    ]),
+                };
+                goto _Return;
+            }
+            base.LogAlternativeFailed("Primary '**' FactorExpression");
+        }
+        base.Reset(_mark);
         base.LogRuleFailed("Power");
     _Return:
-        base.LogRuleMemoCreated("Power", _mark, _res == null);
         base.LogRuleExiting("Power");
         base.LogDecreaseLevel();
-        _memo_Power.AddCache(_mark, base.Mark(), _res);
         return _res;
     }
     #endregion // Power
@@ -8384,12 +8612,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // Primary:
     //     | AwaitPrimary
     //     | RawPrimary
-    PrimaryNode? rule_Primary()
+    IPrimaryNode? rule_Primary()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Primary");
         int _mark = base.Mark();
-        PrimaryNode? _res = null;
+        IPrimaryNode? _res = null;
         {
             // AwaitPrimary
             base.LogAlternativeEntered("AwaitPrimary");
@@ -8701,7 +8929,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new DimensionalSubscriptNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(dimension_Gather),
+                        dimension_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -8917,12 +9145,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     //     | &'{' SetComprehension
     //     | &'{' Dict
     //     | &'{' Set
-    AtomNode? rule_Atom()
+    IAtomNode? rule_Atom()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("Atom");
         int _mark = base.Mark();
-        AtomNode? _res = null;
+        IAtomNode? _res = null;
         {
             // OneTokenAtom
             base.LogAlternativeEntered("OneTokenAtom");
@@ -9465,7 +9693,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         f_string_start,
-                        new NodeList(f_string_value_Star),
+                        f_string_value_Star,
                         f_string_end,
                     ]),
                 };
@@ -9628,7 +9856,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         colon,
-                        new NodeList(f_string_format_spec_Star),
+                        f_string_format_spec_Star,
                     ]),
                 };
                 goto _Return;
@@ -9735,7 +9963,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         t_string_start,
-                        new NodeList(t_string_value_Star),
+                        t_string_value_Star,
                         t_string_end,
                     ]),
                 };
@@ -9897,7 +10125,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 {
                     Children = new NodeArray<IGreenNode>([
                         colon,
-                        new NodeList(t_string_format_spec_Star),
+                        t_string_format_spec_Star,
                     ]),
                 };
                 goto _Return;
@@ -9928,11 +10156,6 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // TStringFormatSpec:
     //     | TStringMiddle -> TStringFormatLiteral(Value=t_string_middle)
     //     | TStringReplacementField -> TStringFormatReplacement(Value=t_string_replacement_field)
-    //
-    //
-    //
-    //
-    //
     TStringFormatSpecNode? rule_TStringFormatSpec()
     {
         base.LogIncreaseLevel();
@@ -9984,7 +10207,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     #endregion // TStringFormatSpec
 
     #region DebugSpecifier
-    // DebugSpecifier: '=' DebugSpecifierString -> new(Value=debug_specifier_string)
+    // DebugSpecifier: '=' -> new()
     DebugSpecifierNode? rule_DebugSpecifier()
     {
         base.LogIncreaseLevel();
@@ -9992,26 +10215,21 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         int _mark = base.Mark();
         DebugSpecifierNode? _res = null;
         {
-            // '=' DebugSpecifierString -> new(Value=debug_specifier_string)
-            base.LogAlternativeEntered("'=' DebugSpecifierString");
+            // '=' -> new()
+            base.LogAlternativeEntered("'='");
             IGreenNode? equal;
-            IGreenNode? debug_specifier_string;
-            if ((equal = Expect(TokenType.Equal)) is not null
-                &&
-                (debug_specifier_string = Expect(TokenType.DebugSpecifierString)) is not null
-            )
+            if ((equal = Expect(TokenType.Equal)) is not null)
             {
-                base.LogAlternativeSucceed("'=' DebugSpecifierString");
+                base.LogAlternativeSucceed("'='");
                 _res = new DebugSpecifierNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         equal,
-                        debug_specifier_string,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'=' DebugSpecifierString");
+            base.LogAlternativeFailed("'='");
         }
         base.Reset(_mark);
         base.LogRuleFailed("DebugSpecifier");
@@ -10083,24 +10301,24 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         {
             // StringValue+ -> StringValueAtom(Parts=string_value_Plus)
             base.LogAlternativeEntered("StringValue+");
-            INodeArray<StringValueNode>? string_value_Plus;
+            INodeArray<IStringValueNode>? string_value_Plus;
             if ((string_value_Plus = _RepeatHelper_string_value_Plus()) is not null)
             {
                 base.LogAlternativeSucceed("StringValue+");
                 _res = new StringValueAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(string_value_Plus),
+                        string_value_Plus,
                     ]),
                 };
                 goto _Return;
             }
             base.LogAlternativeFailed("StringValue+");
-            NodeArray<StringValueNode>? _RepeatHelper_string_value_Plus()
+            NodeArray<IStringValueNode>? _RepeatHelper_string_value_Plus()
             {
-                StringValueNode? _node = rule_StringValue();
+                IStringValueNode? _node = rule_StringValue();
                 if (_node == null) return null;
-                global::System.Collections.Generic.List<StringValueNode> _result = [_node];
+                global::System.Collections.Generic.List<IStringValueNode> _result = [_node];
                 while ((_node = rule_StringValue()) != null)
                 {
                     _result.Add(_node);
@@ -10119,7 +10337,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new StringTemplateAtomNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(t_string_Plus),
+                        t_string_Plus,
                     ]),
                 };
                 goto _Return;
@@ -10187,12 +10405,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // StringValue:
     //     | StringConstant
     //     | FString
-    StringValueNode? rule_StringValue()
+    IStringValueNode? rule_StringValue()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("StringValue");
         int _mark = base.Mark();
-        StringValueNode? _res = null;
+        IStringValueNode? _res = null;
         {
             // StringConstant
             base.LogAlternativeEntered("StringConstant");
@@ -10429,7 +10647,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new StarredOrKeyValuesNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(starred_or_key_value_Gather),
+                        starred_or_key_value_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -10470,7 +10688,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
 
     #region StarredOrKeyValue
     // StarredOrKeyValue:
-    //     | '**' BitwiseOr -> DoubleStarred(Value=bitwise_or)
+    //     | '**' BitwiseOrExpression -> DoubleStarred(Value=bitwise_or_expression)
     //     | Expression ':' Expression -> KeyValuePair(Key=expression, Value=expression1)
     //
     //
@@ -10482,26 +10700,26 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
         int _mark = base.Mark();
         StarredOrKeyValueNode? _res = null;
         {
-            // '**' BitwiseOr -> DoubleStarred(Value=bitwise_or)
-            base.LogAlternativeEntered("'**' BitwiseOr");
+            // '**' BitwiseOrExpression -> DoubleStarred(Value=bitwise_or_expression)
+            base.LogAlternativeEntered("'**' BitwiseOrExpression");
             IGreenNode? double_star;
-            IGreenNode? bitwise_or;
+            IGreenNode? bitwise_or_expression;
             if ((double_star = Expect(TokenType.DoubleStar)) is not null
                 &&
-                (bitwise_or = rule_BitwiseOr()) is not null
+                (bitwise_or_expression = rule_BitwiseOrExpression()) is not null
             )
             {
-                base.LogAlternativeSucceed("'**' BitwiseOr");
+                base.LogAlternativeSucceed("'**' BitwiseOrExpression");
                 _res = new DoubleStarredNode()
                 {
                     Children = new NodeArray<IGreenNode>([
                         double_star,
-                        bitwise_or,
+                        bitwise_or_expression,
                     ]),
                 };
                 goto _Return;
             }
-            base.LogAlternativeFailed("'**' BitwiseOr");
+            base.LogAlternativeFailed("'**' BitwiseOrExpression");
         }
         base.Reset(_mark);
         {
@@ -10587,7 +10805,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         star_targets,
                         _string_token2,
                         disjunction,
-                        new NodeList(if_clause_Star),
+                        if_clause_Star,
                     ]),
                 };
                 goto _Return;
@@ -10641,7 +10859,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         star_targets,
                         _string_token1,
                         disjunction,
-                        new NodeList(if_clause_Star),
+                        if_clause_Star,
                     ]),
                 };
                 goto _Return;
@@ -10742,7 +10960,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         left_square_bracket,
                         star_named_expression,
-                        new NodeList(for_if_clause_Plus),
+                        for_if_clause_Plus,
                         right_square_bracket,
                     ]),
                 };
@@ -10800,7 +11018,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         left_brace,
                         star_named_expression,
-                        new NodeList(for_if_clause_Plus),
+                        for_if_clause_Plus,
                         right_brace,
                     ]),
                 };
@@ -10858,7 +11076,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                     Children = new NodeArray<IGreenNode>([
                         left_paren,
                         star_named_expression,
-                        new NodeList(for_if_clause_Plus),
+                        for_if_clause_Plus,
                         right_paren,
                     ]),
                 };
@@ -10929,7 +11147,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         expression,
                         colon,
                         expression1,
-                        new NodeList(for_if_clause_Plus),
+                        for_if_clause_Plus,
                         right_brace,
                     ]),
                 };
@@ -10975,7 +11193,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                         left_brace,
                         double_star,
                         expression,
-                        new NodeList(for_if_clause_Plus),
+                        for_if_clause_Plus,
                         right_brace,
                     ]),
                 };
@@ -11042,7 +11260,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new WithPositionalArgumentsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(positional_argument_Gather),
+                        positional_argument_Gather,
                         keyword_arguments_part ?? VoidNode.Instance,
                         comma ?? VoidNode.Instance,
                     ]),
@@ -11151,12 +11369,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // PositionalArgument:
     //     | StarredExpression !'='
     //     | NamedExpression !'='
-    PositionalArgumentNode? rule_PositionalArgument()
+    IPositionalArgumentNode? rule_PositionalArgument()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("PositionalArgument");
         int _mark = base.Mark();
-        PositionalArgumentNode? _res = null;
+        IPositionalArgumentNode? _res = null;
         {
             // StarredExpression !'='
             base.LogAlternativeEntered("StarredExpression !'='");
@@ -11190,7 +11408,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("NamedExpression !'='");
-                _res = (NamedExpressionNode?)named_expression;
+                _res = (INamedExpressionNode?)named_expression;
                 goto _Return;
             }
             base.LogAlternativeFailed("NamedExpression !'='");
@@ -11243,9 +11461,9 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new BothStarredKwargsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(kwarg_or_starred_Gather),
+                        kwarg_or_starred_Gather,
                         comma,
-                        new NodeList(kwarg_or_double_starred_Gather),
+                        kwarg_or_double_starred_Gather,
                     ]),
                 };
                 goto _Return;
@@ -11307,7 +11525,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new OneStarredKwargsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(kwarg_or_starred_Gather),
+                        kwarg_or_starred_Gather,
                     ]),
                 };
                 goto _Return;
@@ -11347,7 +11565,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new DoubleStarredKwargsNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(kwarg_or_double_starred_Gather),
+                        kwarg_or_double_starred_Gather,
                     ]),
                 };
                 goto _Return;
@@ -11390,12 +11608,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // KwargOrStarred:
     //     | Kwarg
     //     | StarExpression
-    KwargOrStarredNode? rule_KwargOrStarred()
+    IKwargOrStarredNode? rule_KwargOrStarred()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("KwargOrStarred");
         int _mark = base.Mark();
-        KwargOrStarredNode? _res = null;
+        IKwargOrStarredNode? _res = null;
         {
             // Kwarg
             base.LogAlternativeEntered("Kwarg");
@@ -11416,7 +11634,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             if ((star_expression = rule_StarExpression()) is not null)
             {
                 base.LogAlternativeSucceed("StarExpression");
-                _res = (StarExpressionNode?)star_expression;
+                _res = (IStarExpressionNode?)star_expression;
                 goto _Return;
             }
             base.LogAlternativeFailed("StarExpression");
@@ -11435,12 +11653,12 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
     // KwargOrDoubleStarred:
     //     | Kwarg
     //     | DoubleStarredExpression
-    KwargOrDoubleStarredNode? rule_KwargOrDoubleStarred()
+    IKwargOrDoubleStarredNode? rule_KwargOrDoubleStarred()
     {
         base.LogIncreaseLevel();
         base.LogRuleEntered("KwargOrDoubleStarred");
         int _mark = base.Mark();
-        KwargOrDoubleStarredNode? _res = null;
+        IKwargOrDoubleStarredNode? _res = null;
         {
             // Kwarg
             base.LogAlternativeEntered("Kwarg");
@@ -11616,7 +11834,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("StarTarget !','");
-                _res = new StarTargetsNode_Derived0()
+                _res = new StarTargets_Derived0Node()
                 {
                     Children = new NodeArray<IGreenNode>([
                         star_target,
@@ -11645,10 +11863,10 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
             )
             {
                 base.LogAlternativeSucceed("StarTarget+.',' -','");
-                _res = new StarTargetsNode_Derived1()
+                _res = new StarTargets_Derived1Node()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(star_target_Gather),
+                        star_target_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -11973,7 +12191,7 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
                 _res = new StarTargetSequenceNode()
                 {
                     Children = new NodeArray<IGreenNode>([
-                        new NodeList(star_target_Gather),
+                        star_target_Gather,
                         comma ?? VoidNode.Instance,
                     ]),
                 };
@@ -12617,129 +12835,642 @@ internal partial class PythonParser(ITokenNodeStream _tokenStream) : BaseParser<
 #region Type definitions
 internal sealed partial record FileNode : GreenNode
 {
-    internal NodeArray<StatementNode> Statements => ((NodeList)Children![0]).GetArray<StatementNode>();
+    internal NodeArray<IStatementNode> Statements => (NodeArray<IStatementNode>)Children![0];
+    public override FileView GetView(int position, IRedView? parent)
+        => new FileView(this, position, parent);
+}
+internal sealed partial class FileView : RedView
+{
+    internal FileView(FileNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<IStatementView>? _field_statements = null;
+    internal ViewArray<IStatementView> Statements
+    {
+        get
+        {
+            if (_field_statements == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_statements = (ViewArray<IStatementView>)new ViewArray<IStatementView>(((FileNode)base.Green).Statements, _positionOfField, this);
+            }
+            return (ViewArray<IStatementView>)_field_statements;
+        }
+    }
 }
 
-internal partial interface StatementNode : IGreenNode;
+internal partial interface IStatementNode : IGreenNode;
+internal partial interface IStatementView : IRedView;
 
-internal abstract partial record SimpleStatementsNode : GreenNode, StatementNode
+internal abstract partial record SimpleStatementsNode : GreenNode, IStatementNode
 {
+}
+internal abstract partial class SimpleStatementsView : RedView, IStatementView
+{
+    internal SimpleStatementsView(SimpleStatementsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record SingleSimpleStatementNode : SimpleStatementsNode
 {
-    internal SimpleStatementNode Value => (SimpleStatementNode)Children![0];
+    internal ISimpleStatementNode Value => (ISimpleStatementNode)Children![0];
+    public override SingleSimpleStatementView GetView(int position, IRedView? parent)
+        => new SingleSimpleStatementView(this, position, parent);
+}
+internal sealed partial class SingleSimpleStatementView : SimpleStatementsView
+{
+    internal SingleSimpleStatementView(SingleSimpleStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ISimpleStatementView? _field_value = null;
+    internal ISimpleStatementView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (ISimpleStatementView)((SingleSimpleStatementNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (ISimpleStatementView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record SeparatedSimpleStatementsNode : SimpleStatementsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<SimpleStatementNode>? _field_Values = null;
-    internal global::System.Collections.Immutable.ImmutableArray<SimpleStatementNode> Values
+    private global::System.Collections.Immutable.ImmutableArray<ISimpleStatementNode>? _field_Values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<ISimpleStatementNode> Values
     {
         get
         {
             if (_field_Values is null)
             {
-                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<SimpleStatementNode>();
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<ISimpleStatementNode>();
                 _field_Values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Values.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)Children![0];
+    public override SeparatedSimpleStatementsView GetView(int position, IRedView? parent)
+        => new SeparatedSimpleStatementsView(this, position, parent);
+}
+internal sealed partial class SeparatedSimpleStatementsView : SimpleStatementsView
+{
+    internal SeparatedSimpleStatementsView(SeparatedSimpleStatementsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_values = null;
+    internal ViewArray<RedView> AstValues
+    {
+        get
+        {
+            if (_ast_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_values = new ViewArray<RedView>(((SeparatedSimpleStatementsNode)base.Green).AstValues, _positionOfField, this);
+            }
+            return _ast_field_values.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<ISimpleStatementView>? _field_values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<ISimpleStatementView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<ISimpleStatementView>();
+                _field_values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_values.Value;
+        }
+    }
 }
 
-internal partial interface SimpleStatementNode : IGreenNode;
+internal partial interface ISimpleStatementNode : IGreenNode;
+internal partial interface ISimpleStatementView : IRedView;
 
-internal partial interface CompoundStatementNode : IGreenNode, StatementNode;
+internal partial interface ICompoundStatementNode : IGreenNode, IStatementNode;
+internal partial interface ICompoundStatementView : IRedView, IStatementView;
 
-internal abstract partial record AssignmentNode : GreenNode, SimpleStatementNode
+internal abstract partial record AssignmentNode : GreenNode, ISimpleStatementNode
 {
+}
+internal abstract partial class AssignmentView : RedView, ISimpleStatementView
+{
+    internal AssignmentView(AssignmentNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record AnnotatedAssignmentNode : AssignmentNode
 {
     internal TokenNode Target => (TokenNode)Children![0];
-    internal ExpressionNode TypeHint => (ExpressionNode)Children![2];
+    internal IExpressionNode TypeHint => (IExpressionNode)Children![2];
     internal EqualAnnotatedRhsNode? Rhs => Children![3] as EqualAnnotatedRhsNode;
+    public override AnnotatedAssignmentView GetView(int position, IRedView? parent)
+        => new AnnotatedAssignmentView(this, position, parent);
+}
+internal sealed partial class AnnotatedAssignmentView : AssignmentView
+{
+    internal AnnotatedAssignmentView(AnnotatedAssignmentNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_target = null;
+    internal TokenView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_target = (TokenView)((AnnotatedAssignmentNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_target;
+        }
+    }
+
+    private IExpressionView? _field_typeHint = null;
+    internal IExpressionView TypeHint
+    {
+        get
+        {
+            if (_field_typeHint == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeHint = (IExpressionView)((AnnotatedAssignmentNode)base.Green).TypeHint!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_typeHint;
+        }
+    }
+
+    private EqualAnnotatedRhsView? _field_rhs = null;
+    internal EqualAnnotatedRhsView? Rhs
+    {
+        get
+        {
+            if (_field_rhs == null && ((AnnotatedAssignmentNode)base.Green).Rhs != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_rhs = (EqualAnnotatedRhsView)((AnnotatedAssignmentNode)base.Green).Rhs!.GetView(_positionOfField, this);
+            }
+            return (EqualAnnotatedRhsView?)_field_rhs;
+        }
+    }
 }
 
 internal sealed partial record AnnotatedParenthesizedAssignmentNode : AssignmentNode
 {
     internal SingleTargetNode Target => (SingleTargetNode)Children![1];
-    internal ExpressionNode TypeHint => (ExpressionNode)Children![4];
+    internal IExpressionNode TypeHint => (IExpressionNode)Children![4];
     internal EqualAnnotatedRhsNode? Rhs => Children![5] as EqualAnnotatedRhsNode;
+    public override AnnotatedParenthesizedAssignmentView GetView(int position, IRedView? parent)
+        => new AnnotatedParenthesizedAssignmentView(this, position, parent);
+}
+internal sealed partial class AnnotatedParenthesizedAssignmentView : AssignmentView
+{
+    internal AnnotatedParenthesizedAssignmentView(AnnotatedParenthesizedAssignmentNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SingleTargetView? _field_target = null;
+    internal SingleTargetView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_target = (SingleTargetView)((AnnotatedParenthesizedAssignmentNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (SingleTargetView)_field_target;
+        }
+    }
+
+    private IExpressionView? _field_typeHint = null;
+    internal IExpressionView TypeHint
+    {
+        get
+        {
+            if (_field_typeHint == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_typeHint = (IExpressionView)((AnnotatedParenthesizedAssignmentNode)base.Green).TypeHint!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_typeHint;
+        }
+    }
+
+    private EqualAnnotatedRhsView? _field_rhs = null;
+    internal EqualAnnotatedRhsView? Rhs
+    {
+        get
+        {
+            if (_field_rhs == null && ((AnnotatedParenthesizedAssignmentNode)base.Green).Rhs != null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_rhs = (EqualAnnotatedRhsView)((AnnotatedParenthesizedAssignmentNode)base.Green).Rhs!.GetView(_positionOfField, this);
+            }
+            return (EqualAnnotatedRhsView?)_field_rhs;
+        }
+    }
 }
 
 internal sealed partial record AnnotatedSubscriptAttributeAssignmentNode : AssignmentNode
 {
     internal SingleSubscriptAttributeTargetNode Target => (SingleSubscriptAttributeTargetNode)Children![0];
-    internal ExpressionNode TypeHint => (ExpressionNode)Children![2];
+    internal IExpressionNode TypeHint => (IExpressionNode)Children![2];
     internal EqualAnnotatedRhsNode? Rhs => Children![3] as EqualAnnotatedRhsNode;
+    public override AnnotatedSubscriptAttributeAssignmentView GetView(int position, IRedView? parent)
+        => new AnnotatedSubscriptAttributeAssignmentView(this, position, parent);
+}
+internal sealed partial class AnnotatedSubscriptAttributeAssignmentView : AssignmentView
+{
+    internal AnnotatedSubscriptAttributeAssignmentView(AnnotatedSubscriptAttributeAssignmentNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SingleSubscriptAttributeTargetView? _field_target = null;
+    internal SingleSubscriptAttributeTargetView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_target = (SingleSubscriptAttributeTargetView)((AnnotatedSubscriptAttributeAssignmentNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (SingleSubscriptAttributeTargetView)_field_target;
+        }
+    }
+
+    private IExpressionView? _field_typeHint = null;
+    internal IExpressionView TypeHint
+    {
+        get
+        {
+            if (_field_typeHint == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeHint = (IExpressionView)((AnnotatedSubscriptAttributeAssignmentNode)base.Green).TypeHint!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_typeHint;
+        }
+    }
+
+    private EqualAnnotatedRhsView? _field_rhs = null;
+    internal EqualAnnotatedRhsView? Rhs
+    {
+        get
+        {
+            if (_field_rhs == null && ((AnnotatedSubscriptAttributeAssignmentNode)base.Green).Rhs != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_rhs = (EqualAnnotatedRhsView)((AnnotatedSubscriptAttributeAssignmentNode)base.Green).Rhs!.GetView(_positionOfField, this);
+            }
+            return (EqualAnnotatedRhsView?)_field_rhs;
+        }
+    }
 }
 
 internal sealed partial record CascadeAssignmentNode : AssignmentNode
 {
-    internal NodeArray<AssignmentTargetNode> Targets => ((NodeList)Children![0]).GetArray<AssignmentTargetNode>();
-    internal AnnotatedRhsNode Rhs => (AnnotatedRhsNode)Children![1];
+    internal NodeArray<AssignmentTargetNode> Targets => (NodeArray<AssignmentTargetNode>)Children![0];
+    internal IAnnotatedRhsNode Rhs => (IAnnotatedRhsNode)Children![1];
+    public override CascadeAssignmentView GetView(int position, IRedView? parent)
+        => new CascadeAssignmentView(this, position, parent);
+}
+internal sealed partial class CascadeAssignmentView : AssignmentView
+{
+    internal CascadeAssignmentView(CascadeAssignmentNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<AssignmentTargetView>? _field_targets = null;
+    internal ViewArray<AssignmentTargetView> Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_targets = (ViewArray<AssignmentTargetView>)new ViewArray<AssignmentTargetView>(((CascadeAssignmentNode)base.Green).Targets, _positionOfField, this);
+            }
+            return (ViewArray<AssignmentTargetView>)_field_targets;
+        }
+    }
+
+    private IAnnotatedRhsView? _field_rhs = null;
+    internal IAnnotatedRhsView Rhs
+    {
+        get
+        {
+            if (_field_rhs == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_rhs = (IAnnotatedRhsView)((CascadeAssignmentNode)base.Green).Rhs!.GetView(_positionOfField, this);
+            }
+            return (IAnnotatedRhsView)_field_rhs;
+        }
+    }
 }
 
 internal sealed partial record AugmentedAssignmentNode : AssignmentNode
 {
     internal SingleTargetNode Target => (SingleTargetNode)Children![0];
     internal TokenNode Operator => (TokenNode)Children![1];
-    internal AnnotatedRhsNode Rhs => (AnnotatedRhsNode)Children![2];
+    internal IAnnotatedRhsNode Rhs => (IAnnotatedRhsNode)Children![2];
+    public override AugmentedAssignmentView GetView(int position, IRedView? parent)
+        => new AugmentedAssignmentView(this, position, parent);
+}
+internal sealed partial class AugmentedAssignmentView : AssignmentView
+{
+    internal AugmentedAssignmentView(AugmentedAssignmentNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SingleTargetView? _field_target = null;
+    internal SingleTargetView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_target = (SingleTargetView)((AugmentedAssignmentNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (SingleTargetView)_field_target;
+        }
+    }
+
+    private TokenView? _field_operator = null;
+    internal TokenView Operator
+    {
+        get
+        {
+            if (_field_operator == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_operator = (TokenView)((AugmentedAssignmentNode)base.Green).Operator!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_operator;
+        }
+    }
+
+    private IAnnotatedRhsView? _field_rhs = null;
+    internal IAnnotatedRhsView Rhs
+    {
+        get
+        {
+            if (_field_rhs == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_rhs = (IAnnotatedRhsView)((AugmentedAssignmentNode)base.Green).Rhs!.GetView(_positionOfField, this);
+            }
+            return (IAnnotatedRhsView)_field_rhs;
+        }
+    }
 }
 
 internal sealed partial record AssignmentTargetNode : GreenNode
 {
     internal StarTargetsNode Value => (StarTargetsNode)Children![0];
+    public override AssignmentTargetView GetView(int position, IRedView? parent)
+        => new AssignmentTargetView(this, position, parent);
+}
+internal sealed partial class AssignmentTargetView : RedView
+{
+    internal AssignmentTargetView(AssignmentTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetsView? _field_value = null;
+    internal StarTargetsView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (StarTargetsView)((AssignmentTargetNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (StarTargetsView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record EqualAnnotatedRhsNode : GreenNode
 {
-    internal AnnotatedRhsNode Value => (AnnotatedRhsNode)Children![1];
+    internal IAnnotatedRhsNode Value => (IAnnotatedRhsNode)Children![1];
+    public override EqualAnnotatedRhsView GetView(int position, IRedView? parent)
+        => new EqualAnnotatedRhsView(this, position, parent);
+}
+internal sealed partial class EqualAnnotatedRhsView : RedView
+{
+    internal EqualAnnotatedRhsView(EqualAnnotatedRhsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IAnnotatedRhsView? _field_value = null;
+    internal IAnnotatedRhsView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IAnnotatedRhsView)((EqualAnnotatedRhsNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IAnnotatedRhsView)_field_value;
+        }
+    }
 }
 
-internal partial interface AnnotatedRhsNode : IGreenNode;
+internal partial interface IAnnotatedRhsNode : IGreenNode;
+internal partial interface IAnnotatedRhsView : IRedView;
 
-internal sealed partial record ReturnStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record ReturnStatementNode : GreenNode, ISimpleStatementNode
 {
     internal StarExpressionsNode? Expression => Children![1] as StarExpressionsNode;
+    public override ReturnStatementView GetView(int position, IRedView? parent)
+        => new ReturnStatementView(this, position, parent);
+}
+internal sealed partial class ReturnStatementView : RedView, ISimpleStatementView
+{
+    internal ReturnStatementView(ReturnStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarExpressionsView? _field_expression = null;
+    internal StarExpressionsView? Expression
+    {
+        get
+        {
+            if (_field_expression == null && ((ReturnStatementNode)base.Green).Expression != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (StarExpressionsView)((ReturnStatementNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (StarExpressionsView?)_field_expression;
+        }
+    }
 }
 
-internal abstract partial record RaiseStatementNode : GreenNode, SimpleStatementNode
+internal abstract partial record RaiseStatementNode : GreenNode, ISimpleStatementNode
 {
+}
+internal abstract partial class RaiseStatementView : RedView, ISimpleStatementView
+{
+    internal RaiseStatementView(RaiseStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record RaiseFromStatementNode : RaiseStatementNode
 {
-    internal ExpressionNode NewException => (ExpressionNode)Children![1];
-    internal ExpressionNode OldExpression => (ExpressionNode)Children![3];
+    internal IExpressionNode NewException => (IExpressionNode)Children![1];
+    internal IExpressionNode OldExpression => (IExpressionNode)Children![3];
+    public override RaiseFromStatementView GetView(int position, IRedView? parent)
+        => new RaiseFromStatementView(this, position, parent);
+}
+internal sealed partial class RaiseFromStatementView : RaiseStatementView
+{
+    internal RaiseFromStatementView(RaiseFromStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_newException = null;
+    internal IExpressionView NewException
+    {
+        get
+        {
+            if (_field_newException == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_newException = (IExpressionView)((RaiseFromStatementNode)base.Green).NewException!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_newException;
+        }
+    }
+
+    private IExpressionView? _field_oldExpression = null;
+    internal IExpressionView OldExpression
+    {
+        get
+        {
+            if (_field_oldExpression == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_oldExpression = (IExpressionView)((RaiseFromStatementNode)base.Green).OldExpression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_oldExpression;
+        }
+    }
 }
 
 internal sealed partial record RaiseFromScratchStatementNode : RaiseStatementNode
 {
-    internal ExpressionNode Exception => (ExpressionNode)Children![1];
+    internal IExpressionNode Exception => (IExpressionNode)Children![1];
+    public override RaiseFromScratchStatementView GetView(int position, IRedView? parent)
+        => new RaiseFromScratchStatementView(this, position, parent);
+}
+internal sealed partial class RaiseFromScratchStatementView : RaiseStatementView
+{
+    internal RaiseFromScratchStatementView(RaiseFromScratchStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_exception = null;
+    internal IExpressionView Exception
+    {
+        get
+        {
+            if (_field_exception == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_exception = (IExpressionView)((RaiseFromScratchStatementNode)base.Green).Exception!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_exception;
+        }
+    }
 }
 
 internal sealed partial record PassedRaiseStatementNode : RaiseStatementNode
 {
+    public override PassedRaiseStatementView GetView(int position, IRedView? parent)
+        => new PassedRaiseStatementView(this, position, parent);
 }
-
-internal sealed partial record PassStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial class PassedRaiseStatementView : RaiseStatementView
 {
+    internal PassedRaiseStatementView(PassedRaiseStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal sealed partial record BreakStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record PassStatementNode : GreenNode, ISimpleStatementNode
 {
+    public override PassStatementView GetView(int position, IRedView? parent)
+        => new PassStatementView(this, position, parent);
 }
-
-internal sealed partial record ContinueStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial class PassStatementView : RedView, ISimpleStatementView
 {
+    internal PassStatementView(PassStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal sealed partial record GlobalStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record BreakStatementNode : GreenNode, ISimpleStatementNode
+{
+    public override BreakStatementView GetView(int position, IRedView? parent)
+        => new BreakStatementView(this, position, parent);
+}
+internal sealed partial class BreakStatementView : RedView, ISimpleStatementView
+{
+    internal BreakStatementView(BreakStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
+
+internal sealed partial record ContinueStatementNode : GreenNode, ISimpleStatementNode
+{
+    public override ContinueStatementView GetView(int position, IRedView? parent)
+        => new ContinueStatementView(this, position, parent);
+}
+internal sealed partial class ContinueStatementView : RedView, ISimpleStatementView
+{
+    internal ContinueStatementView(ContinueStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
+
+internal sealed partial record GlobalStatementNode : GreenNode, ISimpleStatementNode
 {
     private global::System.Collections.Immutable.ImmutableArray<TokenNode>? _field_Variables = null;
     internal global::System.Collections.Immutable.ImmutableArray<TokenNode> Variables
@@ -12754,10 +13485,46 @@ internal sealed partial record GlobalStatementNode : GreenNode, SimpleStatementN
             return _field_Variables.Value;
         }
     }
-    internal NodeArray<GreenNode> AstVariables => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstVariables => (NodeArray<GreenNode>)Children![1];
+    public override GlobalStatementView GetView(int position, IRedView? parent)
+        => new GlobalStatementView(this, position, parent);
+}
+internal sealed partial class GlobalStatementView : RedView, ISimpleStatementView
+{
+    internal GlobalStatementView(GlobalStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_variables = null;
+    internal ViewArray<RedView> AstVariables
+    {
+        get
+        {
+            if (_ast_field_variables == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_variables = new ViewArray<RedView>(((GlobalStatementNode)base.Green).AstVariables, _positionOfField, this);
+            }
+            return _ast_field_variables.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<TokenView>? _field_variables = null;
+    internal global::System.Collections.Immutable.ImmutableArray<TokenView> Variables
+    {
+        get
+        {
+            if (_field_variables == null)
+            {
+                var _tmp = AstVariables.Where(static (_, i) => i % 2 == 0).Cast<TokenView>();
+                _field_variables = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_variables.Value;
+        }
+    }
 }
 
-internal sealed partial record NonlocalStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record NonlocalStatementNode : GreenNode, ISimpleStatementNode
 {
     private global::System.Collections.Immutable.ImmutableArray<TokenNode>? _field_Variables = null;
     internal global::System.Collections.Immutable.ImmutableArray<TokenNode> Variables
@@ -12772,10 +13539,46 @@ internal sealed partial record NonlocalStatementNode : GreenNode, SimpleStatemen
             return _field_Variables.Value;
         }
     }
-    internal NodeArray<GreenNode> AstVariables => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstVariables => (NodeArray<GreenNode>)Children![1];
+    public override NonlocalStatementView GetView(int position, IRedView? parent)
+        => new NonlocalStatementView(this, position, parent);
+}
+internal sealed partial class NonlocalStatementView : RedView, ISimpleStatementView
+{
+    internal NonlocalStatementView(NonlocalStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_variables = null;
+    internal ViewArray<RedView> AstVariables
+    {
+        get
+        {
+            if (_ast_field_variables == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_variables = new ViewArray<RedView>(((NonlocalStatementNode)base.Green).AstVariables, _positionOfField, this);
+            }
+            return _ast_field_variables.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<TokenView>? _field_variables = null;
+    internal global::System.Collections.Immutable.ImmutableArray<TokenView> Variables
+    {
+        get
+        {
+            if (_field_variables == null)
+            {
+                var _tmp = AstVariables.Where(static (_, i) => i % 2 == 0).Cast<TokenView>();
+                _field_variables = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_variables.Value;
+        }
+    }
 }
 
-internal sealed partial record DeleteStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record DeleteStatementNode : GreenNode, ISimpleStatementNode
 {
     private global::System.Collections.Immutable.ImmutableArray<DeleteTargetNode>? _field_Targets = null;
     internal global::System.Collections.Immutable.ImmutableArray<DeleteTargetNode> Targets
@@ -12790,28 +13593,148 @@ internal sealed partial record DeleteStatementNode : GreenNode, SimpleStatementN
             return _field_Targets.Value;
         }
     }
-    internal NodeArray<GreenNode> AstTargets => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstTargets => (NodeArray<GreenNode>)Children![1];
+    public override DeleteStatementView GetView(int position, IRedView? parent)
+        => new DeleteStatementView(this, position, parent);
+}
+internal sealed partial class DeleteStatementView : RedView, ISimpleStatementView
+{
+    internal DeleteStatementView(DeleteStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_targets = null;
+    internal ViewArray<RedView> AstTargets
+    {
+        get
+        {
+            if (_ast_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_targets = new ViewArray<RedView>(((DeleteStatementNode)base.Green).AstTargets, _positionOfField, this);
+            }
+            return _ast_field_targets.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<DeleteTargetView>? _field_targets = null;
+    internal global::System.Collections.Immutable.ImmutableArray<DeleteTargetView> Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _tmp = AstTargets.Where(static (_, i) => i % 2 == 0).Cast<DeleteTargetView>();
+                _field_targets = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_targets.Value;
+        }
+    }
 }
 
-internal sealed partial record YieldStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record YieldStatementNode : GreenNode, ISimpleStatementNode
 {
     internal YieldExpressionNode Expression => (YieldExpressionNode)Children![0];
+    public override YieldStatementView GetView(int position, IRedView? parent)
+        => new YieldStatementView(this, position, parent);
+}
+internal sealed partial class YieldStatementView : RedView, ISimpleStatementView
+{
+    internal YieldStatementView(YieldStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private YieldExpressionView? _field_expression = null;
+    internal YieldExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_expression = (YieldExpressionView)((YieldStatementNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (YieldExpressionView)_field_expression;
+        }
+    }
 }
 
-internal sealed partial record AssertStatementNode : GreenNode, SimpleStatementNode
+internal sealed partial record AssertStatementNode : GreenNode, ISimpleStatementNode
 {
-    internal ExpressionNode Guard => (ExpressionNode)Children![1];
+    internal IExpressionNode Guard => (IExpressionNode)Children![1];
     internal AssertMessageNode? Message => Children![2] as AssertMessageNode;
+    public override AssertStatementView GetView(int position, IRedView? parent)
+        => new AssertStatementView(this, position, parent);
+}
+internal sealed partial class AssertStatementView : RedView, ISimpleStatementView
+{
+    internal AssertStatementView(AssertStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_guard = null;
+    internal IExpressionView Guard
+    {
+        get
+        {
+            if (_field_guard == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_guard = (IExpressionView)((AssertStatementNode)base.Green).Guard!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_guard;
+        }
+    }
+
+    private AssertMessageView? _field_message = null;
+    internal AssertMessageView? Message
+    {
+        get
+        {
+            if (_field_message == null && ((AssertStatementNode)base.Green).Message != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_message = (AssertMessageView)((AssertStatementNode)base.Green).Message!.GetView(_positionOfField, this);
+            }
+            return (AssertMessageView?)_field_message;
+        }
+    }
 }
 
 internal sealed partial record AssertMessageNode : GreenNode
 {
-    internal ExpressionNode Value => (ExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![1];
+    public override AssertMessageView GetView(int position, IRedView? parent)
+        => new AssertMessageView(this, position, parent);
+}
+internal sealed partial class AssertMessageView : RedView
+{
+    internal AssertMessageView(AssertMessageNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((AssertMessageNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
-internal partial interface ImportStatementNode : IGreenNode, SimpleStatementNode;
+internal partial interface IImportStatementNode : IGreenNode, ISimpleStatementNode;
+internal partial interface IImportStatementView : IRedView, ISimpleStatementView;
 
-internal sealed partial record ImportNameNode : GreenNode, ImportStatementNode
+internal sealed partial record ImportNameNode : GreenNode, IImportStatementNode
 {
     private global::System.Collections.Immutable.ImmutableArray<DottedAsNameNode>? _field_Import = null;
     internal global::System.Collections.Immutable.ImmutableArray<DottedAsNameNode> Import
@@ -12826,10 +13749,46 @@ internal sealed partial record ImportNameNode : GreenNode, ImportStatementNode
             return _field_Import.Value;
         }
     }
-    internal NodeArray<GreenNode> AstImport => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstImport => (NodeArray<GreenNode>)Children![1];
+    public override ImportNameView GetView(int position, IRedView? parent)
+        => new ImportNameView(this, position, parent);
+}
+internal sealed partial class ImportNameView : RedView, IImportStatementView
+{
+    internal ImportNameView(ImportNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_import = null;
+    internal ViewArray<RedView> AstImport
+    {
+        get
+        {
+            if (_ast_field_import == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_import = new ViewArray<RedView>(((ImportNameNode)base.Green).AstImport, _positionOfField, this);
+            }
+            return _ast_field_import.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<DottedAsNameView>? _field_import = null;
+    internal global::System.Collections.Immutable.ImmutableArray<DottedAsNameView> Import
+    {
+        get
+        {
+            if (_field_import == null)
+            {
+                var _tmp = AstImport.Where(static (_, i) => i % 2 == 0).Cast<DottedAsNameView>();
+                _field_import = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_import.Value;
+        }
+    }
 }
 
-internal sealed partial record LazyImportNameNode : GreenNode, ImportStatementNode
+internal sealed partial record LazyImportNameNode : GreenNode, IImportStatementNode
 {
     private global::System.Collections.Immutable.ImmutableArray<DottedAsNameNode>? _field_Import = null;
     internal global::System.Collections.Immutable.ImmutableArray<DottedAsNameNode> Import
@@ -12844,28 +13803,166 @@ internal sealed partial record LazyImportNameNode : GreenNode, ImportStatementNo
             return _field_Import.Value;
         }
     }
-    internal NodeArray<GreenNode> AstImport => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstImport => (NodeArray<GreenNode>)Children![2];
+    public override LazyImportNameView GetView(int position, IRedView? parent)
+        => new LazyImportNameView(this, position, parent);
+}
+internal sealed partial class LazyImportNameView : RedView, IImportStatementView
+{
+    internal LazyImportNameView(LazyImportNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_import = null;
+    internal ViewArray<RedView> AstImport
+    {
+        get
+        {
+            if (_ast_field_import == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_import = new ViewArray<RedView>(((LazyImportNameNode)base.Green).AstImport, _positionOfField, this);
+            }
+            return _ast_field_import.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<DottedAsNameView>? _field_import = null;
+    internal global::System.Collections.Immutable.ImmutableArray<DottedAsNameView> Import
+    {
+        get
+        {
+            if (_field_import == null)
+            {
+                var _tmp = AstImport.Where(static (_, i) => i % 2 == 0).Cast<DottedAsNameView>();
+                _field_import = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_import.Value;
+        }
+    }
 }
 
-internal abstract partial record ImportFromNode : GreenNode, ImportStatementNode
+internal abstract partial record ImportFromNode : GreenNode, IImportStatementNode
 {
-    internal NodeArray<TokenNode> RelativePath => ((NodeList)Children![1]).GetArray<TokenNode>();
+    internal NodeArray<TokenNode> RelativePath => (NodeArray<TokenNode>)Children![1];
+}
+internal abstract partial class ImportFromView : RedView, IImportStatementView
+{
+    internal ImportFromView(ImportFromNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<TokenView>? _field_relativePath = null;
+    internal ViewArray<TokenView> RelativePath
+    {
+        get
+        {
+            if (_field_relativePath == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_relativePath = (ViewArray<TokenView>)new ViewArray<TokenView>(((ImportFromNode)base.Green).RelativePath, _positionOfField, this);
+            }
+            return (ViewArray<TokenView>)_field_relativePath;
+        }
+    }
 }
 
 internal sealed partial record ImportFromNamesNode : ImportFromNode
 {
     internal DottedNameNode Path => (DottedNameNode)Children![2];
     internal ImportFromTargetsNode Targets => (ImportFromTargetsNode)Children![4];
+    public override ImportFromNamesView GetView(int position, IRedView? parent)
+        => new ImportFromNamesView(this, position, parent);
+}
+internal sealed partial class ImportFromNamesView : ImportFromView
+{
+    internal ImportFromNamesView(ImportFromNamesNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private DottedNameView? _field_path = null;
+    internal DottedNameView Path
+    {
+        get
+        {
+            if (_field_path == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_path = (DottedNameView)((ImportFromNamesNode)base.Green).Path!.GetView(_positionOfField, this);
+            }
+            return (DottedNameView)_field_path;
+        }
+    }
+
+    private ImportFromTargetsView? _field_targets = null;
+    internal ImportFromTargetsView Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_targets = (ImportFromTargetsView)((ImportFromNamesNode)base.Green).Targets!.GetView(_positionOfField, this);
+            }
+            return (ImportFromTargetsView)_field_targets;
+        }
+    }
 }
 
 internal sealed partial record ImportFromRelativeNode : ImportFromNode
 {
     internal ImportFromTargetsNode Targets => (ImportFromTargetsNode)Children![3];
+    public override ImportFromRelativeView GetView(int position, IRedView? parent)
+        => new ImportFromRelativeView(this, position, parent);
+}
+internal sealed partial class ImportFromRelativeView : ImportFromView
+{
+    internal ImportFromRelativeView(ImportFromRelativeNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ImportFromTargetsView? _field_targets = null;
+    internal ImportFromTargetsView Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_targets = (ImportFromTargetsView)((ImportFromRelativeNode)base.Green).Targets!.GetView(_positionOfField, this);
+            }
+            return (ImportFromTargetsView)_field_targets;
+        }
+    }
 }
 
-internal abstract partial record LazyImportFromNode : GreenNode, ImportStatementNode
+internal abstract partial record LazyImportFromNode : GreenNode, IImportStatementNode
 {
-    internal NodeArray<TokenNode> RelativePath => ((NodeList)Children![2]).GetArray<TokenNode>();
+    internal NodeArray<TokenNode> RelativePath => (NodeArray<TokenNode>)Children![2];
+}
+internal abstract partial class LazyImportFromView : RedView, IImportStatementView
+{
+    internal LazyImportFromView(LazyImportFromNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<TokenView>? _field_relativePath = null;
+    internal ViewArray<TokenView> RelativePath
+    {
+        get
+        {
+            if (_field_relativePath == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_relativePath = (ViewArray<TokenView>)new ViewArray<TokenView>(((LazyImportFromNode)base.Green).RelativePath, _positionOfField, this);
+            }
+            return (ViewArray<TokenView>)_field_relativePath;
+        }
+    }
 }
 
 internal sealed partial record LazyImportFromNamesNode : LazyImportFromNode
@@ -12883,17 +13980,97 @@ internal sealed partial record LazyImportFromNamesNode : LazyImportFromNode
             return _field_Path.Value;
         }
     }
-    internal NodeArray<GreenNode> AstPath => (NodeArray<GreenNode>)((NodeList)Children![3]).Children!;
+    internal NodeArray<GreenNode> AstPath => (NodeArray<GreenNode>)Children![3];
     internal ImportFromTargetsNode Targets => (ImportFromTargetsNode)Children![5];
+    public override LazyImportFromNamesView GetView(int position, IRedView? parent)
+        => new LazyImportFromNamesView(this, position, parent);
+}
+internal sealed partial class LazyImportFromNamesView : LazyImportFromView
+{
+    internal LazyImportFromNamesView(LazyImportFromNamesNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_path = null;
+    internal ViewArray<RedView> AstPath
+    {
+        get
+        {
+            if (_ast_field_path == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _ast_field_path = new ViewArray<RedView>(((LazyImportFromNamesNode)base.Green).AstPath, _positionOfField, this);
+            }
+            return _ast_field_path.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<DottedAsNameView>? _field_path = null;
+    internal global::System.Collections.Immutable.ImmutableArray<DottedAsNameView> Path
+    {
+        get
+        {
+            if (_field_path == null)
+            {
+                var _tmp = AstPath.Where(static (_, i) => i % 2 == 0).Cast<DottedAsNameView>();
+                _field_path = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_path.Value;
+        }
+    }
+
+    private ImportFromTargetsView? _field_targets = null;
+    internal ImportFromTargetsView Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_targets = (ImportFromTargetsView)((LazyImportFromNamesNode)base.Green).Targets!.GetView(_positionOfField, this);
+            }
+            return (ImportFromTargetsView)_field_targets;
+        }
+    }
 }
 
 internal sealed partial record LazyImportFromRelativeNode : LazyImportFromNode
 {
     internal ImportFromTargetsNode Targets => (ImportFromTargetsNode)Children![4];
+    public override LazyImportFromRelativeView GetView(int position, IRedView? parent)
+        => new LazyImportFromRelativeView(this, position, parent);
+}
+internal sealed partial class LazyImportFromRelativeView : LazyImportFromView
+{
+    internal LazyImportFromRelativeView(LazyImportFromRelativeNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ImportFromTargetsView? _field_targets = null;
+    internal ImportFromTargetsView Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_targets = (ImportFromTargetsView)((LazyImportFromRelativeNode)base.Green).Targets!.GetView(_positionOfField, this);
+            }
+            return (ImportFromTargetsView)_field_targets;
+        }
+    }
 }
 
 internal abstract partial record ImportFromTargetsNode : GreenNode
 {
+}
+internal abstract partial class ImportFromTargetsView : RedView
+{
+    internal ImportFromTargetsView(ImportFromTargetsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record ImportFromParenthesizedTargetsNode : ImportFromTargetsNode
@@ -12911,7 +14088,43 @@ internal sealed partial record ImportFromParenthesizedTargetsNode : ImportFromTa
             return _field_Value.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)Children![1];
+    public override ImportFromParenthesizedTargetsView GetView(int position, IRedView? parent)
+        => new ImportFromParenthesizedTargetsView(this, position, parent);
+}
+internal sealed partial class ImportFromParenthesizedTargetsView : ImportFromTargetsView
+{
+    internal ImportFromParenthesizedTargetsView(ImportFromParenthesizedTargetsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_value = null;
+    internal ViewArray<RedView> AstValue
+    {
+        get
+        {
+            if (_ast_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_value = new ViewArray<RedView>(((ImportFromParenthesizedTargetsNode)base.Green).AstValue, _positionOfField, this);
+            }
+            return _ast_field_value.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<ImportFromAsNameView>? _field_value = null;
+    internal global::System.Collections.Immutable.ImmutableArray<ImportFromAsNameView> Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _tmp = AstValue.Where(static (_, i) => i % 2 == 0).Cast<ImportFromAsNameView>();
+                _field_value = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_value.Value;
+        }
+    }
 }
 
 internal sealed partial record ImportFromFlatTargetsNode : ImportFromTargetsNode
@@ -12929,77 +14142,429 @@ internal sealed partial record ImportFromFlatTargetsNode : ImportFromTargetsNode
             return _field_Value.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValue => (NodeArray<GreenNode>)Children![0];
+    public override ImportFromFlatTargetsView GetView(int position, IRedView? parent)
+        => new ImportFromFlatTargetsView(this, position, parent);
+}
+internal sealed partial class ImportFromFlatTargetsView : ImportFromTargetsView
+{
+    internal ImportFromFlatTargetsView(ImportFromFlatTargetsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_value = null;
+    internal ViewArray<RedView> AstValue
+    {
+        get
+        {
+            if (_ast_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_value = new ViewArray<RedView>(((ImportFromFlatTargetsNode)base.Green).AstValue, _positionOfField, this);
+            }
+            return _ast_field_value.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<ImportFromAsNameView>? _field_value = null;
+    internal global::System.Collections.Immutable.ImmutableArray<ImportFromAsNameView> Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _tmp = AstValue.Where(static (_, i) => i % 2 == 0).Cast<ImportFromAsNameView>();
+                _field_value = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_value.Value;
+        }
+    }
 }
 
 internal sealed partial record ImportFromAllTargetsNode : ImportFromTargetsNode
 {
+    public override ImportFromAllTargetsView GetView(int position, IRedView? parent)
+        => new ImportFromAllTargetsView(this, position, parent);
+}
+internal sealed partial class ImportFromAllTargetsView : ImportFromTargetsView
+{
+    internal ImportFromAllTargetsView(ImportFromAllTargetsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record ImportFromAsNameNode : GreenNode
 {
     internal TokenNode ToImport => (TokenNode)Children![0];
     internal AsNameNode? Alias => Children![1] as AsNameNode;
+    public override ImportFromAsNameView GetView(int position, IRedView? parent)
+        => new ImportFromAsNameView(this, position, parent);
+}
+internal sealed partial class ImportFromAsNameView : RedView
+{
+    internal ImportFromAsNameView(ImportFromAsNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_toImport = null;
+    internal TokenView ToImport
+    {
+        get
+        {
+            if (_field_toImport == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_toImport = (TokenView)((ImportFromAsNameNode)base.Green).ToImport!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_toImport;
+        }
+    }
+
+    private AsNameView? _field_alias = null;
+    internal AsNameView? Alias
+    {
+        get
+        {
+            if (_field_alias == null && ((ImportFromAsNameNode)base.Green).Alias != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_alias = (AsNameView)((ImportFromAsNameNode)base.Green).Alias!.GetView(_positionOfField, this);
+            }
+            return (AsNameView?)_field_alias;
+        }
+    }
 }
 
 internal sealed partial record AsNameNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
+    public override AsNameView GetView(int position, IRedView? parent)
+        => new AsNameView(this, position, parent);
+}
+internal sealed partial class AsNameView : RedView
+{
+    internal AsNameView(AsNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (TokenView)((AsNameNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record DottedAsNameNode : GreenNode
 {
     internal DottedNameNode Name => (DottedNameNode)Children![0];
     internal AsNameNode? Alias => Children![1] as AsNameNode;
+    public override DottedAsNameView GetView(int position, IRedView? parent)
+        => new DottedAsNameView(this, position, parent);
+}
+internal sealed partial class DottedAsNameView : RedView
+{
+    internal DottedAsNameView(DottedAsNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private DottedNameView? _field_name = null;
+    internal DottedNameView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_name = (DottedNameView)((DottedAsNameNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (DottedNameView)_field_name;
+        }
+    }
+
+    private AsNameView? _field_alias = null;
+    internal AsNameView? Alias
+    {
+        get
+        {
+            if (_field_alias == null && ((DottedAsNameNode)base.Green).Alias != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_alias = (AsNameView)((DottedAsNameNode)base.Green).Alias!.GetView(_positionOfField, this);
+            }
+            return (AsNameView?)_field_alias;
+        }
+    }
 }
 
 internal abstract partial record DottedNameNode : GreenNode
 {
+}
+internal abstract partial class DottedNameView : RedView
+{
+    internal DottedNameView(DottedNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record ManyDottedNameNode : DottedNameNode
 {
     internal DottedNameNode Left => (DottedNameNode)Children![0];
     internal TokenNode Right => (TokenNode)Children![2];
+    public override ManyDottedNameView GetView(int position, IRedView? parent)
+        => new ManyDottedNameView(this, position, parent);
+}
+internal sealed partial class ManyDottedNameView : DottedNameView
+{
+    internal ManyDottedNameView(ManyDottedNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private DottedNameView? _field_left = null;
+    internal DottedNameView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (DottedNameView)((ManyDottedNameNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (DottedNameView)_field_left;
+        }
+    }
+
+    private TokenView? _field_right = null;
+    internal TokenView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (TokenView)((ManyDottedNameNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record SingleDottedNameNode : DottedNameNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override SingleDottedNameView GetView(int position, IRedView? parent)
+        => new SingleDottedNameView(this, position, parent);
+}
+internal sealed partial class SingleDottedNameView : DottedNameView
+{
+    internal SingleDottedNameView(SingleDottedNameNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((SingleDottedNameNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record BlockNode : GreenNode
 {
 }
+internal abstract partial class BlockView : RedView
+{
+    internal BlockView(BlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record IndentedBlockNode : BlockNode
 {
-    internal NodeArray<StatementNode> Statements => ((NodeList)Children![2]).GetArray<StatementNode>();
+    internal NodeArray<IStatementNode> Statements => (NodeArray<IStatementNode>)Children![2];
+    public override IndentedBlockView GetView(int position, IRedView? parent)
+        => new IndentedBlockView(this, position, parent);
+}
+internal sealed partial class IndentedBlockView : BlockView
+{
+    internal IndentedBlockView(IndentedBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<IStatementView>? _field_statements = null;
+    internal ViewArray<IStatementView> Statements
+    {
+        get
+        {
+            if (_field_statements == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_statements = (ViewArray<IStatementView>)new ViewArray<IStatementView>(((IndentedBlockNode)base.Green).Statements, _positionOfField, this);
+            }
+            return (ViewArray<IStatementView>)_field_statements;
+        }
+    }
 }
 
 internal sealed partial record OneLinedBlockNode : BlockNode
 {
     internal SimpleStatementsNode Statements => (SimpleStatementsNode)Children![0];
+    public override OneLinedBlockView GetView(int position, IRedView? parent)
+        => new OneLinedBlockView(this, position, parent);
+}
+internal sealed partial class OneLinedBlockView : BlockView
+{
+    internal OneLinedBlockView(OneLinedBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SimpleStatementsView? _field_statements = null;
+    internal SimpleStatementsView Statements
+    {
+        get
+        {
+            if (_field_statements == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_statements = (SimpleStatementsView)((OneLinedBlockNode)base.Green).Statements!.GetView(_positionOfField, this);
+            }
+            return (SimpleStatementsView)_field_statements;
+        }
+    }
 }
 
 internal sealed partial record DecoratorNode : GreenNode
 {
-    internal NamedExpressionNode Value => (NamedExpressionNode)Children![1];
+    internal INamedExpressionNode Value => (INamedExpressionNode)Children![1];
+    public override DecoratorView GetView(int position, IRedView? parent)
+        => new DecoratorView(this, position, parent);
+}
+internal sealed partial class DecoratorView : RedView
+{
+    internal DecoratorView(DecoratorNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private INamedExpressionView? _field_value = null;
+    internal INamedExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (INamedExpressionView)((DecoratorNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (INamedExpressionView)_field_value;
+        }
+    }
 }
 
-internal abstract partial record ClassDefNode : GreenNode, CompoundStatementNode
+internal abstract partial record ClassDefNode : GreenNode, ICompoundStatementNode
 {
+}
+internal abstract partial class ClassDefView : RedView, ICompoundStatementView
+{
+    internal ClassDefView(ClassDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record DecoratedClassDefNode : ClassDefNode
 {
-    internal NodeArray<DecoratorNode> Decorators => ((NodeList)Children![0]).GetArray<DecoratorNode>();
+    internal NodeArray<DecoratorNode> Decorators => (NodeArray<DecoratorNode>)Children![0];
     internal ClassDefRawNode ClassDef => (ClassDefRawNode)Children![1];
+    public override DecoratedClassDefView GetView(int position, IRedView? parent)
+        => new DecoratedClassDefView(this, position, parent);
+}
+internal sealed partial class DecoratedClassDefView : ClassDefView
+{
+    internal DecoratedClassDefView(DecoratedClassDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<DecoratorView>? _field_decorators = null;
+    internal ViewArray<DecoratorView> Decorators
+    {
+        get
+        {
+            if (_field_decorators == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_decorators = (ViewArray<DecoratorView>)new ViewArray<DecoratorView>(((DecoratedClassDefNode)base.Green).Decorators, _positionOfField, this);
+            }
+            return (ViewArray<DecoratorView>)_field_decorators;
+        }
+    }
+
+    private ClassDefRawView? _field_classDef = null;
+    internal ClassDefRawView ClassDef
+    {
+        get
+        {
+            if (_field_classDef == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_classDef = (ClassDefRawView)((DecoratedClassDefNode)base.Green).ClassDef!.GetView(_positionOfField, this);
+            }
+            return (ClassDefRawView)_field_classDef;
+        }
+    }
 }
 
 internal sealed partial record RawClassDefNode : ClassDefNode
 {
     internal ClassDefRawNode Value => (ClassDefRawNode)Children![0];
+    public override RawClassDefView GetView(int position, IRedView? parent)
+        => new RawClassDefView(this, position, parent);
+}
+internal sealed partial class RawClassDefView : ClassDefView
+{
+    internal RawClassDefView(RawClassDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ClassDefRawView? _field_value = null;
+    internal ClassDefRawView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (ClassDefRawView)((RawClassDefNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (ClassDefRawView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record ClassDefRawNode : GreenNode
@@ -13008,26 +14573,181 @@ internal sealed partial record ClassDefRawNode : GreenNode
     internal TypeParametersNode? TypeParameters => Children![2] as TypeParametersNode;
     internal ClassDefArgsNode? Arguments => Children![3] as ClassDefArgsNode;
     internal BlockNode Block => (BlockNode)Children![5];
+    public override ClassDefRawView GetView(int position, IRedView? parent)
+        => new ClassDefRawView(this, position, parent);
+}
+internal sealed partial class ClassDefRawView : RedView
+{
+    internal ClassDefRawView(ClassDefRawNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_name = (TokenView)((ClassDefRawNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
+
+    private TypeParametersView? _field_typeParameters = null;
+    internal TypeParametersView? TypeParameters
+    {
+        get
+        {
+            if (_field_typeParameters == null && ((ClassDefRawNode)base.Green).TypeParameters != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeParameters = (TypeParametersView)((ClassDefRawNode)base.Green).TypeParameters!.GetView(_positionOfField, this);
+            }
+            return (TypeParametersView?)_field_typeParameters;
+        }
+    }
+
+    private ClassDefArgsView? _field_arguments = null;
+    internal ClassDefArgsView? Arguments
+    {
+        get
+        {
+            if (_field_arguments == null && ((ClassDefRawNode)base.Green).Arguments != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_arguments = (ClassDefArgsView)((ClassDefRawNode)base.Green).Arguments!.GetView(_positionOfField, this);
+            }
+            return (ClassDefArgsView?)_field_arguments;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_block = (BlockView)((ClassDefRawNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record ClassDefArgsNode : GreenNode
 {
     internal ArgumentsNode? Value => Children![1] as ArgumentsNode;
+    public override ClassDefArgsView GetView(int position, IRedView? parent)
+        => new ClassDefArgsView(this, position, parent);
+}
+internal sealed partial class ClassDefArgsView : RedView
+{
+    internal ClassDefArgsView(ClassDefArgsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ArgumentsView? _field_value = null;
+    internal ArgumentsView? Value
+    {
+        get
+        {
+            if (_field_value == null && ((ClassDefArgsNode)base.Green).Value != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (ArgumentsView)((ClassDefArgsNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (ArgumentsView?)_field_value;
+        }
+    }
 }
 
-internal abstract partial record FunctionDefNode : GreenNode, CompoundStatementNode
+internal abstract partial record FunctionDefNode : GreenNode, ICompoundStatementNode
 {
+}
+internal abstract partial class FunctionDefView : RedView, ICompoundStatementView
+{
+    internal FunctionDefView(FunctionDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record DecoratedFunctionDefNode : FunctionDefNode
 {
-    internal NodeArray<DecoratorNode> Decorators => ((NodeList)Children![0]).GetArray<DecoratorNode>();
+    internal NodeArray<DecoratorNode> Decorators => (NodeArray<DecoratorNode>)Children![0];
     internal FunctionDefRawNode FunctionDef => (FunctionDefRawNode)Children![1];
+    public override DecoratedFunctionDefView GetView(int position, IRedView? parent)
+        => new DecoratedFunctionDefView(this, position, parent);
+}
+internal sealed partial class DecoratedFunctionDefView : FunctionDefView
+{
+    internal DecoratedFunctionDefView(DecoratedFunctionDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<DecoratorView>? _field_decorators = null;
+    internal ViewArray<DecoratorView> Decorators
+    {
+        get
+        {
+            if (_field_decorators == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_decorators = (ViewArray<DecoratorView>)new ViewArray<DecoratorView>(((DecoratedFunctionDefNode)base.Green).Decorators, _positionOfField, this);
+            }
+            return (ViewArray<DecoratorView>)_field_decorators;
+        }
+    }
+
+    private FunctionDefRawView? _field_functionDef = null;
+    internal FunctionDefRawView FunctionDef
+    {
+        get
+        {
+            if (_field_functionDef == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_functionDef = (FunctionDefRawView)((DecoratedFunctionDefNode)base.Green).FunctionDef!.GetView(_positionOfField, this);
+            }
+            return (FunctionDefRawView)_field_functionDef;
+        }
+    }
 }
 
 internal sealed partial record RawFunctionDefNode : FunctionDefNode
 {
     internal FunctionDefRawNode Value => (FunctionDefRawNode)Children![0];
+    public override RawFunctionDefView GetView(int position, IRedView? parent)
+        => new RawFunctionDefView(this, position, parent);
+}
+internal sealed partial class RawFunctionDefView : FunctionDefView
+{
+    internal RawFunctionDefView(RawFunctionDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private FunctionDefRawView? _field_value = null;
+    internal FunctionDefRawView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (FunctionDefRawView)((RawFunctionDefNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (FunctionDefRawView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record FunctionDefRawNode : GreenNode
@@ -13038,257 +14758,1631 @@ internal abstract partial record FunctionDefRawNode : GreenNode
     internal FunctionReturnHintNode? ReturnHint => Children![6] as FunctionReturnHintNode;
     internal BlockNode Block => (BlockNode)Children![8];
 }
+internal abstract partial class FunctionDefRawView : RedView
+{
+    internal FunctionDefRawView(FunctionDefRawNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_name = (TokenView)((FunctionDefRawNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
+
+    private TypeParametersView? _field_typeParameters = null;
+    internal TypeParametersView? TypeParameters
+    {
+        get
+        {
+            if (_field_typeParameters == null && ((FunctionDefRawNode)base.Green).TypeParameters != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeParameters = (TypeParametersView)((FunctionDefRawNode)base.Green).TypeParameters!.GetView(_positionOfField, this);
+            }
+            return (TypeParametersView?)_field_typeParameters;
+        }
+    }
+
+    private ParametersView? _field_parameters = null;
+    internal ParametersView? Parameters
+    {
+        get
+        {
+            if (_field_parameters == null && ((FunctionDefRawNode)base.Green).Parameters != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_parameters = (ParametersView)((FunctionDefRawNode)base.Green).Parameters!.GetView(_positionOfField, this);
+            }
+            return (ParametersView?)_field_parameters;
+        }
+    }
+
+    private FunctionReturnHintView? _field_returnHint = null;
+    internal FunctionReturnHintView? ReturnHint
+    {
+        get
+        {
+            if (_field_returnHint == null && ((FunctionDefRawNode)base.Green).ReturnHint != null)
+            {
+                var _positionOfField = base.GetPositionFor(6);
+                _field_returnHint = (FunctionReturnHintView)((FunctionDefRawNode)base.Green).ReturnHint!.GetView(_positionOfField, this);
+            }
+            return (FunctionReturnHintView?)_field_returnHint;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(8);
+                _field_block = (BlockView)((FunctionDefRawNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
+}
 
 internal sealed partial record NormalFunctionDefNode : FunctionDefRawNode
 {
+    public override NormalFunctionDefView GetView(int position, IRedView? parent)
+        => new NormalFunctionDefView(this, position, parent);
+}
+internal sealed partial class NormalFunctionDefView : FunctionDefRawView
+{
+    internal NormalFunctionDefView(NormalFunctionDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record AsyncFunctionDefNode : FunctionDefRawNode
 {
+    public override AsyncFunctionDefView GetView(int position, IRedView? parent)
+        => new AsyncFunctionDefView(this, position, parent);
+}
+internal sealed partial class AsyncFunctionDefView : FunctionDefRawView
+{
+    internal AsyncFunctionDefView(AsyncFunctionDefNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record FunctionReturnHintNode : GreenNode
 {
-    internal ExpressionNode Value => (ExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![1];
+    public override FunctionReturnHintView GetView(int position, IRedView? parent)
+        => new FunctionReturnHintView(this, position, parent);
+}
+internal sealed partial class FunctionReturnHintView : RedView
+{
+    internal FunctionReturnHintView(FunctionReturnHintNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((FunctionReturnHintNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record ParametersNode : GreenNode
 {
 }
-
-internal sealed partial record ParametersNode_Derived0 : ParametersNode
+internal abstract partial class ParametersView : RedView
 {
-    internal SlashNoDefaultNode SlashNoDefaultNode => (SlashNoDefaultNode)Children![0];
-    internal NodeArray<ParamNoDefaultNode> ParamNoDefaultNode => ((NodeList)Children![1]).GetArray<ParamNoDefaultNode>();
-    internal NodeArray<ParamWithDefaultNode> ParamWithDefaultNode => ((NodeList)Children![2]).GetArray<ParamWithDefaultNode>();
-    internal StarEtcNode? StarEtcNode => Children![3] as StarEtcNode;
+    internal ParametersView(ParametersNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal sealed partial record ParametersNode_Derived1 : ParametersNode
+internal sealed partial record Parameters_Derived0Node : ParametersNode
 {
-    internal SlashWithDefaultNode SlashWithDefaultNode => (SlashWithDefaultNode)Children![0];
-    internal NodeArray<ParamWithDefaultNode> ParamWithDefaultNode => ((NodeList)Children![1]).GetArray<ParamWithDefaultNode>();
-    internal StarEtcNode? StarEtcNode => Children![2] as StarEtcNode;
+    internal SlashNoDefaultNode SlashNoDefault => (SlashNoDefaultNode)Children![0];
+    internal NodeArray<ParamNoDefaultNode> ParamNoDefault => (NodeArray<ParamNoDefaultNode>)Children![1];
+    internal NodeArray<ParamWithDefaultNode> ParamWithDefault => (NodeArray<ParamWithDefaultNode>)Children![2];
+    internal StarEtcNode? StarEtc => Children![3] as StarEtcNode;
+    public override Parameters_Derived0View GetView(int position, IRedView? parent)
+        => new Parameters_Derived0View(this, position, parent);
+}
+internal sealed partial class Parameters_Derived0View : ParametersView
+{
+    internal Parameters_Derived0View(Parameters_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SlashNoDefaultView? _field_slashNoDefault = null;
+    internal SlashNoDefaultView SlashNoDefault
+    {
+        get
+        {
+            if (_field_slashNoDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_slashNoDefault = (SlashNoDefaultView)((Parameters_Derived0Node)base.Green).SlashNoDefault!.GetView(_positionOfField, this);
+            }
+            return (SlashNoDefaultView)_field_slashNoDefault;
+        }
+    }
+
+    private ViewArray<ParamNoDefaultView>? _field_paramNoDefault = null;
+    internal ViewArray<ParamNoDefaultView> ParamNoDefault
+    {
+        get
+        {
+            if (_field_paramNoDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_paramNoDefault = (ViewArray<ParamNoDefaultView>)new ViewArray<ParamNoDefaultView>(((Parameters_Derived0Node)base.Green).ParamNoDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamNoDefaultView>)_field_paramNoDefault;
+        }
+    }
+
+    private ViewArray<ParamWithDefaultView>? _field_paramWithDefault = null;
+    internal ViewArray<ParamWithDefaultView> ParamWithDefault
+    {
+        get
+        {
+            if (_field_paramWithDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_paramWithDefault = (ViewArray<ParamWithDefaultView>)new ViewArray<ParamWithDefaultView>(((Parameters_Derived0Node)base.Green).ParamWithDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamWithDefaultView>)_field_paramWithDefault;
+        }
+    }
+
+    private StarEtcView? _field_starEtc = null;
+    internal StarEtcView? StarEtc
+    {
+        get
+        {
+            if (_field_starEtc == null && ((Parameters_Derived0Node)base.Green).StarEtc != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_starEtc = (StarEtcView)((Parameters_Derived0Node)base.Green).StarEtc!.GetView(_positionOfField, this);
+            }
+            return (StarEtcView?)_field_starEtc;
+        }
+    }
 }
 
-internal sealed partial record ParametersNode_Derived2 : ParametersNode
+internal sealed partial record Parameters_Derived1Node : ParametersNode
 {
-    internal NodeArray<ParamNoDefaultNode> ParamNoDefaultNode => ((NodeList)Children![0]).GetArray<ParamNoDefaultNode>();
-    internal NodeArray<ParamWithDefaultNode> ParamWithDefaultNode => ((NodeList)Children![1]).GetArray<ParamWithDefaultNode>();
-    internal StarEtcNode? StarEtcNode => Children![2] as StarEtcNode;
+    internal SlashWithDefaultNode SlashWithDefault => (SlashWithDefaultNode)Children![0];
+    internal NodeArray<ParamWithDefaultNode> ParamWithDefault => (NodeArray<ParamWithDefaultNode>)Children![1];
+    internal StarEtcNode? StarEtc => Children![2] as StarEtcNode;
+    public override Parameters_Derived1View GetView(int position, IRedView? parent)
+        => new Parameters_Derived1View(this, position, parent);
+}
+internal sealed partial class Parameters_Derived1View : ParametersView
+{
+    internal Parameters_Derived1View(Parameters_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SlashWithDefaultView? _field_slashWithDefault = null;
+    internal SlashWithDefaultView SlashWithDefault
+    {
+        get
+        {
+            if (_field_slashWithDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_slashWithDefault = (SlashWithDefaultView)((Parameters_Derived1Node)base.Green).SlashWithDefault!.GetView(_positionOfField, this);
+            }
+            return (SlashWithDefaultView)_field_slashWithDefault;
+        }
+    }
+
+    private ViewArray<ParamWithDefaultView>? _field_paramWithDefault = null;
+    internal ViewArray<ParamWithDefaultView> ParamWithDefault
+    {
+        get
+        {
+            if (_field_paramWithDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_paramWithDefault = (ViewArray<ParamWithDefaultView>)new ViewArray<ParamWithDefaultView>(((Parameters_Derived1Node)base.Green).ParamWithDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamWithDefaultView>)_field_paramWithDefault;
+        }
+    }
+
+    private StarEtcView? _field_starEtc = null;
+    internal StarEtcView? StarEtc
+    {
+        get
+        {
+            if (_field_starEtc == null && ((Parameters_Derived1Node)base.Green).StarEtc != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_starEtc = (StarEtcView)((Parameters_Derived1Node)base.Green).StarEtc!.GetView(_positionOfField, this);
+            }
+            return (StarEtcView?)_field_starEtc;
+        }
+    }
 }
 
-internal sealed partial record ParametersNode_Derived3 : ParametersNode
+internal sealed partial record Parameters_Derived2Node : ParametersNode
 {
-    internal NodeArray<ParamWithDefaultNode> ParamWithDefaultNode => ((NodeList)Children![0]).GetArray<ParamWithDefaultNode>();
-    internal StarEtcNode? StarEtcNode => Children![1] as StarEtcNode;
+    internal NodeArray<ParamNoDefaultNode> ParamNoDefault => (NodeArray<ParamNoDefaultNode>)Children![0];
+    internal NodeArray<ParamWithDefaultNode> ParamWithDefault => (NodeArray<ParamWithDefaultNode>)Children![1];
+    internal StarEtcNode? StarEtc => Children![2] as StarEtcNode;
+    public override Parameters_Derived2View GetView(int position, IRedView? parent)
+        => new Parameters_Derived2View(this, position, parent);
+}
+internal sealed partial class Parameters_Derived2View : ParametersView
+{
+    internal Parameters_Derived2View(Parameters_Derived2Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ParamNoDefaultView>? _field_paramNoDefault = null;
+    internal ViewArray<ParamNoDefaultView> ParamNoDefault
+    {
+        get
+        {
+            if (_field_paramNoDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_paramNoDefault = (ViewArray<ParamNoDefaultView>)new ViewArray<ParamNoDefaultView>(((Parameters_Derived2Node)base.Green).ParamNoDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamNoDefaultView>)_field_paramNoDefault;
+        }
+    }
+
+    private ViewArray<ParamWithDefaultView>? _field_paramWithDefault = null;
+    internal ViewArray<ParamWithDefaultView> ParamWithDefault
+    {
+        get
+        {
+            if (_field_paramWithDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_paramWithDefault = (ViewArray<ParamWithDefaultView>)new ViewArray<ParamWithDefaultView>(((Parameters_Derived2Node)base.Green).ParamWithDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamWithDefaultView>)_field_paramWithDefault;
+        }
+    }
+
+    private StarEtcView? _field_starEtc = null;
+    internal StarEtcView? StarEtc
+    {
+        get
+        {
+            if (_field_starEtc == null && ((Parameters_Derived2Node)base.Green).StarEtc != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_starEtc = (StarEtcView)((Parameters_Derived2Node)base.Green).StarEtc!.GetView(_positionOfField, this);
+            }
+            return (StarEtcView?)_field_starEtc;
+        }
+    }
 }
 
-internal sealed partial record ParametersNode_Derived4 : ParametersNode
+internal sealed partial record Parameters_Derived3Node : ParametersNode
 {
-    internal StarEtcNode StarEtcNode => (StarEtcNode)Children![0];
+    internal NodeArray<ParamWithDefaultNode> ParamWithDefault => (NodeArray<ParamWithDefaultNode>)Children![0];
+    internal StarEtcNode? StarEtc => Children![1] as StarEtcNode;
+    public override Parameters_Derived3View GetView(int position, IRedView? parent)
+        => new Parameters_Derived3View(this, position, parent);
+}
+internal sealed partial class Parameters_Derived3View : ParametersView
+{
+    internal Parameters_Derived3View(Parameters_Derived3Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ParamWithDefaultView>? _field_paramWithDefault = null;
+    internal ViewArray<ParamWithDefaultView> ParamWithDefault
+    {
+        get
+        {
+            if (_field_paramWithDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_paramWithDefault = (ViewArray<ParamWithDefaultView>)new ViewArray<ParamWithDefaultView>(((Parameters_Derived3Node)base.Green).ParamWithDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamWithDefaultView>)_field_paramWithDefault;
+        }
+    }
+
+    private StarEtcView? _field_starEtc = null;
+    internal StarEtcView? StarEtc
+    {
+        get
+        {
+            if (_field_starEtc == null && ((Parameters_Derived3Node)base.Green).StarEtc != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_starEtc = (StarEtcView)((Parameters_Derived3Node)base.Green).StarEtc!.GetView(_positionOfField, this);
+            }
+            return (StarEtcView?)_field_starEtc;
+        }
+    }
+}
+
+internal sealed partial record Parameters_Derived4Node : ParametersNode
+{
+    internal StarEtcNode StarEtc => (StarEtcNode)Children![0];
+    public override Parameters_Derived4View GetView(int position, IRedView? parent)
+        => new Parameters_Derived4View(this, position, parent);
+}
+internal sealed partial class Parameters_Derived4View : ParametersView
+{
+    internal Parameters_Derived4View(Parameters_Derived4Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarEtcView? _field_starEtc = null;
+    internal StarEtcView StarEtc
+    {
+        get
+        {
+            if (_field_starEtc == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_starEtc = (StarEtcView)((Parameters_Derived4Node)base.Green).StarEtc!.GetView(_positionOfField, this);
+            }
+            return (StarEtcView)_field_starEtc;
+        }
+    }
 }
 
 internal abstract partial record SlashNoDefaultNode : GreenNode
 {
-    internal NodeArray<ParamNoDefaultNode> ParamNoDefaultNode => ((NodeList)Children![0]).GetArray<ParamNoDefaultNode>();
-    internal TokenNode TokenNode => (TokenNode)Children![1];
+    internal NodeArray<ParamNoDefaultNode> ParamNoDefault => (NodeArray<ParamNoDefaultNode>)Children![0];
+    internal TokenNode Token => (TokenNode)Children![1];
+}
+internal abstract partial class SlashNoDefaultView : RedView
+{
+    internal SlashNoDefaultView(SlashNoDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ParamNoDefaultView>? _field_paramNoDefault = null;
+    internal ViewArray<ParamNoDefaultView> ParamNoDefault
+    {
+        get
+        {
+            if (_field_paramNoDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_paramNoDefault = (ViewArray<ParamNoDefaultView>)new ViewArray<ParamNoDefaultView>(((SlashNoDefaultNode)base.Green).ParamNoDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamNoDefaultView>)_field_paramNoDefault;
+        }
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token = (TokenView)((SlashNoDefaultNode)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record SlashNoDefaultNode_Derived0 : SlashNoDefaultNode
+internal sealed partial record SlashNoDefault_Derived0Node : SlashNoDefaultNode
 {
-    internal TokenNode TokenNode1 => (TokenNode)Children![2];
+    internal TokenNode Token1 => (TokenNode)Children![2];
+    public override SlashNoDefault_Derived0View GetView(int position, IRedView? parent)
+        => new SlashNoDefault_Derived0View(this, position, parent);
+}
+internal sealed partial class SlashNoDefault_Derived0View : SlashNoDefaultView
+{
+    internal SlashNoDefault_Derived0View(SlashNoDefault_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token1 = null;
+    internal TokenView Token1
+    {
+        get
+        {
+            if (_field_token1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_token1 = (TokenView)((SlashNoDefault_Derived0Node)base.Green).Token1!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token1;
+        }
+    }
 }
 
-internal sealed partial record SlashNoDefaultNode_Derived1 : SlashNoDefaultNode
+internal sealed partial record SlashNoDefault_Derived1Node : SlashNoDefaultNode
 {
+    public override SlashNoDefault_Derived1View GetView(int position, IRedView? parent)
+        => new SlashNoDefault_Derived1View(this, position, parent);
+}
+internal sealed partial class SlashNoDefault_Derived1View : SlashNoDefaultView
+{
+    internal SlashNoDefault_Derived1View(SlashNoDefault_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal abstract partial record SlashWithDefaultNode : GreenNode
 {
-    internal NodeArray<ParamNoDefaultNode> ParamNoDefaultNode => ((NodeList)Children![0]).GetArray<ParamNoDefaultNode>();
-    internal NodeArray<ParamWithDefaultNode> ParamWithDefaultNode => ((NodeList)Children![1]).GetArray<ParamWithDefaultNode>();
-    internal TokenNode TokenNode => (TokenNode)Children![2];
+    internal NodeArray<ParamNoDefaultNode> ParamNoDefault => (NodeArray<ParamNoDefaultNode>)Children![0];
+    internal NodeArray<ParamWithDefaultNode> ParamWithDefault => (NodeArray<ParamWithDefaultNode>)Children![1];
+    internal TokenNode Token => (TokenNode)Children![2];
+}
+internal abstract partial class SlashWithDefaultView : RedView
+{
+    internal SlashWithDefaultView(SlashWithDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ParamNoDefaultView>? _field_paramNoDefault = null;
+    internal ViewArray<ParamNoDefaultView> ParamNoDefault
+    {
+        get
+        {
+            if (_field_paramNoDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_paramNoDefault = (ViewArray<ParamNoDefaultView>)new ViewArray<ParamNoDefaultView>(((SlashWithDefaultNode)base.Green).ParamNoDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamNoDefaultView>)_field_paramNoDefault;
+        }
+    }
+
+    private ViewArray<ParamWithDefaultView>? _field_paramWithDefault = null;
+    internal ViewArray<ParamWithDefaultView> ParamWithDefault
+    {
+        get
+        {
+            if (_field_paramWithDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_paramWithDefault = (ViewArray<ParamWithDefaultView>)new ViewArray<ParamWithDefaultView>(((SlashWithDefaultNode)base.Green).ParamWithDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamWithDefaultView>)_field_paramWithDefault;
+        }
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_token = (TokenView)((SlashWithDefaultNode)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record SlashWithDefaultNode_Derived0 : SlashWithDefaultNode
+internal sealed partial record SlashWithDefault_Derived0Node : SlashWithDefaultNode
 {
-    internal TokenNode TokenNode1 => (TokenNode)Children![3];
+    internal TokenNode Token1 => (TokenNode)Children![3];
+    public override SlashWithDefault_Derived0View GetView(int position, IRedView? parent)
+        => new SlashWithDefault_Derived0View(this, position, parent);
+}
+internal sealed partial class SlashWithDefault_Derived0View : SlashWithDefaultView
+{
+    internal SlashWithDefault_Derived0View(SlashWithDefault_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token1 = null;
+    internal TokenView Token1
+    {
+        get
+        {
+            if (_field_token1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_token1 = (TokenView)((SlashWithDefault_Derived0Node)base.Green).Token1!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token1;
+        }
+    }
 }
 
-internal sealed partial record SlashWithDefaultNode_Derived1 : SlashWithDefaultNode
+internal sealed partial record SlashWithDefault_Derived1Node : SlashWithDefaultNode
 {
+    public override SlashWithDefault_Derived1View GetView(int position, IRedView? parent)
+        => new SlashWithDefault_Derived1View(this, position, parent);
+}
+internal sealed partial class SlashWithDefault_Derived1View : SlashWithDefaultView
+{
+    internal SlashWithDefault_Derived1View(SlashWithDefault_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal abstract partial record StarEtcNode : GreenNode
 {
 }
-
-internal sealed partial record StarEtcNode_Derived0 : StarEtcNode
+internal abstract partial class StarEtcView : RedView
 {
-    internal TokenNode TokenNode => (TokenNode)Children![0];
-    internal ParamNoDefaultNode ParamNoDefaultNode => (ParamNoDefaultNode)Children![1];
-    internal NodeArray<ParamMaybeDefaultNode> ParamMaybeDefaultNode => ((NodeList)Children![2]).GetArray<ParamMaybeDefaultNode>();
-    internal KeywordsNode? KeywordsNode => Children![3] as KeywordsNode;
+    internal StarEtcView(StarEtcNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal sealed partial record StarEtcNode_Derived1 : StarEtcNode
+internal sealed partial record StarEtc_Derived0Node : StarEtcNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![0];
-    internal ParamNoDefaultStarAnnotationNode ParamNoDefaultStarAnnotationNode => (ParamNoDefaultStarAnnotationNode)Children![1];
-    internal NodeArray<ParamMaybeDefaultNode> ParamMaybeDefaultNode => ((NodeList)Children![2]).GetArray<ParamMaybeDefaultNode>();
-    internal KeywordsNode? KeywordsNode => Children![3] as KeywordsNode;
+    internal TokenNode Token => (TokenNode)Children![0];
+    internal ParamNoDefaultNode ParamNoDefault => (ParamNoDefaultNode)Children![1];
+    internal NodeArray<ParamMaybeDefaultNode> ParamMaybeDefault => (NodeArray<ParamMaybeDefaultNode>)Children![2];
+    internal KeywordsNode? Keywords => Children![3] as KeywordsNode;
+    public override StarEtc_Derived0View GetView(int position, IRedView? parent)
+        => new StarEtc_Derived0View(this, position, parent);
+}
+internal sealed partial class StarEtc_Derived0View : StarEtcView
+{
+    internal StarEtc_Derived0View(StarEtc_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_token = (TokenView)((StarEtc_Derived0Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
+
+    private ParamNoDefaultView? _field_paramNoDefault = null;
+    internal ParamNoDefaultView ParamNoDefault
+    {
+        get
+        {
+            if (_field_paramNoDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_paramNoDefault = (ParamNoDefaultView)((StarEtc_Derived0Node)base.Green).ParamNoDefault!.GetView(_positionOfField, this);
+            }
+            return (ParamNoDefaultView)_field_paramNoDefault;
+        }
+    }
+
+    private ViewArray<ParamMaybeDefaultView>? _field_paramMaybeDefault = null;
+    internal ViewArray<ParamMaybeDefaultView> ParamMaybeDefault
+    {
+        get
+        {
+            if (_field_paramMaybeDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_paramMaybeDefault = (ViewArray<ParamMaybeDefaultView>)new ViewArray<ParamMaybeDefaultView>(((StarEtc_Derived0Node)base.Green).ParamMaybeDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamMaybeDefaultView>)_field_paramMaybeDefault;
+        }
+    }
+
+    private KeywordsView? _field_keywords = null;
+    internal KeywordsView? Keywords
+    {
+        get
+        {
+            if (_field_keywords == null && ((StarEtc_Derived0Node)base.Green).Keywords != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_keywords = (KeywordsView)((StarEtc_Derived0Node)base.Green).Keywords!.GetView(_positionOfField, this);
+            }
+            return (KeywordsView?)_field_keywords;
+        }
+    }
 }
 
-internal sealed partial record StarEtcNode_Derived2 : StarEtcNode
+internal sealed partial record StarEtc_Derived1Node : StarEtcNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![0];
-    internal TokenNode TokenNode1 => (TokenNode)Children![1];
-    internal NodeArray<ParamMaybeDefaultNode> ParamMaybeDefaultNode => ((NodeList)Children![2]).GetArray<ParamMaybeDefaultNode>();
-    internal KeywordsNode? KeywordsNode => Children![3] as KeywordsNode;
+    internal TokenNode Token => (TokenNode)Children![0];
+    internal ParamNoDefaultStarAnnotationNode ParamNoDefaultStarAnnotation => (ParamNoDefaultStarAnnotationNode)Children![1];
+    internal NodeArray<ParamMaybeDefaultNode> ParamMaybeDefault => (NodeArray<ParamMaybeDefaultNode>)Children![2];
+    internal KeywordsNode? Keywords => Children![3] as KeywordsNode;
+    public override StarEtc_Derived1View GetView(int position, IRedView? parent)
+        => new StarEtc_Derived1View(this, position, parent);
+}
+internal sealed partial class StarEtc_Derived1View : StarEtcView
+{
+    internal StarEtc_Derived1View(StarEtc_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_token = (TokenView)((StarEtc_Derived1Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
+
+    private ParamNoDefaultStarAnnotationView? _field_paramNoDefaultStarAnnotation = null;
+    internal ParamNoDefaultStarAnnotationView ParamNoDefaultStarAnnotation
+    {
+        get
+        {
+            if (_field_paramNoDefaultStarAnnotation == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_paramNoDefaultStarAnnotation = (ParamNoDefaultStarAnnotationView)((StarEtc_Derived1Node)base.Green).ParamNoDefaultStarAnnotation!.GetView(_positionOfField, this);
+            }
+            return (ParamNoDefaultStarAnnotationView)_field_paramNoDefaultStarAnnotation;
+        }
+    }
+
+    private ViewArray<ParamMaybeDefaultView>? _field_paramMaybeDefault = null;
+    internal ViewArray<ParamMaybeDefaultView> ParamMaybeDefault
+    {
+        get
+        {
+            if (_field_paramMaybeDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_paramMaybeDefault = (ViewArray<ParamMaybeDefaultView>)new ViewArray<ParamMaybeDefaultView>(((StarEtc_Derived1Node)base.Green).ParamMaybeDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamMaybeDefaultView>)_field_paramMaybeDefault;
+        }
+    }
+
+    private KeywordsView? _field_keywords = null;
+    internal KeywordsView? Keywords
+    {
+        get
+        {
+            if (_field_keywords == null && ((StarEtc_Derived1Node)base.Green).Keywords != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_keywords = (KeywordsView)((StarEtc_Derived1Node)base.Green).Keywords!.GetView(_positionOfField, this);
+            }
+            return (KeywordsView?)_field_keywords;
+        }
+    }
 }
 
-internal sealed partial record StarEtcNode_Derived3 : StarEtcNode
+internal sealed partial record StarEtc_Derived2Node : StarEtcNode
 {
-    internal KeywordsNode KeywordsNode => (KeywordsNode)Children![0];
+    internal TokenNode Token => (TokenNode)Children![0];
+    internal TokenNode Token1 => (TokenNode)Children![1];
+    internal NodeArray<ParamMaybeDefaultNode> ParamMaybeDefault => (NodeArray<ParamMaybeDefaultNode>)Children![2];
+    internal KeywordsNode? Keywords => Children![3] as KeywordsNode;
+    public override StarEtc_Derived2View GetView(int position, IRedView? parent)
+        => new StarEtc_Derived2View(this, position, parent);
+}
+internal sealed partial class StarEtc_Derived2View : StarEtcView
+{
+    internal StarEtc_Derived2View(StarEtc_Derived2Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_token = (TokenView)((StarEtc_Derived2Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
+
+    private TokenView? _field_token1 = null;
+    internal TokenView Token1
+    {
+        get
+        {
+            if (_field_token1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token1 = (TokenView)((StarEtc_Derived2Node)base.Green).Token1!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token1;
+        }
+    }
+
+    private ViewArray<ParamMaybeDefaultView>? _field_paramMaybeDefault = null;
+    internal ViewArray<ParamMaybeDefaultView> ParamMaybeDefault
+    {
+        get
+        {
+            if (_field_paramMaybeDefault == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_paramMaybeDefault = (ViewArray<ParamMaybeDefaultView>)new ViewArray<ParamMaybeDefaultView>(((StarEtc_Derived2Node)base.Green).ParamMaybeDefault, _positionOfField, this);
+            }
+            return (ViewArray<ParamMaybeDefaultView>)_field_paramMaybeDefault;
+        }
+    }
+
+    private KeywordsView? _field_keywords = null;
+    internal KeywordsView? Keywords
+    {
+        get
+        {
+            if (_field_keywords == null && ((StarEtc_Derived2Node)base.Green).Keywords != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_keywords = (KeywordsView)((StarEtc_Derived2Node)base.Green).Keywords!.GetView(_positionOfField, this);
+            }
+            return (KeywordsView?)_field_keywords;
+        }
+    }
+}
+
+internal sealed partial record StarEtc_Derived3Node : StarEtcNode
+{
+    internal KeywordsNode Keywords => (KeywordsNode)Children![0];
+    public override StarEtc_Derived3View GetView(int position, IRedView? parent)
+        => new StarEtc_Derived3View(this, position, parent);
+}
+internal sealed partial class StarEtc_Derived3View : StarEtcView
+{
+    internal StarEtc_Derived3View(StarEtc_Derived3Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private KeywordsView? _field_keywords = null;
+    internal KeywordsView Keywords
+    {
+        get
+        {
+            if (_field_keywords == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_keywords = (KeywordsView)((StarEtc_Derived3Node)base.Green).Keywords!.GetView(_positionOfField, this);
+            }
+            return (KeywordsView)_field_keywords;
+        }
+    }
 }
 
 internal sealed partial record KeywordsNode : GreenNode
 {
     internal ParamNoDefaultNode Parameter => (ParamNoDefaultNode)Children![1];
+    public override KeywordsView GetView(int position, IRedView? parent)
+        => new KeywordsView(this, position, parent);
+}
+internal sealed partial class KeywordsView : RedView
+{
+    internal KeywordsView(KeywordsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ParamNoDefaultView? _field_parameter = null;
+    internal ParamNoDefaultView Parameter
+    {
+        get
+        {
+            if (_field_parameter == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_parameter = (ParamNoDefaultView)((KeywordsNode)base.Green).Parameter!.GetView(_positionOfField, this);
+            }
+            return (ParamNoDefaultView)_field_parameter;
+        }
+    }
 }
 
 internal abstract partial record ParamNoDefaultNode : GreenNode
 {
-    internal ParamNode ParamNode => (ParamNode)Children![0];
+    internal ParamNode Param => (ParamNode)Children![0];
+}
+internal abstract partial class ParamNoDefaultView : RedView
+{
+    internal ParamNoDefaultView(ParamNoDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ParamView? _field_param = null;
+    internal ParamView Param
+    {
+        get
+        {
+            if (_field_param == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_param = (ParamView)((ParamNoDefaultNode)base.Green).Param!.GetView(_positionOfField, this);
+            }
+            return (ParamView)_field_param;
+        }
+    }
 }
 
-internal sealed partial record ParamNoDefaultNode_Derived0 : ParamNoDefaultNode
+internal sealed partial record ParamNoDefault_Derived0Node : ParamNoDefaultNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![1];
+    internal TokenNode Token => (TokenNode)Children![1];
+    public override ParamNoDefault_Derived0View GetView(int position, IRedView? parent)
+        => new ParamNoDefault_Derived0View(this, position, parent);
+}
+internal sealed partial class ParamNoDefault_Derived0View : ParamNoDefaultView
+{
+    internal ParamNoDefault_Derived0View(ParamNoDefault_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token = (TokenView)((ParamNoDefault_Derived0Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record ParamNoDefaultNode_Derived1 : ParamNoDefaultNode
+internal sealed partial record ParamNoDefault_Derived1Node : ParamNoDefaultNode
 {
+    public override ParamNoDefault_Derived1View GetView(int position, IRedView? parent)
+        => new ParamNoDefault_Derived1View(this, position, parent);
+}
+internal sealed partial class ParamNoDefault_Derived1View : ParamNoDefaultView
+{
+    internal ParamNoDefault_Derived1View(ParamNoDefault_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal abstract partial record ParamNoDefaultStarAnnotationNode : GreenNode
 {
-    internal ParamStarAnnotationNode ParamStarAnnotationNode => (ParamStarAnnotationNode)Children![0];
+    internal ParamStarAnnotationNode ParamStarAnnotation => (ParamStarAnnotationNode)Children![0];
+}
+internal abstract partial class ParamNoDefaultStarAnnotationView : RedView
+{
+    internal ParamNoDefaultStarAnnotationView(ParamNoDefaultStarAnnotationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ParamStarAnnotationView? _field_paramStarAnnotation = null;
+    internal ParamStarAnnotationView ParamStarAnnotation
+    {
+        get
+        {
+            if (_field_paramStarAnnotation == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_paramStarAnnotation = (ParamStarAnnotationView)((ParamNoDefaultStarAnnotationNode)base.Green).ParamStarAnnotation!.GetView(_positionOfField, this);
+            }
+            return (ParamStarAnnotationView)_field_paramStarAnnotation;
+        }
+    }
 }
 
-internal sealed partial record ParamNoDefaultStarAnnotationNode_Derived0 : ParamNoDefaultStarAnnotationNode
+internal sealed partial record ParamNoDefaultStarAnnotation_Derived0Node : ParamNoDefaultStarAnnotationNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![1];
+    internal TokenNode Token => (TokenNode)Children![1];
+    public override ParamNoDefaultStarAnnotation_Derived0View GetView(int position, IRedView? parent)
+        => new ParamNoDefaultStarAnnotation_Derived0View(this, position, parent);
+}
+internal sealed partial class ParamNoDefaultStarAnnotation_Derived0View : ParamNoDefaultStarAnnotationView
+{
+    internal ParamNoDefaultStarAnnotation_Derived0View(ParamNoDefaultStarAnnotation_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token = (TokenView)((ParamNoDefaultStarAnnotation_Derived0Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record ParamNoDefaultStarAnnotationNode_Derived1 : ParamNoDefaultStarAnnotationNode
+internal sealed partial record ParamNoDefaultStarAnnotation_Derived1Node : ParamNoDefaultStarAnnotationNode
 {
+    public override ParamNoDefaultStarAnnotation_Derived1View GetView(int position, IRedView? parent)
+        => new ParamNoDefaultStarAnnotation_Derived1View(this, position, parent);
+}
+internal sealed partial class ParamNoDefaultStarAnnotation_Derived1View : ParamNoDefaultStarAnnotationView
+{
+    internal ParamNoDefaultStarAnnotation_Derived1View(ParamNoDefaultStarAnnotation_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal abstract partial record ParamWithDefaultNode : GreenNode
 {
-    internal ParamNode ParamNode => (ParamNode)Children![0];
-    internal DefaultValueNode DefaultValueNode => (DefaultValueNode)Children![1];
+    internal ParamNode Param => (ParamNode)Children![0];
+    internal DefaultValueNode DefaultValue => (DefaultValueNode)Children![1];
+}
+internal abstract partial class ParamWithDefaultView : RedView
+{
+    internal ParamWithDefaultView(ParamWithDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ParamView? _field_param = null;
+    internal ParamView Param
+    {
+        get
+        {
+            if (_field_param == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_param = (ParamView)((ParamWithDefaultNode)base.Green).Param!.GetView(_positionOfField, this);
+            }
+            return (ParamView)_field_param;
+        }
+    }
+
+    private DefaultValueView? _field_defaultValue = null;
+    internal DefaultValueView DefaultValue
+    {
+        get
+        {
+            if (_field_defaultValue == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_defaultValue = (DefaultValueView)((ParamWithDefaultNode)base.Green).DefaultValue!.GetView(_positionOfField, this);
+            }
+            return (DefaultValueView)_field_defaultValue;
+        }
+    }
 }
 
-internal sealed partial record ParamWithDefaultNode_Derived0 : ParamWithDefaultNode
+internal sealed partial record ParamWithDefault_Derived0Node : ParamWithDefaultNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![2];
+    internal TokenNode Token => (TokenNode)Children![2];
+    public override ParamWithDefault_Derived0View GetView(int position, IRedView? parent)
+        => new ParamWithDefault_Derived0View(this, position, parent);
+}
+internal sealed partial class ParamWithDefault_Derived0View : ParamWithDefaultView
+{
+    internal ParamWithDefault_Derived0View(ParamWithDefault_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_token = (TokenView)((ParamWithDefault_Derived0Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record ParamWithDefaultNode_Derived1 : ParamWithDefaultNode
+internal sealed partial record ParamWithDefault_Derived1Node : ParamWithDefaultNode
 {
+    public override ParamWithDefault_Derived1View GetView(int position, IRedView? parent)
+        => new ParamWithDefault_Derived1View(this, position, parent);
+}
+internal sealed partial class ParamWithDefault_Derived1View : ParamWithDefaultView
+{
+    internal ParamWithDefault_Derived1View(ParamWithDefault_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal abstract partial record ParamMaybeDefaultNode : GreenNode
 {
-    internal ParamNode ParamNode => (ParamNode)Children![0];
-    internal DefaultValueNode? DefaultValueNode => Children![1] as DefaultValueNode;
+    internal ParamNode Param => (ParamNode)Children![0];
+    internal DefaultValueNode? DefaultValue => Children![1] as DefaultValueNode;
+}
+internal abstract partial class ParamMaybeDefaultView : RedView
+{
+    internal ParamMaybeDefaultView(ParamMaybeDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ParamView? _field_param = null;
+    internal ParamView Param
+    {
+        get
+        {
+            if (_field_param == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_param = (ParamView)((ParamMaybeDefaultNode)base.Green).Param!.GetView(_positionOfField, this);
+            }
+            return (ParamView)_field_param;
+        }
+    }
+
+    private DefaultValueView? _field_defaultValue = null;
+    internal DefaultValueView? DefaultValue
+    {
+        get
+        {
+            if (_field_defaultValue == null && ((ParamMaybeDefaultNode)base.Green).DefaultValue != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_defaultValue = (DefaultValueView)((ParamMaybeDefaultNode)base.Green).DefaultValue!.GetView(_positionOfField, this);
+            }
+            return (DefaultValueView?)_field_defaultValue;
+        }
+    }
 }
 
-internal sealed partial record ParamMaybeDefaultNode_Derived0 : ParamMaybeDefaultNode
+internal sealed partial record ParamMaybeDefault_Derived0Node : ParamMaybeDefaultNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![2];
+    internal TokenNode Token => (TokenNode)Children![2];
+    public override ParamMaybeDefault_Derived0View GetView(int position, IRedView? parent)
+        => new ParamMaybeDefault_Derived0View(this, position, parent);
+}
+internal sealed partial class ParamMaybeDefault_Derived0View : ParamMaybeDefaultView
+{
+    internal ParamMaybeDefault_Derived0View(ParamMaybeDefault_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_token = (TokenView)((ParamMaybeDefault_Derived0Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record ParamMaybeDefaultNode_Derived1 : ParamMaybeDefaultNode
+internal sealed partial record ParamMaybeDefault_Derived1Node : ParamMaybeDefaultNode
 {
+    public override ParamMaybeDefault_Derived1View GetView(int position, IRedView? parent)
+        => new ParamMaybeDefault_Derived1View(this, position, parent);
+}
+internal sealed partial class ParamMaybeDefault_Derived1View : ParamMaybeDefaultView
+{
+    internal ParamMaybeDefault_Derived1View(ParamMaybeDefault_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record ParamNode : GreenNode
 {
     internal TokenNode Name => (TokenNode)Children![0];
     internal AnnotationNode? Annotation => Children![1] as AnnotationNode;
+    public override ParamView GetView(int position, IRedView? parent)
+        => new ParamView(this, position, parent);
+}
+internal sealed partial class ParamView : RedView
+{
+    internal ParamView(ParamNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_name = (TokenView)((ParamNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
+
+    private AnnotationView? _field_annotation = null;
+    internal AnnotationView? Annotation
+    {
+        get
+        {
+            if (_field_annotation == null && ((ParamNode)base.Green).Annotation != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_annotation = (AnnotationView)((ParamNode)base.Green).Annotation!.GetView(_positionOfField, this);
+            }
+            return (AnnotationView?)_field_annotation;
+        }
+    }
 }
 
 internal sealed partial record ParamStarAnnotationNode : GreenNode
 {
     internal TokenNode Name => (TokenNode)Children![0];
     internal StarAnnotationNode Annotation => (StarAnnotationNode)Children![1];
+    public override ParamStarAnnotationView GetView(int position, IRedView? parent)
+        => new ParamStarAnnotationView(this, position, parent);
+}
+internal sealed partial class ParamStarAnnotationView : RedView
+{
+    internal ParamStarAnnotationView(ParamStarAnnotationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_name = (TokenView)((ParamStarAnnotationNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
+
+    private StarAnnotationView? _field_annotation = null;
+    internal StarAnnotationView Annotation
+    {
+        get
+        {
+            if (_field_annotation == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_annotation = (StarAnnotationView)((ParamStarAnnotationNode)base.Green).Annotation!.GetView(_positionOfField, this);
+            }
+            return (StarAnnotationView)_field_annotation;
+        }
+    }
 }
 
 internal sealed partial record AnnotationNode : GreenNode
 {
-    internal ExpressionNode Value => (ExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![1];
+    public override AnnotationView GetView(int position, IRedView? parent)
+        => new AnnotationView(this, position, parent);
+}
+internal sealed partial class AnnotationView : RedView
+{
+    internal AnnotationView(AnnotationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((AnnotationNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record StarAnnotationNode : GreenNode
 {
-    internal StarExpressionNode Value => (StarExpressionNode)Children![1];
+    internal IStarExpressionNode Value => (IStarExpressionNode)Children![1];
+    public override StarAnnotationView GetView(int position, IRedView? parent)
+        => new StarAnnotationView(this, position, parent);
+}
+internal sealed partial class StarAnnotationView : RedView
+{
+    internal StarAnnotationView(StarAnnotationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarExpressionView? _field_value = null;
+    internal IStarExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IStarExpressionView)((StarAnnotationNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IStarExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record DefaultValueNode : GreenNode
 {
-    internal ExpressionNode Value => (ExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![1];
+    public override DefaultValueView GetView(int position, IRedView? parent)
+        => new DefaultValueView(this, position, parent);
+}
+internal sealed partial class DefaultValueView : RedView
+{
+    internal DefaultValueView(DefaultValueNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((DefaultValueNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
-internal abstract partial record IfStatementNode : GreenNode, CompoundStatementNode
+internal abstract partial record IfStatementNode : GreenNode, ICompoundStatementNode
 {
-    internal NamedExpressionNode Condition => (NamedExpressionNode)Children![1];
+    internal INamedExpressionNode Condition => (INamedExpressionNode)Children![1];
     internal BlockNode Block => (BlockNode)Children![3];
+}
+internal abstract partial class IfStatementView : RedView, ICompoundStatementView
+{
+    internal IfStatementView(IfStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private INamedExpressionView? _field_condition = null;
+    internal INamedExpressionView Condition
+    {
+        get
+        {
+            if (_field_condition == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_condition = (INamedExpressionView)((IfStatementNode)base.Green).Condition!.GetView(_positionOfField, this);
+            }
+            return (INamedExpressionView)_field_condition;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_block = (BlockView)((IfStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record IfElifStatementNode : IfStatementNode
 {
     internal ElifStatementNode Elif => (ElifStatementNode)Children![4];
+    public override IfElifStatementView GetView(int position, IRedView? parent)
+        => new IfElifStatementView(this, position, parent);
+}
+internal sealed partial class IfElifStatementView : IfStatementView
+{
+    internal IfElifStatementView(IfElifStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ElifStatementView? _field_elif = null;
+    internal ElifStatementView Elif
+    {
+        get
+        {
+            if (_field_elif == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_elif = (ElifStatementView)((IfElifStatementNode)base.Green).Elif!.GetView(_positionOfField, this);
+            }
+            return (ElifStatementView)_field_elif;
+        }
+    }
 }
 
 internal sealed partial record IfMaybeElseStatementNode : IfStatementNode
 {
     internal ElseBlockNode? Else => Children![4] as ElseBlockNode;
+    public override IfMaybeElseStatementView GetView(int position, IRedView? parent)
+        => new IfMaybeElseStatementView(this, position, parent);
+}
+internal sealed partial class IfMaybeElseStatementView : IfStatementView
+{
+    internal IfMaybeElseStatementView(IfMaybeElseStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((IfMaybeElseStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_else = (ElseBlockView)((IfMaybeElseStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
 }
 
 internal abstract partial record ElifStatementNode : GreenNode
 {
-    internal NamedExpressionNode Condition => (NamedExpressionNode)Children![1];
+    internal INamedExpressionNode Condition => (INamedExpressionNode)Children![1];
     internal BlockNode Block => (BlockNode)Children![3];
+}
+internal abstract partial class ElifStatementView : RedView
+{
+    internal ElifStatementView(ElifStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private INamedExpressionView? _field_condition = null;
+    internal INamedExpressionView Condition
+    {
+        get
+        {
+            if (_field_condition == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_condition = (INamedExpressionView)((ElifStatementNode)base.Green).Condition!.GetView(_positionOfField, this);
+            }
+            return (INamedExpressionView)_field_condition;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_block = (BlockView)((ElifStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record ElifElifStatementNode : ElifStatementNode
 {
     internal ElifStatementNode Elif => (ElifStatementNode)Children![4];
+    public override ElifElifStatementView GetView(int position, IRedView? parent)
+        => new ElifElifStatementView(this, position, parent);
+}
+internal sealed partial class ElifElifStatementView : ElifStatementView
+{
+    internal ElifElifStatementView(ElifElifStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ElifStatementView? _field_elif = null;
+    internal ElifStatementView Elif
+    {
+        get
+        {
+            if (_field_elif == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_elif = (ElifStatementView)((ElifElifStatementNode)base.Green).Elif!.GetView(_positionOfField, this);
+            }
+            return (ElifStatementView)_field_elif;
+        }
+    }
 }
 
 internal sealed partial record ElifMaybeElseStatementNode : ElifStatementNode
 {
     internal ElseBlockNode? Else => Children![4] as ElseBlockNode;
+    public override ElifMaybeElseStatementView GetView(int position, IRedView? parent)
+        => new ElifMaybeElseStatementView(this, position, parent);
+}
+internal sealed partial class ElifMaybeElseStatementView : ElifStatementView
+{
+    internal ElifMaybeElseStatementView(ElifMaybeElseStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((ElifMaybeElseStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_else = (ElseBlockView)((ElifMaybeElseStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
 }
 
 internal sealed partial record ElseBlockNode : GreenNode
 {
     internal BlockNode Block => (BlockNode)Children![2];
+    public override ElseBlockView GetView(int position, IRedView? parent)
+        => new ElseBlockView(this, position, parent);
+}
+internal sealed partial class ElseBlockView : RedView
+{
+    internal ElseBlockView(ElseBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_block = (BlockView)((ElseBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
-internal sealed partial record WhileStatementNode : GreenNode, CompoundStatementNode
+internal sealed partial record WhileStatementNode : GreenNode, ICompoundStatementNode
 {
-    internal NamedExpressionNode Condition => (NamedExpressionNode)Children![1];
+    internal INamedExpressionNode Condition => (INamedExpressionNode)Children![1];
     internal BlockNode Block => (BlockNode)Children![3];
     internal ElseBlockNode? Else => Children![4] as ElseBlockNode;
+    public override WhileStatementView GetView(int position, IRedView? parent)
+        => new WhileStatementView(this, position, parent);
+}
+internal sealed partial class WhileStatementView : RedView, ICompoundStatementView
+{
+    internal WhileStatementView(WhileStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private INamedExpressionView? _field_condition = null;
+    internal INamedExpressionView Condition
+    {
+        get
+        {
+            if (_field_condition == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_condition = (INamedExpressionView)((WhileStatementNode)base.Green).Condition!.GetView(_positionOfField, this);
+            }
+            return (INamedExpressionView)_field_condition;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_block = (BlockView)((WhileStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((WhileStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_else = (ElseBlockView)((WhileStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
 }
 
-internal abstract partial record ForStatementNode : GreenNode, CompoundStatementNode
+internal abstract partial record ForStatementNode : GreenNode, ICompoundStatementNode
 {
+}
+internal abstract partial class ForStatementView : RedView, ICompoundStatementView
+{
+    internal ForStatementView(ForStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record NormalForStatementNode : ForStatementNode
@@ -13297,6 +16391,71 @@ internal sealed partial record NormalForStatementNode : ForStatementNode
     internal StarExpressionsNode Expression => (StarExpressionsNode)Children![3];
     internal BlockNode Block => (BlockNode)Children![5];
     internal ElseBlockNode? Else => Children![6] as ElseBlockNode;
+    public override NormalForStatementView GetView(int position, IRedView? parent)
+        => new NormalForStatementView(this, position, parent);
+}
+internal sealed partial class NormalForStatementView : ForStatementView
+{
+    internal NormalForStatementView(NormalForStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetsView? _field_targets = null;
+    internal StarTargetsView Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_targets = (StarTargetsView)((NormalForStatementNode)base.Green).Targets!.GetView(_positionOfField, this);
+            }
+            return (StarTargetsView)_field_targets;
+        }
+    }
+
+    private StarExpressionsView? _field_expression = null;
+    internal StarExpressionsView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_expression = (StarExpressionsView)((NormalForStatementNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (StarExpressionsView)_field_expression;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_block = (BlockView)((NormalForStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((NormalForStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(6);
+                _field_else = (ElseBlockView)((NormalForStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
 }
 
 internal sealed partial record AsyncForStatementNode : ForStatementNode
@@ -13305,10 +16464,82 @@ internal sealed partial record AsyncForStatementNode : ForStatementNode
     internal StarExpressionsNode Expression => (StarExpressionsNode)Children![4];
     internal BlockNode Block => (BlockNode)Children![6];
     internal ElseBlockNode? Else => Children![7] as ElseBlockNode;
+    public override AsyncForStatementView GetView(int position, IRedView? parent)
+        => new AsyncForStatementView(this, position, parent);
+}
+internal sealed partial class AsyncForStatementView : ForStatementView
+{
+    internal AsyncForStatementView(AsyncForStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetsView? _field_targets = null;
+    internal StarTargetsView Targets
+    {
+        get
+        {
+            if (_field_targets == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_targets = (StarTargetsView)((AsyncForStatementNode)base.Green).Targets!.GetView(_positionOfField, this);
+            }
+            return (StarTargetsView)_field_targets;
+        }
+    }
+
+    private StarExpressionsView? _field_expression = null;
+    internal StarExpressionsView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_expression = (StarExpressionsView)((AsyncForStatementNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (StarExpressionsView)_field_expression;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(6);
+                _field_block = (BlockView)((AsyncForStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((AsyncForStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(7);
+                _field_else = (ElseBlockView)((AsyncForStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
 }
 
-internal abstract partial record WithStatementNode : GreenNode, CompoundStatementNode
+internal abstract partial record WithStatementNode : GreenNode, ICompoundStatementNode
 {
+}
+internal abstract partial class WithStatementView : RedView, ICompoundStatementView
+{
+    internal WithStatementView(WithStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record ParenthesizedWithStatementNode : WithStatementNode
@@ -13326,8 +16557,58 @@ internal sealed partial record ParenthesizedWithStatementNode : WithStatementNod
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![2];
     internal BlockNode Block => (BlockNode)Children![6];
+    public override ParenthesizedWithStatementView GetView(int position, IRedView? parent)
+        => new ParenthesizedWithStatementView(this, position, parent);
+}
+internal sealed partial class ParenthesizedWithStatementView : WithStatementView
+{
+    internal ParenthesizedWithStatementView(ParenthesizedWithStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_items = new ViewArray<RedView>(((ParenthesizedWithStatementNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<WithItemView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<WithItemView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<WithItemView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(6);
+                _field_block = (BlockView)((ParenthesizedWithStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record OneLinedWithStatementNode : WithStatementNode
@@ -13345,8 +16626,58 @@ internal sealed partial record OneLinedWithStatementNode : WithStatementNode
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![1];
     internal BlockNode Block => (BlockNode)Children![3];
+    public override OneLinedWithStatementView GetView(int position, IRedView? parent)
+        => new OneLinedWithStatementView(this, position, parent);
+}
+internal sealed partial class OneLinedWithStatementView : WithStatementView
+{
+    internal OneLinedWithStatementView(OneLinedWithStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_items = new ViewArray<RedView>(((OneLinedWithStatementNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<WithItemView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<WithItemView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<WithItemView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_block = (BlockView)((OneLinedWithStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record ParenthesizedAsyncWithStatementNode : WithStatementNode
@@ -13364,8 +16695,58 @@ internal sealed partial record ParenthesizedAsyncWithStatementNode : WithStateme
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![3]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![3];
     internal BlockNode Block => (BlockNode)Children![7];
+    public override ParenthesizedAsyncWithStatementView GetView(int position, IRedView? parent)
+        => new ParenthesizedAsyncWithStatementView(this, position, parent);
+}
+internal sealed partial class ParenthesizedAsyncWithStatementView : WithStatementView
+{
+    internal ParenthesizedAsyncWithStatementView(ParenthesizedAsyncWithStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _ast_field_items = new ViewArray<RedView>(((ParenthesizedAsyncWithStatementNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<WithItemView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<WithItemView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<WithItemView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(7);
+                _field_block = (BlockView)((ParenthesizedAsyncWithStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record OneLinedAsyncWithStatementNode : WithStatementNode
@@ -13383,135 +16764,771 @@ internal sealed partial record OneLinedAsyncWithStatementNode : WithStatementNod
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![2];
     internal BlockNode Block => (BlockNode)Children![4];
+    public override OneLinedAsyncWithStatementView GetView(int position, IRedView? parent)
+        => new OneLinedAsyncWithStatementView(this, position, parent);
+}
+internal sealed partial class OneLinedAsyncWithStatementView : WithStatementView
+{
+    internal OneLinedAsyncWithStatementView(OneLinedAsyncWithStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_items = new ViewArray<RedView>(((OneLinedAsyncWithStatementNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<WithItemView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<WithItemView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<WithItemView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_block = (BlockView)((OneLinedAsyncWithStatementNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal abstract partial record WithItemNode : GreenNode
 {
-    internal ExpressionNode Expression => (ExpressionNode)Children![0];
+    internal IExpressionNode Expression => (IExpressionNode)Children![0];
+}
+internal abstract partial class WithItemView : RedView
+{
+    internal WithItemView(WithItemNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_expression = null;
+    internal IExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_expression = (IExpressionView)((WithItemNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_expression;
+        }
+    }
 }
 
 internal sealed partial record NamedWithItemNode : WithItemNode
 {
     internal StarTargetNode Target => (StarTargetNode)Children![2];
+    public override NamedWithItemView GetView(int position, IRedView? parent)
+        => new NamedWithItemView(this, position, parent);
+}
+internal sealed partial class NamedWithItemView : WithItemView
+{
+    internal NamedWithItemView(NamedWithItemNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetView? _field_target = null;
+    internal StarTargetView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_target = (StarTargetView)((NamedWithItemNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (StarTargetView)_field_target;
+        }
+    }
 }
 
 internal sealed partial record PlainWithItemNode : WithItemNode
 {
+    public override PlainWithItemView GetView(int position, IRedView? parent)
+        => new PlainWithItemView(this, position, parent);
+}
+internal sealed partial class PlainWithItemView : WithItemView
+{
+    internal PlainWithItemView(PlainWithItemNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal abstract partial record TryStatementNode : GreenNode, CompoundStatementNode
+internal abstract partial record TryStatementNode : GreenNode, ICompoundStatementNode
 {
     internal BlockNode Try => (BlockNode)Children![2];
+}
+internal abstract partial class TryStatementView : RedView, ICompoundStatementView
+{
+    internal TryStatementView(TryStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private BlockView? _field_try = null;
+    internal BlockView Try
+    {
+        get
+        {
+            if (_field_try == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_try = (BlockView)((TryStatementNode)base.Green).Try!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_try;
+        }
+    }
 }
 
 internal sealed partial record TryFinallyStatementNode : TryStatementNode
 {
     internal FinallyBlockNode Finally => (FinallyBlockNode)Children![3];
+    public override TryFinallyStatementView GetView(int position, IRedView? parent)
+        => new TryFinallyStatementView(this, position, parent);
+}
+internal sealed partial class TryFinallyStatementView : TryStatementView
+{
+    internal TryFinallyStatementView(TryFinallyStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private FinallyBlockView? _field_finally = null;
+    internal FinallyBlockView Finally
+    {
+        get
+        {
+            if (_field_finally == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_finally = (FinallyBlockView)((TryFinallyStatementNode)base.Green).Finally!.GetView(_positionOfField, this);
+            }
+            return (FinallyBlockView)_field_finally;
+        }
+    }
 }
 
 internal sealed partial record TryExceptStatementNode : TryStatementNode
 {
-    internal NodeArray<ExceptBlockNode> Excepts => ((NodeList)Children![3]).GetArray<ExceptBlockNode>();
+    internal NodeArray<ExceptBlockNode> Excepts => (NodeArray<ExceptBlockNode>)Children![3];
     internal ElseBlockNode? Else => Children![4] as ElseBlockNode;
     internal FinallyBlockNode? Finally => Children![5] as FinallyBlockNode;
+    public override TryExceptStatementView GetView(int position, IRedView? parent)
+        => new TryExceptStatementView(this, position, parent);
+}
+internal sealed partial class TryExceptStatementView : TryStatementView
+{
+    internal TryExceptStatementView(TryExceptStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ExceptBlockView>? _field_excepts = null;
+    internal ViewArray<ExceptBlockView> Excepts
+    {
+        get
+        {
+            if (_field_excepts == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_excepts = (ViewArray<ExceptBlockView>)new ViewArray<ExceptBlockView>(((TryExceptStatementNode)base.Green).Excepts, _positionOfField, this);
+            }
+            return (ViewArray<ExceptBlockView>)_field_excepts;
+        }
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((TryExceptStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_else = (ElseBlockView)((TryExceptStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
+
+    private FinallyBlockView? _field_finally = null;
+    internal FinallyBlockView? Finally
+    {
+        get
+        {
+            if (_field_finally == null && ((TryExceptStatementNode)base.Green).Finally != null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_finally = (FinallyBlockView)((TryExceptStatementNode)base.Green).Finally!.GetView(_positionOfField, this);
+            }
+            return (FinallyBlockView?)_field_finally;
+        }
+    }
 }
 
 internal sealed partial record TryExceptStarStatementNode : TryStatementNode
 {
-    internal NodeArray<ExceptStarBlockNode> Excepts => ((NodeList)Children![3]).GetArray<ExceptStarBlockNode>();
+    internal NodeArray<ExceptStarBlockNode> Excepts => (NodeArray<ExceptStarBlockNode>)Children![3];
     internal ElseBlockNode? Else => Children![4] as ElseBlockNode;
     internal FinallyBlockNode? Finally => Children![5] as FinallyBlockNode;
+    public override TryExceptStarStatementView GetView(int position, IRedView? parent)
+        => new TryExceptStarStatementView(this, position, parent);
+}
+internal sealed partial class TryExceptStarStatementView : TryStatementView
+{
+    internal TryExceptStarStatementView(TryExceptStarStatementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<ExceptStarBlockView>? _field_excepts = null;
+    internal ViewArray<ExceptStarBlockView> Excepts
+    {
+        get
+        {
+            if (_field_excepts == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_excepts = (ViewArray<ExceptStarBlockView>)new ViewArray<ExceptStarBlockView>(((TryExceptStarStatementNode)base.Green).Excepts, _positionOfField, this);
+            }
+            return (ViewArray<ExceptStarBlockView>)_field_excepts;
+        }
+    }
+
+    private ElseBlockView? _field_else = null;
+    internal ElseBlockView? Else
+    {
+        get
+        {
+            if (_field_else == null && ((TryExceptStarStatementNode)base.Green).Else != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_else = (ElseBlockView)((TryExceptStarStatementNode)base.Green).Else!.GetView(_positionOfField, this);
+            }
+            return (ElseBlockView?)_field_else;
+        }
+    }
+
+    private FinallyBlockView? _field_finally = null;
+    internal FinallyBlockView? Finally
+    {
+        get
+        {
+            if (_field_finally == null && ((TryExceptStarStatementNode)base.Green).Finally != null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_finally = (FinallyBlockView)((TryExceptStarStatementNode)base.Green).Finally!.GetView(_positionOfField, this);
+            }
+            return (FinallyBlockView?)_field_finally;
+        }
+    }
 }
 
 internal abstract partial record ExceptBlockNode : GreenNode
 {
 }
+internal abstract partial class ExceptBlockView : RedView
+{
+    internal ExceptBlockView(ExceptBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record PlainExceptBlockNode : ExceptBlockNode
 {
-    internal ExpressionNode Exception => (ExpressionNode)Children![1];
+    internal IExpressionNode Exception => (IExpressionNode)Children![1];
     internal BlockNode Block => (BlockNode)Children![3];
+    public override PlainExceptBlockView GetView(int position, IRedView? parent)
+        => new PlainExceptBlockView(this, position, parent);
+}
+internal sealed partial class PlainExceptBlockView : ExceptBlockView
+{
+    internal PlainExceptBlockView(PlainExceptBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_exception = null;
+    internal IExpressionView Exception
+    {
+        get
+        {
+            if (_field_exception == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_exception = (IExpressionView)((PlainExceptBlockNode)base.Green).Exception!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_exception;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_block = (BlockView)((PlainExceptBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record AliasExceptBlockNode : ExceptBlockNode
 {
-    internal ExpressionNode Exception => (ExpressionNode)Children![1];
+    internal IExpressionNode Exception => (IExpressionNode)Children![1];
     internal TokenNode Alias => (TokenNode)Children![3];
     internal BlockNode Block => (BlockNode)Children![5];
+    public override AliasExceptBlockView GetView(int position, IRedView? parent)
+        => new AliasExceptBlockView(this, position, parent);
+}
+internal sealed partial class AliasExceptBlockView : ExceptBlockView
+{
+    internal AliasExceptBlockView(AliasExceptBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_exception = null;
+    internal IExpressionView Exception
+    {
+        get
+        {
+            if (_field_exception == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_exception = (IExpressionView)((AliasExceptBlockNode)base.Green).Exception!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_exception;
+        }
+    }
+
+    private TokenView? _field_alias = null;
+    internal TokenView Alias
+    {
+        get
+        {
+            if (_field_alias == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_alias = (TokenView)((AliasExceptBlockNode)base.Green).Alias!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_alias;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_block = (BlockView)((AliasExceptBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record MultipleExceptBlockNode : ExceptBlockNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<ExpressionNode>? _field_Exceptions = null;
-    internal global::System.Collections.Immutable.ImmutableArray<ExpressionNode> Exceptions
+    private global::System.Collections.Immutable.ImmutableArray<IExpressionNode>? _field_Exceptions = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IExpressionNode> Exceptions
     {
         get
         {
             if (_field_Exceptions is null)
             {
-                var _tmp = AstExceptions.Where(static (_, i) => i % 2 == 0).Cast<ExpressionNode>();
+                var _tmp = AstExceptions.Where(static (_, i) => i % 2 == 0).Cast<IExpressionNode>();
                 _field_Exceptions = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Exceptions.Value;
         }
     }
-    internal NodeArray<GreenNode> AstExceptions => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstExceptions => (NodeArray<GreenNode>)Children![1];
     internal BlockNode Block => (BlockNode)Children![4];
+    public override MultipleExceptBlockView GetView(int position, IRedView? parent)
+        => new MultipleExceptBlockView(this, position, parent);
+}
+internal sealed partial class MultipleExceptBlockView : ExceptBlockView
+{
+    internal MultipleExceptBlockView(MultipleExceptBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_exceptions = null;
+    internal ViewArray<RedView> AstExceptions
+    {
+        get
+        {
+            if (_ast_field_exceptions == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_exceptions = new ViewArray<RedView>(((MultipleExceptBlockNode)base.Green).AstExceptions, _positionOfField, this);
+            }
+            return _ast_field_exceptions.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IExpressionView>? _field_exceptions = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IExpressionView> Exceptions
+    {
+        get
+        {
+            if (_field_exceptions == null)
+            {
+                var _tmp = AstExceptions.Where(static (_, i) => i % 2 == 0).Cast<IExpressionView>();
+                _field_exceptions = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_exceptions.Value;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_block = (BlockView)((MultipleExceptBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record EmptyExceptBlockNode : ExceptBlockNode
 {
     internal BlockNode Block => (BlockNode)Children![2];
+    public override EmptyExceptBlockView GetView(int position, IRedView? parent)
+        => new EmptyExceptBlockView(this, position, parent);
+}
+internal sealed partial class EmptyExceptBlockView : ExceptBlockView
+{
+    internal EmptyExceptBlockView(EmptyExceptBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_block = (BlockView)((EmptyExceptBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal abstract partial record ExceptStarBlockNode : GreenNode
 {
 }
+internal abstract partial class ExceptStarBlockView : RedView
+{
+    internal ExceptStarBlockView(ExceptStarBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record PlainExceptStarBlockNode : ExceptStarBlockNode
 {
-    internal ExpressionNode Exception => (ExpressionNode)Children![2];
+    internal IExpressionNode Exception => (IExpressionNode)Children![2];
     internal BlockNode Block => (BlockNode)Children![4];
+    public override PlainExceptStarBlockView GetView(int position, IRedView? parent)
+        => new PlainExceptStarBlockView(this, position, parent);
+}
+internal sealed partial class PlainExceptStarBlockView : ExceptStarBlockView
+{
+    internal PlainExceptStarBlockView(PlainExceptStarBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_exception = null;
+    internal IExpressionView Exception
+    {
+        get
+        {
+            if (_field_exception == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_exception = (IExpressionView)((PlainExceptStarBlockNode)base.Green).Exception!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_exception;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_block = (BlockView)((PlainExceptStarBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record AliasExceptStarBlockNode : ExceptStarBlockNode
 {
-    internal ExpressionNode Exception => (ExpressionNode)Children![2];
+    internal IExpressionNode Exception => (IExpressionNode)Children![2];
     internal TokenNode Alias => (TokenNode)Children![4];
     internal BlockNode Block => (BlockNode)Children![6];
+    public override AliasExceptStarBlockView GetView(int position, IRedView? parent)
+        => new AliasExceptStarBlockView(this, position, parent);
+}
+internal sealed partial class AliasExceptStarBlockView : ExceptStarBlockView
+{
+    internal AliasExceptStarBlockView(AliasExceptStarBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_exception = null;
+    internal IExpressionView Exception
+    {
+        get
+        {
+            if (_field_exception == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_exception = (IExpressionView)((AliasExceptStarBlockNode)base.Green).Exception!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_exception;
+        }
+    }
+
+    private TokenView? _field_alias = null;
+    internal TokenView Alias
+    {
+        get
+        {
+            if (_field_alias == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_alias = (TokenView)((AliasExceptStarBlockNode)base.Green).Alias!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_alias;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(6);
+                _field_block = (BlockView)((AliasExceptStarBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record MultipleExceptStarBlockNode : ExceptStarBlockNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<ExpressionNode>? _field_Exceptions = null;
-    internal global::System.Collections.Immutable.ImmutableArray<ExpressionNode> Exceptions
+    private global::System.Collections.Immutable.ImmutableArray<IExpressionNode>? _field_Exceptions = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IExpressionNode> Exceptions
     {
         get
         {
             if (_field_Exceptions is null)
             {
-                var _tmp = AstExceptions.Where(static (_, i) => i % 2 == 0).Cast<ExpressionNode>();
+                var _tmp = AstExceptions.Where(static (_, i) => i % 2 == 0).Cast<IExpressionNode>();
                 _field_Exceptions = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Exceptions.Value;
         }
     }
-    internal NodeArray<GreenNode> AstExceptions => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstExceptions => (NodeArray<GreenNode>)Children![2];
     internal BlockNode Block => (BlockNode)Children![5];
+    public override MultipleExceptStarBlockView GetView(int position, IRedView? parent)
+        => new MultipleExceptStarBlockView(this, position, parent);
+}
+internal sealed partial class MultipleExceptStarBlockView : ExceptStarBlockView
+{
+    internal MultipleExceptStarBlockView(MultipleExceptStarBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_exceptions = null;
+    internal ViewArray<RedView> AstExceptions
+    {
+        get
+        {
+            if (_ast_field_exceptions == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_exceptions = new ViewArray<RedView>(((MultipleExceptStarBlockNode)base.Green).AstExceptions, _positionOfField, this);
+            }
+            return _ast_field_exceptions.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IExpressionView>? _field_exceptions = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IExpressionView> Exceptions
+    {
+        get
+        {
+            if (_field_exceptions == null)
+            {
+                var _tmp = AstExceptions.Where(static (_, i) => i % 2 == 0).Cast<IExpressionView>();
+                _field_exceptions = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_exceptions.Value;
+        }
+    }
+
+    private BlockView? _field_block = null;
+    internal BlockView Block
+    {
+        get
+        {
+            if (_field_block == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_block = (BlockView)((MultipleExceptStarBlockNode)base.Green).Block!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_block;
+        }
+    }
 }
 
 internal sealed partial record FinallyBlockNode : GreenNode
 {
     internal BlockNode Value => (BlockNode)Children![2];
+    public override FinallyBlockView GetView(int position, IRedView? parent)
+        => new FinallyBlockView(this, position, parent);
+}
+internal sealed partial class FinallyBlockView : RedView
+{
+    internal FinallyBlockView(FinallyBlockNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private BlockView? _field_value = null;
+    internal BlockView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_value = (BlockView)((FinallyBlockNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (BlockView)_field_value;
+        }
+    }
 }
 
-internal sealed partial record TypeAliasNode : GreenNode, SimpleStatementNode
+internal sealed partial record TypeAliasNode : GreenNode, ISimpleStatementNode
 {
     internal TokenNode Name => (TokenNode)Children![1];
     internal TypeParametersNode? TypeParameters => Children![2] as TypeParametersNode;
-    internal ExpressionNode Value => (ExpressionNode)Children![4];
+    internal IExpressionNode Value => (IExpressionNode)Children![4];
+    public override TypeAliasView GetView(int position, IRedView? parent)
+        => new TypeAliasView(this, position, parent);
+}
+internal sealed partial class TypeAliasView : RedView, ISimpleStatementView
+{
+    internal TypeAliasView(TypeAliasNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_name = null;
+    internal TokenView Name
+    {
+        get
+        {
+            if (_field_name == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_name = (TokenView)((TypeAliasNode)base.Green).Name!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_name;
+        }
+    }
+
+    private TypeParametersView? _field_typeParameters = null;
+    internal TypeParametersView? TypeParameters
+    {
+        get
+        {
+            if (_field_typeParameters == null && ((TypeAliasNode)base.Green).TypeParameters != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeParameters = (TypeParametersView)((TypeAliasNode)base.Green).TypeParameters!.GetView(_positionOfField, this);
+            }
+            return (TypeParametersView?)_field_typeParameters;
+        }
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_value = (IExpressionView)((TypeAliasNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TypeParametersNode : GreenNode
@@ -13529,145 +17546,631 @@ internal sealed partial record TypeParametersNode : GreenNode
             return _field_Values.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)((NodeList)Children![1]).Children!;
+    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)Children![1];
+    public override TypeParametersView GetView(int position, IRedView? parent)
+        => new TypeParametersView(this, position, parent);
+}
+internal sealed partial class TypeParametersView : RedView
+{
+    internal TypeParametersView(TypeParametersNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_values = null;
+    internal ViewArray<RedView> AstValues
+    {
+        get
+        {
+            if (_ast_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _ast_field_values = new ViewArray<RedView>(((TypeParametersNode)base.Green).AstValues, _positionOfField, this);
+            }
+            return _ast_field_values.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<TypeParameterView>? _field_values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<TypeParameterView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<TypeParameterView>();
+                _field_values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_values.Value;
+        }
+    }
 }
 
 internal abstract partial record TypeParameterNode : GreenNode
 {
-    internal TokenNode TokenNode => (TokenNode)Children![0];
+    internal TokenNode Token => (TokenNode)Children![0];
+}
+internal abstract partial class TypeParameterView : RedView
+{
+    internal TypeParameterView(TypeParameterNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_token = (TokenView)((TypeParameterNode)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
 }
 
-internal sealed partial record TypeParameterNode_Derived0 : TypeParameterNode
+internal sealed partial record TypeParameter_Derived0Node : TypeParameterNode
 {
-    internal TypeParameterBoundNode? TypeParameterBoundNode => Children![1] as TypeParameterBoundNode;
-    internal TypeParameterDefaultNode? TypeParameterDefaultNode => Children![2] as TypeParameterDefaultNode;
+    internal TypeParameterBoundNode? TypeParameterBound => Children![1] as TypeParameterBoundNode;
+    internal TypeParameterDefaultNode? TypeParameterDefault => Children![2] as TypeParameterDefaultNode;
+    public override TypeParameter_Derived0View GetView(int position, IRedView? parent)
+        => new TypeParameter_Derived0View(this, position, parent);
+}
+internal sealed partial class TypeParameter_Derived0View : TypeParameterView
+{
+    internal TypeParameter_Derived0View(TypeParameter_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TypeParameterBoundView? _field_typeParameterBound = null;
+    internal TypeParameterBoundView? TypeParameterBound
+    {
+        get
+        {
+            if (_field_typeParameterBound == null && ((TypeParameter_Derived0Node)base.Green).TypeParameterBound != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_typeParameterBound = (TypeParameterBoundView)((TypeParameter_Derived0Node)base.Green).TypeParameterBound!.GetView(_positionOfField, this);
+            }
+            return (TypeParameterBoundView?)_field_typeParameterBound;
+        }
+    }
+
+    private TypeParameterDefaultView? _field_typeParameterDefault = null;
+    internal TypeParameterDefaultView? TypeParameterDefault
+    {
+        get
+        {
+            if (_field_typeParameterDefault == null && ((TypeParameter_Derived0Node)base.Green).TypeParameterDefault != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeParameterDefault = (TypeParameterDefaultView)((TypeParameter_Derived0Node)base.Green).TypeParameterDefault!.GetView(_positionOfField, this);
+            }
+            return (TypeParameterDefaultView?)_field_typeParameterDefault;
+        }
+    }
 }
 
-internal sealed partial record TypeParameterNode_Derived1 : TypeParameterNode
+internal sealed partial record TypeParameter_Derived1Node : TypeParameterNode
 {
-    internal TokenNode TokenNode1 => (TokenNode)Children![1];
-    internal TypeParameterStarredDefaultNode? TypeParameterStarredDefaultNode => Children![2] as TypeParameterStarredDefaultNode;
+    internal TokenNode Token1 => (TokenNode)Children![1];
+    internal TypeParameterStarredDefaultNode? TypeParameterStarredDefault => Children![2] as TypeParameterStarredDefaultNode;
+    public override TypeParameter_Derived1View GetView(int position, IRedView? parent)
+        => new TypeParameter_Derived1View(this, position, parent);
+}
+internal sealed partial class TypeParameter_Derived1View : TypeParameterView
+{
+    internal TypeParameter_Derived1View(TypeParameter_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token1 = null;
+    internal TokenView Token1
+    {
+        get
+        {
+            if (_field_token1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token1 = (TokenView)((TypeParameter_Derived1Node)base.Green).Token1!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token1;
+        }
+    }
+
+    private TypeParameterStarredDefaultView? _field_typeParameterStarredDefault = null;
+    internal TypeParameterStarredDefaultView? TypeParameterStarredDefault
+    {
+        get
+        {
+            if (_field_typeParameterStarredDefault == null && ((TypeParameter_Derived1Node)base.Green).TypeParameterStarredDefault != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeParameterStarredDefault = (TypeParameterStarredDefaultView)((TypeParameter_Derived1Node)base.Green).TypeParameterStarredDefault!.GetView(_positionOfField, this);
+            }
+            return (TypeParameterStarredDefaultView?)_field_typeParameterStarredDefault;
+        }
+    }
 }
 
-internal sealed partial record TypeParameterNode_Derived2 : TypeParameterNode
+internal sealed partial record TypeParameter_Derived2Node : TypeParameterNode
 {
-    internal TokenNode TokenNode1 => (TokenNode)Children![1];
-    internal TypeParameterDefaultNode? TypeParameterDefaultNode => Children![2] as TypeParameterDefaultNode;
+    internal TokenNode Token1 => (TokenNode)Children![1];
+    internal TypeParameterDefaultNode? TypeParameterDefault => Children![2] as TypeParameterDefaultNode;
+    public override TypeParameter_Derived2View GetView(int position, IRedView? parent)
+        => new TypeParameter_Derived2View(this, position, parent);
+}
+internal sealed partial class TypeParameter_Derived2View : TypeParameterView
+{
+    internal TypeParameter_Derived2View(TypeParameter_Derived2Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_token1 = null;
+    internal TokenView Token1
+    {
+        get
+        {
+            if (_field_token1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token1 = (TokenView)((TypeParameter_Derived2Node)base.Green).Token1!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token1;
+        }
+    }
+
+    private TypeParameterDefaultView? _field_typeParameterDefault = null;
+    internal TypeParameterDefaultView? TypeParameterDefault
+    {
+        get
+        {
+            if (_field_typeParameterDefault == null && ((TypeParameter_Derived2Node)base.Green).TypeParameterDefault != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_typeParameterDefault = (TypeParameterDefaultView)((TypeParameter_Derived2Node)base.Green).TypeParameterDefault!.GetView(_positionOfField, this);
+            }
+            return (TypeParameterDefaultView?)_field_typeParameterDefault;
+        }
+    }
 }
 
 internal sealed partial record TypeParameterBoundNode : GreenNode
 {
-    internal ExpressionNode Value => (ExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![1];
+    public override TypeParameterBoundView GetView(int position, IRedView? parent)
+        => new TypeParameterBoundView(this, position, parent);
+}
+internal sealed partial class TypeParameterBoundView : RedView
+{
+    internal TypeParameterBoundView(TypeParameterBoundNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((TypeParameterBoundNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TypeParameterDefaultNode : GreenNode
 {
-    internal ExpressionNode Value => (ExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![1];
+    public override TypeParameterDefaultView GetView(int position, IRedView? parent)
+        => new TypeParameterDefaultView(this, position, parent);
+}
+internal sealed partial class TypeParameterDefaultView : RedView
+{
+    internal TypeParameterDefaultView(TypeParameterDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((TypeParameterDefaultNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TypeParameterStarredDefaultNode : GreenNode
 {
-    internal StarExpressionNode Value => (StarExpressionNode)Children![1];
+    internal IStarExpressionNode Value => (IStarExpressionNode)Children![1];
+    public override TypeParameterStarredDefaultView GetView(int position, IRedView? parent)
+        => new TypeParameterStarredDefaultView(this, position, parent);
+}
+internal sealed partial class TypeParameterStarredDefaultView : RedView
+{
+    internal TypeParameterStarredDefaultView(TypeParameterStarredDefaultNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarExpressionView? _field_value = null;
+    internal IStarExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IStarExpressionView)((TypeParameterStarredDefaultNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IStarExpressionView)_field_value;
+        }
+    }
 }
 
-internal partial interface ExpressionNode : IGreenNode, NamedExpressionNode;
+internal partial interface IExpressionNode : IGreenNode, IStarExpressionNode, INamedExpressionNode;
+internal partial interface IExpressionView : IRedView, IStarExpressionView, INamedExpressionView;
 
-internal sealed partial record IfExpressionNode : GreenNode, ExpressionNode
+internal sealed partial record IfExpressionNode : GreenNode, IExpressionNode
 {
-    internal DisjunctionNode DisjunctionNode => (DisjunctionNode)Children![0];
-    internal TokenNode TokenNode => (TokenNode)Children![1];
-    internal DisjunctionNode DisjunctionNode1 => (DisjunctionNode)Children![2];
-    internal TokenNode TokenNode1 => (TokenNode)Children![3];
-    internal ExpressionNode ExpressionNode => (ExpressionNode)Children![4];
+    internal DisjunctionNode Disjunction => (DisjunctionNode)Children![0];
+    internal TokenNode Token => (TokenNode)Children![1];
+    internal DisjunctionNode Disjunction1 => (DisjunctionNode)Children![2];
+    internal TokenNode Token1 => (TokenNode)Children![3];
+    internal IExpressionNode Expression => (IExpressionNode)Children![4];
+    public override IfExpressionView GetView(int position, IRedView? parent)
+        => new IfExpressionView(this, position, parent);
+}
+internal sealed partial class IfExpressionView : RedView, IExpressionView
+{
+    internal IfExpressionView(IfExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private DisjunctionView? _field_disjunction = null;
+    internal DisjunctionView Disjunction
+    {
+        get
+        {
+            if (_field_disjunction == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_disjunction = (DisjunctionView)((IfExpressionNode)base.Green).Disjunction!.GetView(_positionOfField, this);
+            }
+            return (DisjunctionView)_field_disjunction;
+        }
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView Token
+    {
+        get
+        {
+            if (_field_token == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token = (TokenView)((IfExpressionNode)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token;
+        }
+    }
+
+    private DisjunctionView? _field_disjunction1 = null;
+    internal DisjunctionView Disjunction1
+    {
+        get
+        {
+            if (_field_disjunction1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_disjunction1 = (DisjunctionView)((IfExpressionNode)base.Green).Disjunction1!.GetView(_positionOfField, this);
+            }
+            return (DisjunctionView)_field_disjunction1;
+        }
+    }
+
+    private TokenView? _field_token1 = null;
+    internal TokenView Token1
+    {
+        get
+        {
+            if (_field_token1 == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_token1 = (TokenView)((IfExpressionNode)base.Green).Token1!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_token1;
+        }
+    }
+
+    private IExpressionView? _field_expression = null;
+    internal IExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_expression = (IExpressionView)((IfExpressionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_expression;
+        }
+    }
 }
 
-internal abstract partial record YieldExpressionNode : GreenNode, AnnotatedRhsNode
+internal abstract partial record YieldExpressionNode : GreenNode, IAnnotatedRhsNode
 {
+}
+internal abstract partial class YieldExpressionView : RedView, IAnnotatedRhsView
+{
+    internal YieldExpressionView(YieldExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record YieldFromExpressionNode : YieldExpressionNode
 {
-    internal ExpressionNode Expression => (ExpressionNode)Children![2];
+    internal IExpressionNode Expression => (IExpressionNode)Children![2];
+    public override YieldFromExpressionView GetView(int position, IRedView? parent)
+        => new YieldFromExpressionView(this, position, parent);
+}
+internal sealed partial class YieldFromExpressionView : YieldExpressionView
+{
+    internal YieldFromExpressionView(YieldFromExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_expression = null;
+    internal IExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_expression = (IExpressionView)((YieldFromExpressionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_expression;
+        }
+    }
 }
 
 internal sealed partial record YieldStarExpressionNode : YieldExpressionNode
 {
     internal StarExpressionsNode? Expression => Children![1] as StarExpressionsNode;
+    public override YieldStarExpressionView GetView(int position, IRedView? parent)
+        => new YieldStarExpressionView(this, position, parent);
+}
+internal sealed partial class YieldStarExpressionView : YieldExpressionView
+{
+    internal YieldStarExpressionView(YieldStarExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarExpressionsView? _field_expression = null;
+    internal StarExpressionsView? Expression
+    {
+        get
+        {
+            if (_field_expression == null && ((YieldStarExpressionNode)base.Green).Expression != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (StarExpressionsView)((YieldStarExpressionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (StarExpressionsView?)_field_expression;
+        }
+    }
 }
 
-internal sealed partial record StarExpressionsNode : GreenNode, SimpleStatementNode, AnnotatedRhsNode
+internal sealed partial record StarExpressionsNode : GreenNode, ISimpleStatementNode, IAnnotatedRhsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<StarExpressionNode>? _field_Values = null;
-    internal global::System.Collections.Immutable.ImmutableArray<StarExpressionNode> Values
+    private global::System.Collections.Immutable.ImmutableArray<IStarExpressionNode>? _field_Values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IStarExpressionNode> Values
     {
         get
         {
             if (_field_Values is null)
             {
-                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<StarExpressionNode>();
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<IStarExpressionNode>();
                 _field_Values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Values.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)Children![0];
+    public override StarExpressionsView GetView(int position, IRedView? parent)
+        => new StarExpressionsView(this, position, parent);
+}
+internal sealed partial class StarExpressionsView : RedView, ISimpleStatementView, IAnnotatedRhsView
+{
+    internal StarExpressionsView(StarExpressionsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_values = null;
+    internal ViewArray<RedView> AstValues
+    {
+        get
+        {
+            if (_ast_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_values = new ViewArray<RedView>(((StarExpressionsNode)base.Green).AstValues, _positionOfField, this);
+            }
+            return _ast_field_values.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IStarExpressionView>? _field_values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IStarExpressionView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<IStarExpressionView>();
+                _field_values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_values.Value;
+        }
+    }
 }
 
-internal abstract partial record StarExpressionNode : GreenNode, KwargOrStarredNode
+internal partial interface IStarExpressionNode : IGreenNode, IKwargOrStarredNode;
+internal partial interface IStarExpressionView : IRedView, IKwargOrStarredView;
+
+internal sealed partial record StarBitwiseOrExpressionNode : GreenNode, IStarExpressionNode, IStarNamedExpressionNode
 {
+    internal IBitwiseOrExpressionNode Value => (IBitwiseOrExpressionNode)Children![1];
+    public override StarBitwiseOrExpressionView GetView(int position, IRedView? parent)
+        => new StarBitwiseOrExpressionView(this, position, parent);
+}
+internal sealed partial class StarBitwiseOrExpressionView : RedView, IStarExpressionView, IStarNamedExpressionView
+{
+    internal StarBitwiseOrExpressionView(StarBitwiseOrExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_value = null;
+    internal IBitwiseOrExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IBitwiseOrExpressionView)((StarBitwiseOrExpressionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_value;
+        }
+    }
 }
 
-internal sealed partial record NormalStarExpressionNode : StarExpressionNode
-{
-    internal BitwiseOrNode Value => (BitwiseOrNode)Children![1];
-}
-
-internal sealed partial record WithoutStarExpressionNode : StarExpressionNode
-{
-    internal ExpressionNode Value => (ExpressionNode)Children![0];
-}
-
-internal abstract partial record StarNamedExpressionNode : GreenNode
-{
-}
-
-internal sealed partial record NormalStarNamedExpressionNode : StarNamedExpressionNode
-{
-    internal BitwiseOrNode Value => (BitwiseOrNode)Children![1];
-}
-
-internal sealed partial record WithoutStarNamedExpressionNode : StarNamedExpressionNode
-{
-    internal NamedExpressionNode Value => (NamedExpressionNode)Children![0];
-}
+internal partial interface IStarNamedExpressionNode : IGreenNode;
+internal partial interface IStarNamedExpressionView : IRedView;
 
 internal sealed partial record StarNamedExpressionsNode : GreenNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<StarNamedExpressionNode>? _field_Items = null;
-    internal global::System.Collections.Immutable.ImmutableArray<StarNamedExpressionNode> Items
+    private global::System.Collections.Immutable.ImmutableArray<IStarNamedExpressionNode>? _field_Items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IStarNamedExpressionNode> Items
     {
         get
         {
             if (_field_Items is null)
             {
-                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<StarNamedExpressionNode>();
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<IStarNamedExpressionNode>();
                 _field_Items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![0];
+    public override StarNamedExpressionsView GetView(int position, IRedView? parent)
+        => new StarNamedExpressionsView(this, position, parent);
+}
+internal sealed partial class StarNamedExpressionsView : RedView
+{
+    internal StarNamedExpressionsView(StarNamedExpressionsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_items = new ViewArray<RedView>(((StarNamedExpressionsNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IStarNamedExpressionView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IStarNamedExpressionView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<IStarNamedExpressionView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
 }
 
-internal sealed partial record AssignmentExpressionNode : GreenNode, NamedExpressionNode
+internal sealed partial record AssignmentExpressionNode : GreenNode, INamedExpressionNode
 {
     internal TokenNode Target => (TokenNode)Children![0];
-    internal ExpressionNode Value => (ExpressionNode)Children![2];
+    internal IExpressionNode Value => (IExpressionNode)Children![2];
+    public override AssignmentExpressionView GetView(int position, IRedView? parent)
+        => new AssignmentExpressionView(this, position, parent);
+}
+internal sealed partial class AssignmentExpressionView : RedView, INamedExpressionView
+{
+    internal AssignmentExpressionView(AssignmentExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_target = null;
+    internal TokenView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_target = (TokenView)((AssignmentExpressionNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_target;
+        }
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_value = (IExpressionView)((AssignmentExpressionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
-internal partial interface NamedExpressionNode : IGreenNode, PositionalArgumentNode;
+internal partial interface INamedExpressionNode : IGreenNode, IStarNamedExpressionNode, IPositionalArgumentNode;
+internal partial interface INamedExpressionView : IRedView, IStarNamedExpressionView, IPositionalArgumentView;
 
-internal sealed partial record DisjunctionNode : GreenNode, ExpressionNode
+internal sealed partial record DisjunctionNode : GreenNode, IExpressionNode
 {
     private global::System.Collections.Immutable.ImmutableArray<ConjunctionNode>? _field_Values = null;
     internal global::System.Collections.Immutable.ImmutableArray<ConjunctionNode> Values
@@ -13682,279 +18185,1156 @@ internal sealed partial record DisjunctionNode : GreenNode, ExpressionNode
             return _field_Values.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)Children![0];
+    public override DisjunctionView GetView(int position, IRedView? parent)
+        => new DisjunctionView(this, position, parent);
+}
+internal sealed partial class DisjunctionView : RedView, IExpressionView
+{
+    internal DisjunctionView(DisjunctionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_values = null;
+    internal ViewArray<RedView> AstValues
+    {
+        get
+        {
+            if (_ast_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_values = new ViewArray<RedView>(((DisjunctionNode)base.Green).AstValues, _positionOfField, this);
+            }
+            return _ast_field_values.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<ConjunctionView>? _field_values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<ConjunctionView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<ConjunctionView>();
+                _field_values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_values.Value;
+        }
+    }
 }
 
 internal sealed partial record ConjunctionNode : GreenNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<InversionNode>? _field_Values = null;
-    internal global::System.Collections.Immutable.ImmutableArray<InversionNode> Values
+    private global::System.Collections.Immutable.ImmutableArray<IInversionExpressionNode>? _field_Values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IInversionExpressionNode> Values
     {
         get
         {
             if (_field_Values is null)
             {
-                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<InversionNode>();
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<IInversionExpressionNode>();
                 _field_Values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Values.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)Children![0];
+    public override ConjunctionView GetView(int position, IRedView? parent)
+        => new ConjunctionView(this, position, parent);
+}
+internal sealed partial class ConjunctionView : RedView
+{
+    internal ConjunctionView(ConjunctionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_values = null;
+    internal ViewArray<RedView> AstValues
+    {
+        get
+        {
+            if (_ast_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_values = new ViewArray<RedView>(((ConjunctionNode)base.Green).AstValues, _positionOfField, this);
+            }
+            return _ast_field_values.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IInversionExpressionView>? _field_values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IInversionExpressionView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<IInversionExpressionView>();
+                _field_values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_values.Value;
+        }
+    }
 }
 
-internal abstract partial record InversionNode : GreenNode
+internal partial interface IInversionExpressionNode : IGreenNode;
+internal partial interface IInversionExpressionView : IRedView;
+
+internal sealed partial record InversionNode : GreenNode, IInversionExpressionNode
 {
+    internal IInversionExpressionNode Value => (IInversionExpressionNode)Children![1];
+    public override InversionView GetView(int position, IRedView? parent)
+        => new InversionView(this, position, parent);
+}
+internal sealed partial class InversionView : RedView, IInversionExpressionView
+{
+    internal InversionView(InversionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IInversionExpressionView? _field_value = null;
+    internal IInversionExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IInversionExpressionView)((InversionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IInversionExpressionView)_field_value;
+        }
+    }
 }
 
-internal sealed partial record NotInversionNode : InversionNode
+internal sealed partial record ComparisonNode : GreenNode, IInversionExpressionNode
 {
-    internal InversionNode Value => (InversionNode)Children![1];
+    internal IBitwiseOrExpressionNode First => (IBitwiseOrExpressionNode)Children![0];
+    internal NodeArray<CompareOperationNode> Rest => (NodeArray<CompareOperationNode>)Children![1];
+    public override ComparisonView GetView(int position, IRedView? parent)
+        => new ComparisonView(this, position, parent);
 }
-
-internal sealed partial record DirectInversionNode : InversionNode
+internal sealed partial class ComparisonView : RedView, IInversionExpressionView
 {
-    internal ComparisonNode Value => (ComparisonNode)Children![0];
-}
+    internal ComparisonView(ComparisonNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 
-internal abstract partial record ComparisonNode : GreenNode
-{
-    internal BitwiseOrNode First => (BitwiseOrNode)Children![0];
-}
+    private IBitwiseOrExpressionView? _field_first = null;
+    internal IBitwiseOrExpressionView First
+    {
+        get
+        {
+            if (_field_first == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_first = (IBitwiseOrExpressionView)((ComparisonNode)base.Green).First!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_first;
+        }
+    }
 
-internal sealed partial record ManyValueComparisonNode : ComparisonNode
-{
-    internal NodeArray<CompareOperationNode> Rest => ((NodeList)Children![1]).GetArray<CompareOperationNode>();
-}
-
-internal sealed partial record SingleValueComparisonNode : ComparisonNode
-{
+    private ViewArray<CompareOperationView>? _field_rest = null;
+    internal ViewArray<CompareOperationView> Rest
+    {
+        get
+        {
+            if (_field_rest == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_rest = (ViewArray<CompareOperationView>)new ViewArray<CompareOperationView>(((ComparisonNode)base.Green).Rest, _positionOfField, this);
+            }
+            return (ViewArray<CompareOperationView>)_field_rest;
+        }
+    }
 }
 
 internal abstract partial record CompareOperationNode : GreenNode
 {
 }
+internal abstract partial class CompareOperationView : RedView
+{
+    internal CompareOperationView(CompareOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record EqOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override EqOperationView GetView(int position, IRedView? parent)
+        => new EqOperationView(this, position, parent);
+}
+internal sealed partial class EqOperationView : CompareOperationView
+{
+    internal EqOperationView(EqOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((EqOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record NotEqOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override NotEqOperationView GetView(int position, IRedView? parent)
+        => new NotEqOperationView(this, position, parent);
+}
+internal sealed partial class NotEqOperationView : CompareOperationView
+{
+    internal NotEqOperationView(NotEqOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((NotEqOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record LtEqOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override LtEqOperationView GetView(int position, IRedView? parent)
+        => new LtEqOperationView(this, position, parent);
+}
+internal sealed partial class LtEqOperationView : CompareOperationView
+{
+    internal LtEqOperationView(LtEqOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((LtEqOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record LtOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override LtOperationView GetView(int position, IRedView? parent)
+        => new LtOperationView(this, position, parent);
+}
+internal sealed partial class LtOperationView : CompareOperationView
+{
+    internal LtOperationView(LtOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((LtOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record GtEqOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override GtEqOperationView GetView(int position, IRedView? parent)
+        => new GtEqOperationView(this, position, parent);
+}
+internal sealed partial class GtEqOperationView : CompareOperationView
+{
+    internal GtEqOperationView(GtEqOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((GtEqOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record GtOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override GtOperationView GetView(int position, IRedView? parent)
+        => new GtOperationView(this, position, parent);
+}
+internal sealed partial class GtOperationView : CompareOperationView
+{
+    internal GtOperationView(GtOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((GtOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record NotInOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![2];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![2];
+    public override NotInOperationView GetView(int position, IRedView? parent)
+        => new NotInOperationView(this, position, parent);
+}
+internal sealed partial class NotInOperationView : CompareOperationView
+{
+    internal NotInOperationView(NotInOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IBitwiseOrExpressionView)((NotInOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record InOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override InOperationView GetView(int position, IRedView? parent)
+        => new InOperationView(this, position, parent);
+}
+internal sealed partial class InOperationView : CompareOperationView
+{
+    internal InOperationView(InOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((InOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record IsNotOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![2];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![2];
+    public override IsNotOperationView GetView(int position, IRedView? parent)
+        => new IsNotOperationView(this, position, parent);
+}
+internal sealed partial class IsNotOperationView : CompareOperationView
+{
+    internal IsNotOperationView(IsNotOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IBitwiseOrExpressionView)((IsNotOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record IsOperationNode : CompareOperationNode
 {
-    internal BitwiseOrNode Right => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Right => (IBitwiseOrExpressionNode)Children![1];
+    public override IsOperationView GetView(int position, IRedView? parent)
+        => new IsOperationView(this, position, parent);
+}
+internal sealed partial class IsOperationView : CompareOperationView
+{
+    internal IsOperationView(IsOperationNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_right = null;
+    internal IBitwiseOrExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_right = (IBitwiseOrExpressionView)((IsOperationNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_right;
+        }
+    }
 }
 
-internal abstract partial record BitwiseOrNode : GreenNode
+internal partial interface IBitwiseOrExpressionNode : IGreenNode, IExpressionNode;
+internal partial interface IBitwiseOrExpressionView : IRedView, IExpressionView;
+
+internal sealed partial record BitwiseOrNode : GreenNode, IBitwiseOrExpressionNode
 {
+    internal IBitwiseOrExpressionNode Left => (IBitwiseOrExpressionNode)Children![0];
+    internal IBitwiseXorExpressionNode Right => (IBitwiseXorExpressionNode)Children![2];
+    public override BitwiseOrView GetView(int position, IRedView? parent)
+        => new BitwiseOrView(this, position, parent);
+}
+internal sealed partial class BitwiseOrView : RedView, IBitwiseOrExpressionView
+{
+    internal BitwiseOrView(BitwiseOrNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_left = null;
+    internal IBitwiseOrExpressionView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (IBitwiseOrExpressionView)((BitwiseOrNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_left;
+        }
+    }
+
+    private IBitwiseXorExpressionView? _field_right = null;
+    internal IBitwiseXorExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IBitwiseXorExpressionView)((BitwiseOrNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseXorExpressionView)_field_right;
+        }
+    }
 }
 
-internal sealed partial record BinaryBitwiseOrNode : BitwiseOrNode
+internal partial interface IBitwiseXorExpressionNode : IGreenNode, IBitwiseOrExpressionNode;
+internal partial interface IBitwiseXorExpressionView : IRedView, IBitwiseOrExpressionView;
+
+internal sealed partial record BitwiseXorNode : GreenNode, IBitwiseXorExpressionNode
 {
-    internal BitwiseOrNode Left => (BitwiseOrNode)Children![0];
-    internal BitwiseXorNode Right => (BitwiseXorNode)Children![2];
+    internal IBitwiseXorExpressionNode Left => (IBitwiseXorExpressionNode)Children![0];
+    internal IBitwiseAndExpressionNode Right => (IBitwiseAndExpressionNode)Children![2];
+    public override BitwiseXorView GetView(int position, IRedView? parent)
+        => new BitwiseXorView(this, position, parent);
+}
+internal sealed partial class BitwiseXorView : RedView, IBitwiseXorExpressionView
+{
+    internal BitwiseXorView(BitwiseXorNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseXorExpressionView? _field_left = null;
+    internal IBitwiseXorExpressionView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (IBitwiseXorExpressionView)((BitwiseXorNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseXorExpressionView)_field_left;
+        }
+    }
+
+    private IBitwiseAndExpressionView? _field_right = null;
+    internal IBitwiseAndExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IBitwiseAndExpressionView)((BitwiseXorNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseAndExpressionView)_field_right;
+        }
+    }
 }
 
-internal sealed partial record DirectBitwiseOrNode : BitwiseOrNode
+internal partial interface IBitwiseAndExpressionNode : IGreenNode, IBitwiseXorExpressionNode;
+internal partial interface IBitwiseAndExpressionView : IRedView, IBitwiseXorExpressionView;
+
+internal sealed partial record BitwiseAndNode : GreenNode, IBitwiseAndExpressionNode
 {
-    internal BitwiseXorNode Value => (BitwiseXorNode)Children![0];
+    internal IBitwiseAndExpressionNode Left => (IBitwiseAndExpressionNode)Children![0];
+    internal IBitShiftExpressionNode Right => (IBitShiftExpressionNode)Children![2];
+    public override BitwiseAndView GetView(int position, IRedView? parent)
+        => new BitwiseAndView(this, position, parent);
+}
+internal sealed partial class BitwiseAndView : RedView, IBitwiseAndExpressionView
+{
+    internal BitwiseAndView(BitwiseAndNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseAndExpressionView? _field_left = null;
+    internal IBitwiseAndExpressionView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (IBitwiseAndExpressionView)((BitwiseAndNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseAndExpressionView)_field_left;
+        }
+    }
+
+    private IBitShiftExpressionView? _field_right = null;
+    internal IBitShiftExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IBitShiftExpressionView)((BitwiseAndNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IBitShiftExpressionView)_field_right;
+        }
+    }
 }
 
-internal abstract partial record BitwiseXorNode : GreenNode
-{
-}
+internal partial interface IBitShiftExpressionNode : IGreenNode, IBitwiseAndExpressionNode;
+internal partial interface IBitShiftExpressionView : IRedView, IBitwiseAndExpressionView;
 
-internal sealed partial record BinaryBitwiseXorNode : BitwiseXorNode
+internal sealed partial record BitShiftNode : GreenNode, IBitShiftExpressionNode
 {
-    internal BitwiseXorNode Left => (BitwiseXorNode)Children![0];
-    internal BitwiseAndNode Right => (BitwiseAndNode)Children![2];
-}
-
-internal sealed partial record DirectBitwiseXorNode : BitwiseXorNode
-{
-    internal BitwiseAndNode Value => (BitwiseAndNode)Children![0];
-}
-
-internal abstract partial record BitwiseAndNode : GreenNode
-{
-}
-
-internal sealed partial record BinaryBitwiseAndNode : BitwiseAndNode
-{
-    internal BitwiseAndNode Left => (BitwiseAndNode)Children![0];
-    internal BitShiftNode Right => (BitShiftNode)Children![2];
-}
-
-internal sealed partial record DirectBitwiseAndNode : BitwiseAndNode
-{
-    internal BitShiftNode Value => (BitShiftNode)Children![0];
-}
-
-internal abstract partial record BitShiftNode : GreenNode
-{
-}
-
-internal sealed partial record BinaryBitShiftNode : BitShiftNode
-{
-    internal BitShiftNode Left => (BitShiftNode)Children![0];
-    internal SumNode Right => (SumNode)Children![2];
+    internal IBitShiftExpressionNode Left => (IBitShiftExpressionNode)Children![0];
+    internal ISumExpressionNode Right => (ISumExpressionNode)Children![2];
     internal TokenNode Operator => (TokenNode)Children![1];
+    public override BitShiftView GetView(int position, IRedView? parent)
+        => new BitShiftView(this, position, parent);
+}
+internal sealed partial class BitShiftView : RedView, IBitShiftExpressionView
+{
+    internal BitShiftView(BitShiftNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitShiftExpressionView? _field_left = null;
+    internal IBitShiftExpressionView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (IBitShiftExpressionView)((BitShiftNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (IBitShiftExpressionView)_field_left;
+        }
+    }
+
+    private ISumExpressionView? _field_right = null;
+    internal ISumExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (ISumExpressionView)((BitShiftNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (ISumExpressionView)_field_right;
+        }
+    }
+
+    private TokenView? _field_operator = null;
+    internal TokenView Operator
+    {
+        get
+        {
+            if (_field_operator == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_operator = (TokenView)((BitShiftNode)base.Green).Operator!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_operator;
+        }
+    }
 }
 
-internal sealed partial record DirectBitShiftNode : BitShiftNode
-{
-    internal SumNode Value => (SumNode)Children![0];
-}
+internal partial interface ISumExpressionNode : IGreenNode, IBitShiftExpressionNode;
+internal partial interface ISumExpressionView : IRedView, IBitShiftExpressionView;
 
-internal abstract partial record SumNode : GreenNode
+internal sealed partial record SumNode : GreenNode, ISumExpressionNode
 {
-}
-
-internal sealed partial record BinarySumNode : SumNode
-{
-    internal SumNode Left => (SumNode)Children![0];
-    internal TermNode Right => (TermNode)Children![2];
+    internal ISumExpressionNode Left => (ISumExpressionNode)Children![0];
+    internal ITermExpressionNode Right => (ITermExpressionNode)Children![2];
     internal TokenNode Operator => (TokenNode)Children![1];
+    public override SumView GetView(int position, IRedView? parent)
+        => new SumView(this, position, parent);
+}
+internal sealed partial class SumView : RedView, ISumExpressionView
+{
+    internal SumView(SumNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ISumExpressionView? _field_left = null;
+    internal ISumExpressionView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (ISumExpressionView)((SumNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (ISumExpressionView)_field_left;
+        }
+    }
+
+    private ITermExpressionView? _field_right = null;
+    internal ITermExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (ITermExpressionView)((SumNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (ITermExpressionView)_field_right;
+        }
+    }
+
+    private TokenView? _field_operator = null;
+    internal TokenView Operator
+    {
+        get
+        {
+            if (_field_operator == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_operator = (TokenView)((SumNode)base.Green).Operator!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_operator;
+        }
+    }
 }
 
-internal sealed partial record DirectSumNode : SumNode
-{
-    internal TermNode Value => (TermNode)Children![0];
-}
+internal partial interface ITermExpressionNode : IGreenNode, ISumExpressionNode;
+internal partial interface ITermExpressionView : IRedView, ISumExpressionView;
 
-internal abstract partial record TermNode : GreenNode
+internal sealed partial record TermNode : GreenNode, ITermExpressionNode
 {
-}
-
-internal sealed partial record BinaryTermNode : TermNode
-{
-    internal TermNode Left => (TermNode)Children![0];
-    internal FactorNode Right => (FactorNode)Children![2];
+    internal ITermExpressionNode Left => (ITermExpressionNode)Children![0];
+    internal IFactorExpressionNode Right => (IFactorExpressionNode)Children![2];
     internal TokenNode Operator => (TokenNode)Children![1];
+    public override TermView GetView(int position, IRedView? parent)
+        => new TermView(this, position, parent);
 }
-
-internal sealed partial record DirectTermNode : TermNode
+internal sealed partial class TermView : RedView, ITermExpressionView
 {
-    internal FactorNode Value => (FactorNode)Children![0];
+    internal TermView(TermNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ITermExpressionView? _field_left = null;
+    internal ITermExpressionView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (ITermExpressionView)((TermNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (ITermExpressionView)_field_left;
+        }
+    }
+
+    private IFactorExpressionView? _field_right = null;
+    internal IFactorExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IFactorExpressionView)((TermNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IFactorExpressionView)_field_right;
+        }
+    }
+
+    private TokenView? _field_operator = null;
+    internal TokenView Operator
+    {
+        get
+        {
+            if (_field_operator == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_operator = (TokenView)((TermNode)base.Green).Operator!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_operator;
+        }
+    }
 }
 
-internal abstract partial record FactorNode : GreenNode
-{
-}
+internal partial interface IFactorExpressionNode : IGreenNode, ITermExpressionNode;
+internal partial interface IFactorExpressionView : IRedView, ITermExpressionView;
 
-internal sealed partial record UnaryFactorNode : FactorNode
+internal sealed partial record FactorNode : GreenNode, IFactorExpressionNode
 {
     internal TokenNode Operator => (TokenNode)Children![0];
-    internal FactorNode Value => (FactorNode)Children![1];
+    internal IFactorExpressionNode Value => (IFactorExpressionNode)Children![1];
+    public override FactorView GetView(int position, IRedView? parent)
+        => new FactorView(this, position, parent);
 }
-
-internal sealed partial record DirectFactorNode : FactorNode
+internal sealed partial class FactorView : RedView, IFactorExpressionView
 {
-    internal PowerNode Value => (PowerNode)Children![0];
+    internal FactorView(FactorNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_operator = null;
+    internal TokenView Operator
+    {
+        get
+        {
+            if (_field_operator == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_operator = (TokenView)((FactorNode)base.Green).Operator!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_operator;
+        }
+    }
+
+    private IFactorExpressionView? _field_value = null;
+    internal IFactorExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IFactorExpressionView)((FactorNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IFactorExpressionView)_field_value;
+        }
+    }
 }
 
-internal abstract partial record PowerNode : GreenNode
+internal partial interface IPowerExpressionNode : IGreenNode, IFactorExpressionNode;
+internal partial interface IPowerExpressionView : IRedView, IFactorExpressionView;
+
+internal sealed partial record PowerNode : GreenNode, IPowerExpressionNode
 {
+    internal IPrimaryNode Left => (IPrimaryNode)Children![0];
+    internal IFactorExpressionNode Right => (IFactorExpressionNode)Children![2];
+    public override PowerView GetView(int position, IRedView? parent)
+        => new PowerView(this, position, parent);
 }
-
-internal sealed partial record BinaryPowerNode : PowerNode
+internal sealed partial class PowerView : RedView, IPowerExpressionView
 {
-    internal PrimaryNode Left => (PrimaryNode)Children![0];
-    internal FactorNode Right => (FactorNode)Children![2];
+    internal PowerView(PowerNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IPrimaryView? _field_left = null;
+    internal IPrimaryView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (IPrimaryView)((PowerNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (IPrimaryView)_field_left;
+        }
+    }
+
+    private IFactorExpressionView? _field_right = null;
+    internal IFactorExpressionView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (IFactorExpressionView)((PowerNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (IFactorExpressionView)_field_right;
+        }
+    }
 }
 
-internal sealed partial record DirectPowerNode : PowerNode
-{
-    internal PrimaryNode Value => (PrimaryNode)Children![0];
-}
+internal partial interface IPrimaryNode : IGreenNode, IPowerExpressionNode;
+internal partial interface IPrimaryView : IRedView, IPowerExpressionView;
 
-internal partial interface PrimaryNode : IGreenNode;
-
-internal sealed partial record AwaitPrimaryNode : GreenNode, PrimaryNode
+internal sealed partial record AwaitPrimaryNode : GreenNode, IPrimaryNode
 {
     internal RawPrimaryNode Value => (RawPrimaryNode)Children![1];
+    public override AwaitPrimaryView GetView(int position, IRedView? parent)
+        => new AwaitPrimaryView(this, position, parent);
+}
+internal sealed partial class AwaitPrimaryView : RedView, IPrimaryView
+{
+    internal AwaitPrimaryView(AwaitPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private RawPrimaryView? _field_value = null;
+    internal RawPrimaryView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (RawPrimaryView)((AwaitPrimaryNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (RawPrimaryView)_field_value;
+        }
+    }
 }
 
-internal abstract partial record RawPrimaryNode : GreenNode, PrimaryNode
+internal abstract partial record RawPrimaryNode : GreenNode, IPrimaryNode
 {
+}
+internal abstract partial class RawPrimaryView : RedView, IPrimaryView
+{
+    internal RawPrimaryView(RawPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record DotOperationPrimaryNode : RawPrimaryNode
 {
     internal RawPrimaryNode Left => (RawPrimaryNode)Children![0];
     internal TokenNode Right => (TokenNode)Children![2];
+    public override DotOperationPrimaryView GetView(int position, IRedView? parent)
+        => new DotOperationPrimaryView(this, position, parent);
+}
+internal sealed partial class DotOperationPrimaryView : RawPrimaryView
+{
+    internal DotOperationPrimaryView(DotOperationPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private RawPrimaryView? _field_left = null;
+    internal RawPrimaryView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (RawPrimaryView)((DotOperationPrimaryNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (RawPrimaryView)_field_left;
+        }
+    }
+
+    private TokenView? _field_right = null;
+    internal TokenView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (TokenView)((DotOperationPrimaryNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record CallWithGeneratorPrimaryNode : RawPrimaryNode
 {
     internal RawPrimaryNode Function => (RawPrimaryNode)Children![0];
     internal GeneratorExpressionNode Argument => (GeneratorExpressionNode)Children![1];
+    public override CallWithGeneratorPrimaryView GetView(int position, IRedView? parent)
+        => new CallWithGeneratorPrimaryView(this, position, parent);
+}
+internal sealed partial class CallWithGeneratorPrimaryView : RawPrimaryView
+{
+    internal CallWithGeneratorPrimaryView(CallWithGeneratorPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private RawPrimaryView? _field_function = null;
+    internal RawPrimaryView Function
+    {
+        get
+        {
+            if (_field_function == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_function = (RawPrimaryView)((CallWithGeneratorPrimaryNode)base.Green).Function!.GetView(_positionOfField, this);
+            }
+            return (RawPrimaryView)_field_function;
+        }
+    }
+
+    private GeneratorExpressionView? _field_argument = null;
+    internal GeneratorExpressionView Argument
+    {
+        get
+        {
+            if (_field_argument == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_argument = (GeneratorExpressionView)((CallWithGeneratorPrimaryNode)base.Green).Argument!.GetView(_positionOfField, this);
+            }
+            return (GeneratorExpressionView)_field_argument;
+        }
+    }
 }
 
 internal sealed partial record CallWithArgumentsPrimaryNode : RawPrimaryNode
 {
     internal RawPrimaryNode Function => (RawPrimaryNode)Children![0];
     internal ArgumentsNode? Arguments => Children![2] as ArgumentsNode;
+    public override CallWithArgumentsPrimaryView GetView(int position, IRedView? parent)
+        => new CallWithArgumentsPrimaryView(this, position, parent);
+}
+internal sealed partial class CallWithArgumentsPrimaryView : RawPrimaryView
+{
+    internal CallWithArgumentsPrimaryView(CallWithArgumentsPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private RawPrimaryView? _field_function = null;
+    internal RawPrimaryView Function
+    {
+        get
+        {
+            if (_field_function == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_function = (RawPrimaryView)((CallWithArgumentsPrimaryNode)base.Green).Function!.GetView(_positionOfField, this);
+            }
+            return (RawPrimaryView)_field_function;
+        }
+    }
+
+    private ArgumentsView? _field_arguments = null;
+    internal ArgumentsView? Arguments
+    {
+        get
+        {
+            if (_field_arguments == null && ((CallWithArgumentsPrimaryNode)base.Green).Arguments != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_arguments = (ArgumentsView)((CallWithArgumentsPrimaryNode)base.Green).Arguments!.GetView(_positionOfField, this);
+            }
+            return (ArgumentsView?)_field_arguments;
+        }
+    }
 }
 
 internal sealed partial record SubscriptPrimaryNode : RawPrimaryNode
 {
     internal RawPrimaryNode Target => (RawPrimaryNode)Children![0];
     internal SlicesNode Subscript => (SlicesNode)Children![2];
+    public override SubscriptPrimaryView GetView(int position, IRedView? parent)
+        => new SubscriptPrimaryView(this, position, parent);
+}
+internal sealed partial class SubscriptPrimaryView : RawPrimaryView
+{
+    internal SubscriptPrimaryView(SubscriptPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private RawPrimaryView? _field_target = null;
+    internal RawPrimaryView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_target = (RawPrimaryView)((SubscriptPrimaryNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (RawPrimaryView)_field_target;
+        }
+    }
+
+    private SlicesView? _field_subscript = null;
+    internal SlicesView Subscript
+    {
+        get
+        {
+            if (_field_subscript == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_subscript = (SlicesView)((SubscriptPrimaryNode)base.Green).Subscript!.GetView(_positionOfField, this);
+            }
+            return (SlicesView)_field_subscript;
+        }
+    }
 }
 
 internal sealed partial record AtomPrimaryNode : RawPrimaryNode
 {
-    internal AtomNode Value => (AtomNode)Children![0];
+    internal IAtomNode Value => (IAtomNode)Children![0];
+    public override AtomPrimaryView GetView(int position, IRedView? parent)
+        => new AtomPrimaryView(this, position, parent);
+}
+internal sealed partial class AtomPrimaryView : RawPrimaryView
+{
+    internal AtomPrimaryView(AtomPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IAtomView? _field_value = null;
+    internal IAtomView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (IAtomView)((AtomPrimaryNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IAtomView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record SlicesNode : GreenNode
 {
 }
+internal abstract partial class SlicesView : RedView
+{
+    internal SlicesView(SlicesNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record OneSliceSubscriptNode : SlicesNode
 {
     internal SliceNode Value => (SliceNode)Children![0];
+    public override OneSliceSubscriptView GetView(int position, IRedView? parent)
+        => new OneSliceSubscriptView(this, position, parent);
+}
+internal sealed partial class OneSliceSubscriptView : SlicesView
+{
+    internal OneSliceSubscriptView(OneSliceSubscriptNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SliceView? _field_value = null;
+    internal SliceView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (SliceView)((OneSliceSubscriptNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (SliceView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record DimensionalSubscriptNode : SlicesNode
@@ -13972,234 +19352,1246 @@ internal sealed partial record DimensionalSubscriptNode : SlicesNode
             return _field_Values.Value;
         }
     }
-    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstValues => (NodeArray<GreenNode>)Children![0];
+    public override DimensionalSubscriptView GetView(int position, IRedView? parent)
+        => new DimensionalSubscriptView(this, position, parent);
+}
+internal sealed partial class DimensionalSubscriptView : SlicesView
+{
+    internal DimensionalSubscriptView(DimensionalSubscriptNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_values = null;
+    internal ViewArray<RedView> AstValues
+    {
+        get
+        {
+            if (_ast_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_values = new ViewArray<RedView>(((DimensionalSubscriptNode)base.Green).AstValues, _positionOfField, this);
+            }
+            return _ast_field_values.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<DimensionView>? _field_values = null;
+    internal global::System.Collections.Immutable.ImmutableArray<DimensionView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _tmp = AstValues.Where(static (_, i) => i % 2 == 0).Cast<DimensionView>();
+                _field_values = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_values.Value;
+        }
+    }
 }
 
 internal abstract partial record DimensionNode : GreenNode
 {
 }
+internal abstract partial class DimensionView : RedView
+{
+    internal DimensionView(DimensionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record DimensionSliceNode : DimensionNode
 {
     internal SliceNode Value => (SliceNode)Children![0];
+    public override DimensionSliceView GetView(int position, IRedView? parent)
+        => new DimensionSliceView(this, position, parent);
+}
+internal sealed partial class DimensionSliceView : DimensionView
+{
+    internal DimensionSliceView(DimensionSliceNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SliceView? _field_value = null;
+    internal SliceView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (SliceView)((DimensionSliceNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (SliceView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record DimensionExpressionNode : DimensionNode
 {
-    internal StarExpressionNode Value => (StarExpressionNode)Children![0];
+    internal IStarExpressionNode Value => (IStarExpressionNode)Children![0];
+    public override DimensionExpressionView GetView(int position, IRedView? parent)
+        => new DimensionExpressionView(this, position, parent);
+}
+internal sealed partial class DimensionExpressionView : DimensionView
+{
+    internal DimensionExpressionView(DimensionExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarExpressionView? _field_value = null;
+    internal IStarExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (IStarExpressionView)((DimensionExpressionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IStarExpressionView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record SliceNode : GreenNode
 {
 }
+internal abstract partial class SliceView : RedView
+{
+    internal SliceView(SliceNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record NamedSliceExpressionNode : SliceNode
 {
-    internal NamedExpressionNode Value => (NamedExpressionNode)Children![0];
+    internal INamedExpressionNode Value => (INamedExpressionNode)Children![0];
+    public override NamedSliceExpressionView GetView(int position, IRedView? parent)
+        => new NamedSliceExpressionView(this, position, parent);
+}
+internal sealed partial class NamedSliceExpressionView : SliceView
+{
+    internal NamedSliceExpressionView(NamedSliceExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private INamedExpressionView? _field_value = null;
+    internal INamedExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (INamedExpressionView)((NamedSliceExpressionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (INamedExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record ColonSliceNode : SliceNode
 {
-    internal ExpressionNode? Start => Children![0] as ExpressionNode;
-    internal ExpressionNode? End => Children![2] as ExpressionNode;
+    internal IExpressionNode? Start => Children![0] as IExpressionNode;
+    internal IExpressionNode? End => Children![2] as IExpressionNode;
     internal StepSliceParamNode? Step => Children![3] as StepSliceParamNode;
+    public override ColonSliceView GetView(int position, IRedView? parent)
+        => new ColonSliceView(this, position, parent);
+}
+internal sealed partial class ColonSliceView : SliceView
+{
+    internal ColonSliceView(ColonSliceNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_start = null;
+    internal IExpressionView? Start
+    {
+        get
+        {
+            if (_field_start == null && ((ColonSliceNode)base.Green).Start != null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_start = (IExpressionView)((ColonSliceNode)base.Green).Start!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView?)_field_start;
+        }
+    }
+
+    private IExpressionView? _field_end = null;
+    internal IExpressionView? End
+    {
+        get
+        {
+            if (_field_end == null && ((ColonSliceNode)base.Green).End != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_end = (IExpressionView)((ColonSliceNode)base.Green).End!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView?)_field_end;
+        }
+    }
+
+    private StepSliceParamView? _field_step = null;
+    internal StepSliceParamView? Step
+    {
+        get
+        {
+            if (_field_step == null && ((ColonSliceNode)base.Green).Step != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_step = (StepSliceParamView)((ColonSliceNode)base.Green).Step!.GetView(_positionOfField, this);
+            }
+            return (StepSliceParamView?)_field_step;
+        }
+    }
 }
 
 internal sealed partial record StepSliceParamNode : GreenNode
 {
-    internal ExpressionNode? Value => Children![1] as ExpressionNode;
+    internal IExpressionNode? Value => Children![1] as IExpressionNode;
+    public override StepSliceParamView GetView(int position, IRedView? parent)
+        => new StepSliceParamView(this, position, parent);
+}
+internal sealed partial class StepSliceParamView : RedView
+{
+    internal StepSliceParamView(StepSliceParamNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView? Value
+    {
+        get
+        {
+            if (_field_value == null && ((StepSliceParamNode)base.Green).Value != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IExpressionView)((StepSliceParamNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView?)_field_value;
+        }
+    }
 }
 
-internal partial interface AtomNode : IGreenNode;
+internal partial interface IAtomNode : IGreenNode;
+internal partial interface IAtomView : IRedView;
 
-internal abstract partial record OneTokenAtomNode : GreenNode, AtomNode
+internal abstract partial record OneTokenAtomNode : GreenNode, IAtomNode
 {
+}
+internal abstract partial class OneTokenAtomView : RedView, IAtomView
+{
+    internal OneTokenAtomView(OneTokenAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record NameAtomNode : OneTokenAtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override NameAtomView GetView(int position, IRedView? parent)
+        => new NameAtomView(this, position, parent);
+}
+internal sealed partial class NameAtomView : OneTokenAtomView
+{
+    internal NameAtomView(NameAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((NameAtomNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TrueAtomNode : OneTokenAtomNode
 {
+    public override TrueAtomView GetView(int position, IRedView? parent)
+        => new TrueAtomView(this, position, parent);
+}
+internal sealed partial class TrueAtomView : OneTokenAtomView
+{
+    internal TrueAtomView(TrueAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record FalseAtomNode : OneTokenAtomNode
 {
+    public override FalseAtomView GetView(int position, IRedView? parent)
+        => new FalseAtomView(this, position, parent);
+}
+internal sealed partial class FalseAtomView : OneTokenAtomView
+{
+    internal FalseAtomView(FalseAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record NoneAtomNode : OneTokenAtomNode
 {
+    public override NoneAtomView GetView(int position, IRedView? parent)
+        => new NoneAtomView(this, position, parent);
+}
+internal sealed partial class NoneAtomView : OneTokenAtomView
+{
+    internal NoneAtomView(NoneAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record NumberAtomNode : OneTokenAtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override NumberAtomView GetView(int position, IRedView? parent)
+        => new NumberAtomView(this, position, parent);
+}
+internal sealed partial class NumberAtomView : OneTokenAtomView
+{
+    internal NumberAtomView(NumberAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((NumberAtomNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record EllipsisAtomNode : OneTokenAtomNode
 {
+    public override EllipsisAtomView GetView(int position, IRedView? parent)
+        => new EllipsisAtomView(this, position, parent);
+}
+internal sealed partial class EllipsisAtomView : OneTokenAtomView
+{
+    internal EllipsisAtomView(EllipsisAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal abstract partial record GroupNode : GreenNode, AtomNode
+internal abstract partial record GroupNode : GreenNode, IAtomNode
 {
+}
+internal abstract partial class GroupView : RedView, IAtomView
+{
+    internal GroupView(GroupNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record NamedGroupExpressionNode : GroupNode
 {
-    internal NamedExpressionNode Value => (NamedExpressionNode)Children![1];
+    internal INamedExpressionNode Value => (INamedExpressionNode)Children![1];
+    public override NamedGroupExpressionView GetView(int position, IRedView? parent)
+        => new NamedGroupExpressionView(this, position, parent);
+}
+internal sealed partial class NamedGroupExpressionView : GroupView
+{
+    internal NamedGroupExpressionView(NamedGroupExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private INamedExpressionView? _field_value = null;
+    internal INamedExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (INamedExpressionView)((NamedGroupExpressionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (INamedExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record YieldGroupExpressionNode : GroupNode
 {
     internal YieldExpressionNode Value => (YieldExpressionNode)Children![1];
+    public override YieldGroupExpressionView GetView(int position, IRedView? parent)
+        => new YieldGroupExpressionView(this, position, parent);
+}
+internal sealed partial class YieldGroupExpressionView : GroupView
+{
+    internal YieldGroupExpressionView(YieldGroupExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private YieldExpressionView? _field_value = null;
+    internal YieldExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (YieldExpressionView)((YieldGroupExpressionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (YieldExpressionView)_field_value;
+        }
+    }
 }
 
-internal sealed partial record FStringNode : GreenNode, StringValueNode
+internal sealed partial record FStringNode : GreenNode, IStringValueNode
 {
     internal TokenNode Header => (TokenNode)Children![0];
-    internal NodeArray<FStringValueNode> Values => ((NodeList)Children![1]).GetArray<FStringValueNode>();
+    internal NodeArray<FStringValueNode> Values => (NodeArray<FStringValueNode>)Children![1];
+    public override FStringView GetView(int position, IRedView? parent)
+        => new FStringView(this, position, parent);
+}
+internal sealed partial class FStringView : RedView, IStringValueView
+{
+    internal FStringView(FStringNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_header = null;
+    internal TokenView Header
+    {
+        get
+        {
+            if (_field_header == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_header = (TokenView)((FStringNode)base.Green).Header!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_header;
+        }
+    }
+
+    private ViewArray<FStringValueView>? _field_values = null;
+    internal ViewArray<FStringValueView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_values = (ViewArray<FStringValueView>)new ViewArray<FStringValueView>(((FStringNode)base.Green).Values, _positionOfField, this);
+            }
+            return (ViewArray<FStringValueView>)_field_values;
+        }
+    }
 }
 
 internal abstract partial record FStringValueNode : GreenNode
 {
 }
+internal abstract partial class FStringValueView : RedView
+{
+    internal FStringValueView(FStringValueNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record FStringValueLiteralNode : FStringValueNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override FStringValueLiteralView GetView(int position, IRedView? parent)
+        => new FStringValueLiteralView(this, position, parent);
+}
+internal sealed partial class FStringValueLiteralView : FStringValueView
+{
+    internal FStringValueLiteralView(FStringValueLiteralNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((FStringValueLiteralNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record FStringValueReplacementNode : FStringValueNode
 {
     internal FStringReplacementFieldNode Value => (FStringReplacementFieldNode)Children![0];
+    public override FStringValueReplacementView GetView(int position, IRedView? parent)
+        => new FStringValueReplacementView(this, position, parent);
+}
+internal sealed partial class FStringValueReplacementView : FStringValueView
+{
+    internal FStringValueReplacementView(FStringValueReplacementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private FStringReplacementFieldView? _field_value = null;
+    internal FStringReplacementFieldView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (FStringReplacementFieldView)((FStringValueReplacementNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (FStringReplacementFieldView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record FStringReplacementFieldNode : GreenNode
 {
-    internal AnnotatedRhsNode Value => (AnnotatedRhsNode)Children![1];
+    internal IAnnotatedRhsNode Value => (IAnnotatedRhsNode)Children![1];
     internal DebugSpecifierNode? DebugSpecifier => Children![2] as DebugSpecifierNode;
     internal ConversionNode? Conversion => Children![3] as ConversionNode;
     internal FStringFullFormatSpecNode? FormatSpec => Children![4] as FStringFullFormatSpecNode;
+    public override FStringReplacementFieldView GetView(int position, IRedView? parent)
+        => new FStringReplacementFieldView(this, position, parent);
+}
+internal sealed partial class FStringReplacementFieldView : RedView
+{
+    internal FStringReplacementFieldView(FStringReplacementFieldNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IAnnotatedRhsView? _field_value = null;
+    internal IAnnotatedRhsView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IAnnotatedRhsView)((FStringReplacementFieldNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IAnnotatedRhsView)_field_value;
+        }
+    }
+
+    private DebugSpecifierView? _field_debugSpecifier = null;
+    internal DebugSpecifierView? DebugSpecifier
+    {
+        get
+        {
+            if (_field_debugSpecifier == null && ((FStringReplacementFieldNode)base.Green).DebugSpecifier != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_debugSpecifier = (DebugSpecifierView)((FStringReplacementFieldNode)base.Green).DebugSpecifier!.GetView(_positionOfField, this);
+            }
+            return (DebugSpecifierView?)_field_debugSpecifier;
+        }
+    }
+
+    private ConversionView? _field_conversion = null;
+    internal ConversionView? Conversion
+    {
+        get
+        {
+            if (_field_conversion == null && ((FStringReplacementFieldNode)base.Green).Conversion != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_conversion = (ConversionView)((FStringReplacementFieldNode)base.Green).Conversion!.GetView(_positionOfField, this);
+            }
+            return (ConversionView?)_field_conversion;
+        }
+    }
+
+    private FStringFullFormatSpecView? _field_formatSpec = null;
+    internal FStringFullFormatSpecView? FormatSpec
+    {
+        get
+        {
+            if (_field_formatSpec == null && ((FStringReplacementFieldNode)base.Green).FormatSpec != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_formatSpec = (FStringFullFormatSpecView)((FStringReplacementFieldNode)base.Green).FormatSpec!.GetView(_positionOfField, this);
+            }
+            return (FStringFullFormatSpecView?)_field_formatSpec;
+        }
+    }
 }
 
 internal sealed partial record FStringFullFormatSpecNode : GreenNode
 {
-    internal NodeArray<FStringFormatSpecNode> Specs => ((NodeList)Children![1]).GetArray<FStringFormatSpecNode>();
+    internal NodeArray<FStringFormatSpecNode> Specs => (NodeArray<FStringFormatSpecNode>)Children![1];
+    public override FStringFullFormatSpecView GetView(int position, IRedView? parent)
+        => new FStringFullFormatSpecView(this, position, parent);
+}
+internal sealed partial class FStringFullFormatSpecView : RedView
+{
+    internal FStringFullFormatSpecView(FStringFullFormatSpecNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<FStringFormatSpecView>? _field_specs = null;
+    internal ViewArray<FStringFormatSpecView> Specs
+    {
+        get
+        {
+            if (_field_specs == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_specs = (ViewArray<FStringFormatSpecView>)new ViewArray<FStringFormatSpecView>(((FStringFullFormatSpecNode)base.Green).Specs, _positionOfField, this);
+            }
+            return (ViewArray<FStringFormatSpecView>)_field_specs;
+        }
+    }
 }
 
 internal abstract partial record FStringFormatSpecNode : GreenNode
 {
 }
+internal abstract partial class FStringFormatSpecView : RedView
+{
+    internal FStringFormatSpecView(FStringFormatSpecNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record FStringFormatLiteralNode : FStringFormatSpecNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override FStringFormatLiteralView GetView(int position, IRedView? parent)
+        => new FStringFormatLiteralView(this, position, parent);
+}
+internal sealed partial class FStringFormatLiteralView : FStringFormatSpecView
+{
+    internal FStringFormatLiteralView(FStringFormatLiteralNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((FStringFormatLiteralNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record FStringFormatReplacementNode : FStringFormatSpecNode
 {
     internal FStringReplacementFieldNode Value => (FStringReplacementFieldNode)Children![0];
+    public override FStringFormatReplacementView GetView(int position, IRedView? parent)
+        => new FStringFormatReplacementView(this, position, parent);
+}
+internal sealed partial class FStringFormatReplacementView : FStringFormatSpecView
+{
+    internal FStringFormatReplacementView(FStringFormatReplacementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private FStringReplacementFieldView? _field_value = null;
+    internal FStringReplacementFieldView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (FStringReplacementFieldView)((FStringFormatReplacementNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (FStringReplacementFieldView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TStringNode : GreenNode
 {
     internal TokenNode Header => (TokenNode)Children![0];
-    internal NodeArray<TStringValueNode> Values => ((NodeList)Children![1]).GetArray<TStringValueNode>();
+    internal NodeArray<TStringValueNode> Values => (NodeArray<TStringValueNode>)Children![1];
+    public override TStringView GetView(int position, IRedView? parent)
+        => new TStringView(this, position, parent);
+}
+internal sealed partial class TStringView : RedView
+{
+    internal TStringView(TStringNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_header = null;
+    internal TokenView Header
+    {
+        get
+        {
+            if (_field_header == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_header = (TokenView)((TStringNode)base.Green).Header!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_header;
+        }
+    }
+
+    private ViewArray<TStringValueView>? _field_values = null;
+    internal ViewArray<TStringValueView> Values
+    {
+        get
+        {
+            if (_field_values == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_values = (ViewArray<TStringValueView>)new ViewArray<TStringValueView>(((TStringNode)base.Green).Values, _positionOfField, this);
+            }
+            return (ViewArray<TStringValueView>)_field_values;
+        }
+    }
 }
 
 internal abstract partial record TStringValueNode : GreenNode
 {
 }
+internal abstract partial class TStringValueView : RedView
+{
+    internal TStringValueView(TStringValueNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record TStringValueLiteralNode : TStringValueNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override TStringValueLiteralView GetView(int position, IRedView? parent)
+        => new TStringValueLiteralView(this, position, parent);
+}
+internal sealed partial class TStringValueLiteralView : TStringValueView
+{
+    internal TStringValueLiteralView(TStringValueLiteralNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((TStringValueLiteralNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TStringValueReplacementNode : TStringValueNode
 {
     internal TStringReplacementFieldNode Value => (TStringReplacementFieldNode)Children![0];
+    public override TStringValueReplacementView GetView(int position, IRedView? parent)
+        => new TStringValueReplacementView(this, position, parent);
+}
+internal sealed partial class TStringValueReplacementView : TStringValueView
+{
+    internal TStringValueReplacementView(TStringValueReplacementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TStringReplacementFieldView? _field_value = null;
+    internal TStringReplacementFieldView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TStringReplacementFieldView)((TStringValueReplacementNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TStringReplacementFieldView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TStringReplacementFieldNode : GreenNode
 {
-    internal AnnotatedRhsNode Value => (AnnotatedRhsNode)Children![1];
+    internal IAnnotatedRhsNode Value => (IAnnotatedRhsNode)Children![1];
     internal DebugSpecifierNode? DebugSpecifier => Children![2] as DebugSpecifierNode;
     internal ConversionNode? Conversion => Children![3] as ConversionNode;
     internal TStringFullFormatSpecNode? FormatSpec => Children![4] as TStringFullFormatSpecNode;
+    public override TStringReplacementFieldView GetView(int position, IRedView? parent)
+        => new TStringReplacementFieldView(this, position, parent);
+}
+internal sealed partial class TStringReplacementFieldView : RedView
+{
+    internal TStringReplacementFieldView(TStringReplacementFieldNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IAnnotatedRhsView? _field_value = null;
+    internal IAnnotatedRhsView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IAnnotatedRhsView)((TStringReplacementFieldNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IAnnotatedRhsView)_field_value;
+        }
+    }
+
+    private DebugSpecifierView? _field_debugSpecifier = null;
+    internal DebugSpecifierView? DebugSpecifier
+    {
+        get
+        {
+            if (_field_debugSpecifier == null && ((TStringReplacementFieldNode)base.Green).DebugSpecifier != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_debugSpecifier = (DebugSpecifierView)((TStringReplacementFieldNode)base.Green).DebugSpecifier!.GetView(_positionOfField, this);
+            }
+            return (DebugSpecifierView?)_field_debugSpecifier;
+        }
+    }
+
+    private ConversionView? _field_conversion = null;
+    internal ConversionView? Conversion
+    {
+        get
+        {
+            if (_field_conversion == null && ((TStringReplacementFieldNode)base.Green).Conversion != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_conversion = (ConversionView)((TStringReplacementFieldNode)base.Green).Conversion!.GetView(_positionOfField, this);
+            }
+            return (ConversionView?)_field_conversion;
+        }
+    }
+
+    private TStringFullFormatSpecView? _field_formatSpec = null;
+    internal TStringFullFormatSpecView? FormatSpec
+    {
+        get
+        {
+            if (_field_formatSpec == null && ((TStringReplacementFieldNode)base.Green).FormatSpec != null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_formatSpec = (TStringFullFormatSpecView)((TStringReplacementFieldNode)base.Green).FormatSpec!.GetView(_positionOfField, this);
+            }
+            return (TStringFullFormatSpecView?)_field_formatSpec;
+        }
+    }
 }
 
 internal sealed partial record TStringFullFormatSpecNode : GreenNode
 {
-    internal NodeArray<TStringFormatSpecNode> Specs => ((NodeList)Children![1]).GetArray<TStringFormatSpecNode>();
+    internal NodeArray<TStringFormatSpecNode> Specs => (NodeArray<TStringFormatSpecNode>)Children![1];
+    public override TStringFullFormatSpecView GetView(int position, IRedView? parent)
+        => new TStringFullFormatSpecView(this, position, parent);
+}
+internal sealed partial class TStringFullFormatSpecView : RedView
+{
+    internal TStringFullFormatSpecView(TStringFullFormatSpecNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<TStringFormatSpecView>? _field_specs = null;
+    internal ViewArray<TStringFormatSpecView> Specs
+    {
+        get
+        {
+            if (_field_specs == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_specs = (ViewArray<TStringFormatSpecView>)new ViewArray<TStringFormatSpecView>(((TStringFullFormatSpecNode)base.Green).Specs, _positionOfField, this);
+            }
+            return (ViewArray<TStringFormatSpecView>)_field_specs;
+        }
+    }
 }
 
 internal abstract partial record TStringFormatSpecNode : GreenNode
 {
 }
+internal abstract partial class TStringFormatSpecView : RedView
+{
+    internal TStringFormatSpecView(TStringFormatSpecNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record TStringFormatLiteralNode : TStringFormatSpecNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override TStringFormatLiteralView GetView(int position, IRedView? parent)
+        => new TStringFormatLiteralView(this, position, parent);
+}
+internal sealed partial class TStringFormatLiteralView : TStringFormatSpecView
+{
+    internal TStringFormatLiteralView(TStringFormatLiteralNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((TStringFormatLiteralNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TStringFormatReplacementNode : TStringFormatSpecNode
 {
     internal TStringReplacementFieldNode Value => (TStringReplacementFieldNode)Children![0];
+    public override TStringFormatReplacementView GetView(int position, IRedView? parent)
+        => new TStringFormatReplacementView(this, position, parent);
+}
+internal sealed partial class TStringFormatReplacementView : TStringFormatSpecView
+{
+    internal TStringFormatReplacementView(TStringFormatReplacementNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TStringReplacementFieldView? _field_value = null;
+    internal TStringReplacementFieldView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TStringReplacementFieldView)((TStringFormatReplacementNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TStringReplacementFieldView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record DebugSpecifierNode : GreenNode
 {
-    internal TokenNode Value => (TokenNode)Children![1];
+    public override DebugSpecifierView GetView(int position, IRedView? parent)
+        => new DebugSpecifierView(this, position, parent);
+}
+internal sealed partial class DebugSpecifierView : RedView
+{
+    internal DebugSpecifierView(DebugSpecifierNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record ConversionNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![1];
+    public override ConversionView GetView(int position, IRedView? parent)
+        => new ConversionView(this, position, parent);
+}
+internal sealed partial class ConversionView : RedView
+{
+    internal ConversionView(ConversionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (TokenView)((ConversionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
-internal abstract partial record StringAtomNode : GreenNode, AtomNode
+internal abstract partial record StringAtomNode : GreenNode, IAtomNode
 {
+}
+internal abstract partial class StringAtomView : RedView, IAtomView
+{
+    internal StringAtomView(StringAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record StringValueAtomNode : StringAtomNode
 {
-    internal NodeArray<StringValueNode> Parts => ((NodeList)Children![0]).GetArray<StringValueNode>();
+    internal NodeArray<IStringValueNode> Parts => (NodeArray<IStringValueNode>)Children![0];
+    public override StringValueAtomView GetView(int position, IRedView? parent)
+        => new StringValueAtomView(this, position, parent);
+}
+internal sealed partial class StringValueAtomView : StringAtomView
+{
+    internal StringValueAtomView(StringValueAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<IStringValueView>? _field_parts = null;
+    internal ViewArray<IStringValueView> Parts
+    {
+        get
+        {
+            if (_field_parts == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_parts = (ViewArray<IStringValueView>)new ViewArray<IStringValueView>(((StringValueAtomNode)base.Green).Parts, _positionOfField, this);
+            }
+            return (ViewArray<IStringValueView>)_field_parts;
+        }
+    }
 }
 
 internal sealed partial record StringTemplateAtomNode : StringAtomNode
 {
-    internal NodeArray<TStringNode> Parts => ((NodeList)Children![0]).GetArray<TStringNode>();
+    internal NodeArray<TStringNode> Parts => (NodeArray<TStringNode>)Children![0];
+    public override StringTemplateAtomView GetView(int position, IRedView? parent)
+        => new StringTemplateAtomView(this, position, parent);
+}
+internal sealed partial class StringTemplateAtomView : StringAtomView
+{
+    internal StringTemplateAtomView(StringTemplateAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<TStringView>? _field_parts = null;
+    internal ViewArray<TStringView> Parts
+    {
+        get
+        {
+            if (_field_parts == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_parts = (ViewArray<TStringView>)new ViewArray<TStringView>(((StringTemplateAtomNode)base.Green).Parts, _positionOfField, this);
+            }
+            return (ViewArray<TStringView>)_field_parts;
+        }
+    }
 }
 
-internal sealed partial record StringConstantNode : GreenNode, StringValueNode
+internal sealed partial record StringConstantNode : GreenNode, IStringValueNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override StringConstantView GetView(int position, IRedView? parent)
+        => new StringConstantView(this, position, parent);
+}
+internal sealed partial class StringConstantView : RedView, IStringValueView
+{
+    internal StringConstantView(StringConstantNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((StringConstantNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
-internal partial interface StringValueNode : IGreenNode;
+internal partial interface IStringValueNode : IGreenNode;
+internal partial interface IStringValueView : IRedView;
 
-internal sealed partial record ListNode : GreenNode, AtomNode
+internal sealed partial record ListNode : GreenNode, IAtomNode
 {
     internal StarNamedExpressionsNode? Items => Children![1] as StarNamedExpressionsNode;
+    public override ListView GetView(int position, IRedView? parent)
+        => new ListView(this, position, parent);
 }
-
-internal sealed partial record TupleNode : GreenNode, AtomNode
+internal sealed partial class ListView : RedView, IAtomView
 {
-    internal StarNamedExpressionNode First => (StarNamedExpressionNode)Children![1];
-    internal StarNamedExpressionsNode? Rest => Children![3] as StarNamedExpressionsNode;
+    internal ListView(ListNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarNamedExpressionsView? _field_items = null;
+    internal StarNamedExpressionsView? Items
+    {
+        get
+        {
+            if (_field_items == null && ((ListNode)base.Green).Items != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_items = (StarNamedExpressionsView)((ListNode)base.Green).Items!.GetView(_positionOfField, this);
+            }
+            return (StarNamedExpressionsView?)_field_items;
+        }
+    }
 }
 
-internal sealed partial record SetNode : GreenNode, AtomNode
+internal sealed partial record TupleNode : GreenNode, IAtomNode
+{
+    internal IStarNamedExpressionNode First => (IStarNamedExpressionNode)Children![1];
+    internal StarNamedExpressionsNode? Rest => Children![3] as StarNamedExpressionsNode;
+    public override TupleView GetView(int position, IRedView? parent)
+        => new TupleView(this, position, parent);
+}
+internal sealed partial class TupleView : RedView, IAtomView
+{
+    internal TupleView(TupleNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarNamedExpressionView? _field_first = null;
+    internal IStarNamedExpressionView First
+    {
+        get
+        {
+            if (_field_first == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_first = (IStarNamedExpressionView)((TupleNode)base.Green).First!.GetView(_positionOfField, this);
+            }
+            return (IStarNamedExpressionView)_field_first;
+        }
+    }
+
+    private StarNamedExpressionsView? _field_rest = null;
+    internal StarNamedExpressionsView? Rest
+    {
+        get
+        {
+            if (_field_rest == null && ((TupleNode)base.Green).Rest != null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_rest = (StarNamedExpressionsView)((TupleNode)base.Green).Rest!.GetView(_positionOfField, this);
+            }
+            return (StarNamedExpressionsView?)_field_rest;
+        }
+    }
+}
+
+internal sealed partial record SetNode : GreenNode, IAtomNode
 {
     internal StarNamedExpressionsNode Items => (StarNamedExpressionsNode)Children![1];
+    public override SetView GetView(int position, IRedView? parent)
+        => new SetView(this, position, parent);
+}
+internal sealed partial class SetView : RedView, IAtomView
+{
+    internal SetView(SetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarNamedExpressionsView? _field_items = null;
+    internal StarNamedExpressionsView Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_items = (StarNamedExpressionsView)((SetNode)base.Green).Items!.GetView(_positionOfField, this);
+            }
+            return (StarNamedExpressionsView)_field_items;
+        }
+    }
 }
 
-internal sealed partial record DictNode : GreenNode, AtomNode
+internal sealed partial record DictNode : GreenNode, IAtomNode
 {
     internal StarredOrKeyValuesNode? KeyValuePairs => Children![1] as StarredOrKeyValuesNode;
+    public override DictView GetView(int position, IRedView? parent)
+        => new DictView(this, position, parent);
+}
+internal sealed partial class DictView : RedView, IAtomView
+{
+    internal DictView(DictNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarredOrKeyValuesView? _field_keyValuePairs = null;
+    internal StarredOrKeyValuesView? KeyValuePairs
+    {
+        get
+        {
+            if (_field_keyValuePairs == null && ((DictNode)base.Green).KeyValuePairs != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_keyValuePairs = (StarredOrKeyValuesView)((DictNode)base.Green).KeyValuePairs!.GetView(_positionOfField, this);
+            }
+            return (StarredOrKeyValuesView?)_field_keyValuePairs;
+        }
+    }
 }
 
 internal sealed partial record StarredOrKeyValuesNode : GreenNode
@@ -14217,289 +20609,1374 @@ internal sealed partial record StarredOrKeyValuesNode : GreenNode
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![0];
+    public override StarredOrKeyValuesView GetView(int position, IRedView? parent)
+        => new StarredOrKeyValuesView(this, position, parent);
+}
+internal sealed partial class StarredOrKeyValuesView : RedView
+{
+    internal StarredOrKeyValuesView(StarredOrKeyValuesNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_items = new ViewArray<RedView>(((StarredOrKeyValuesNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<StarredOrKeyValueView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<StarredOrKeyValueView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<StarredOrKeyValueView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
 }
 
 internal abstract partial record StarredOrKeyValueNode : GreenNode
 {
 }
+internal abstract partial class StarredOrKeyValueView : RedView
+{
+    internal StarredOrKeyValueView(StarredOrKeyValueNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record DoubleStarredNode : StarredOrKeyValueNode
 {
-    internal BitwiseOrNode Value => (BitwiseOrNode)Children![1];
+    internal IBitwiseOrExpressionNode Value => (IBitwiseOrExpressionNode)Children![1];
+    public override DoubleStarredView GetView(int position, IRedView? parent)
+        => new DoubleStarredView(this, position, parent);
+}
+internal sealed partial class DoubleStarredView : StarredOrKeyValueView
+{
+    internal DoubleStarredView(DoubleStarredNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IBitwiseOrExpressionView? _field_value = null;
+    internal IBitwiseOrExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (IBitwiseOrExpressionView)((DoubleStarredNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IBitwiseOrExpressionView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record KeyValuePairNode : StarredOrKeyValueNode
 {
-    internal ExpressionNode Key => (ExpressionNode)Children![0];
-    internal ExpressionNode Value => (ExpressionNode)Children![2];
+    internal IExpressionNode Key => (IExpressionNode)Children![0];
+    internal IExpressionNode Value => (IExpressionNode)Children![2];
+    public override KeyValuePairView GetView(int position, IRedView? parent)
+        => new KeyValuePairView(this, position, parent);
+}
+internal sealed partial class KeyValuePairView : StarredOrKeyValueView
+{
+    internal KeyValuePairView(KeyValuePairNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_key = null;
+    internal IExpressionView Key
+    {
+        get
+        {
+            if (_field_key == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_key = (IExpressionView)((KeyValuePairNode)base.Green).Key!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_key;
+        }
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_value = (IExpressionView)((KeyValuePairNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record ForIfClauseNode : GreenNode
 {
+}
+internal abstract partial class ForIfClauseView : RedView
+{
+    internal ForIfClauseView(ForIfClauseNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record AsyncForIfClauseNode : ForIfClauseNode
 {
     internal StarTargetsNode Variables => (StarTargetsNode)Children![2];
     internal DisjunctionNode Iterable => (DisjunctionNode)Children![4];
-    internal NodeArray<IfClauseNode> Conditions => ((NodeList)Children![5]).GetArray<IfClauseNode>();
+    internal NodeArray<IfClauseNode> Conditions => (NodeArray<IfClauseNode>)Children![5];
+    public override AsyncForIfClauseView GetView(int position, IRedView? parent)
+        => new AsyncForIfClauseView(this, position, parent);
+}
+internal sealed partial class AsyncForIfClauseView : ForIfClauseView
+{
+    internal AsyncForIfClauseView(AsyncForIfClauseNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetsView? _field_variables = null;
+    internal StarTargetsView Variables
+    {
+        get
+        {
+            if (_field_variables == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_variables = (StarTargetsView)((AsyncForIfClauseNode)base.Green).Variables!.GetView(_positionOfField, this);
+            }
+            return (StarTargetsView)_field_variables;
+        }
+    }
+
+    private DisjunctionView? _field_iterable = null;
+    internal DisjunctionView Iterable
+    {
+        get
+        {
+            if (_field_iterable == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_iterable = (DisjunctionView)((AsyncForIfClauseNode)base.Green).Iterable!.GetView(_positionOfField, this);
+            }
+            return (DisjunctionView)_field_iterable;
+        }
+    }
+
+    private ViewArray<IfClauseView>? _field_conditions = null;
+    internal ViewArray<IfClauseView> Conditions
+    {
+        get
+        {
+            if (_field_conditions == null)
+            {
+                var _positionOfField = base.GetPositionFor(5);
+                _field_conditions = (ViewArray<IfClauseView>)new ViewArray<IfClauseView>(((AsyncForIfClauseNode)base.Green).Conditions, _positionOfField, this);
+            }
+            return (ViewArray<IfClauseView>)_field_conditions;
+        }
+    }
 }
 
 internal sealed partial record NormalForIfClauseNode : ForIfClauseNode
 {
     internal StarTargetsNode Variables => (StarTargetsNode)Children![1];
     internal DisjunctionNode Iterable => (DisjunctionNode)Children![3];
-    internal NodeArray<IfClauseNode> Conditions => ((NodeList)Children![4]).GetArray<IfClauseNode>();
+    internal NodeArray<IfClauseNode> Conditions => (NodeArray<IfClauseNode>)Children![4];
+    public override NormalForIfClauseView GetView(int position, IRedView? parent)
+        => new NormalForIfClauseView(this, position, parent);
+}
+internal sealed partial class NormalForIfClauseView : ForIfClauseView
+{
+    internal NormalForIfClauseView(NormalForIfClauseNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetsView? _field_variables = null;
+    internal StarTargetsView Variables
+    {
+        get
+        {
+            if (_field_variables == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_variables = (StarTargetsView)((NormalForIfClauseNode)base.Green).Variables!.GetView(_positionOfField, this);
+            }
+            return (StarTargetsView)_field_variables;
+        }
+    }
+
+    private DisjunctionView? _field_iterable = null;
+    internal DisjunctionView Iterable
+    {
+        get
+        {
+            if (_field_iterable == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_iterable = (DisjunctionView)((NormalForIfClauseNode)base.Green).Iterable!.GetView(_positionOfField, this);
+            }
+            return (DisjunctionView)_field_iterable;
+        }
+    }
+
+    private ViewArray<IfClauseView>? _field_conditions = null;
+    internal ViewArray<IfClauseView> Conditions
+    {
+        get
+        {
+            if (_field_conditions == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_conditions = (ViewArray<IfClauseView>)new ViewArray<IfClauseView>(((NormalForIfClauseNode)base.Green).Conditions, _positionOfField, this);
+            }
+            return (ViewArray<IfClauseView>)_field_conditions;
+        }
+    }
 }
 
 internal sealed partial record IfClauseNode : GreenNode
 {
     internal DisjunctionNode Condition => (DisjunctionNode)Children![1];
+    public override IfClauseView GetView(int position, IRedView? parent)
+        => new IfClauseView(this, position, parent);
+}
+internal sealed partial class IfClauseView : RedView
+{
+    internal IfClauseView(IfClauseNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private DisjunctionView? _field_condition = null;
+    internal DisjunctionView Condition
+    {
+        get
+        {
+            if (_field_condition == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_condition = (DisjunctionView)((IfClauseNode)base.Green).Condition!.GetView(_positionOfField, this);
+            }
+            return (DisjunctionView)_field_condition;
+        }
+    }
 }
 
-internal sealed partial record ListComprehensionNode : GreenNode, AtomNode
+internal sealed partial record ListComprehensionNode : GreenNode, IAtomNode
 {
-    internal StarNamedExpressionNode Expression => (StarNamedExpressionNode)Children![1];
-    internal NodeArray<ForIfClauseNode> Iterators => ((NodeList)Children![2]).GetArray<ForIfClauseNode>();
+    internal IStarNamedExpressionNode Expression => (IStarNamedExpressionNode)Children![1];
+    internal NodeArray<ForIfClauseNode> Iterators => (NodeArray<ForIfClauseNode>)Children![2];
+    public override ListComprehensionView GetView(int position, IRedView? parent)
+        => new ListComprehensionView(this, position, parent);
+}
+internal sealed partial class ListComprehensionView : RedView, IAtomView
+{
+    internal ListComprehensionView(ListComprehensionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarNamedExpressionView? _field_expression = null;
+    internal IStarNamedExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (IStarNamedExpressionView)((ListComprehensionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IStarNamedExpressionView)_field_expression;
+        }
+    }
+
+    private ViewArray<ForIfClauseView>? _field_iterators = null;
+    internal ViewArray<ForIfClauseView> Iterators
+    {
+        get
+        {
+            if (_field_iterators == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_iterators = (ViewArray<ForIfClauseView>)new ViewArray<ForIfClauseView>(((ListComprehensionNode)base.Green).Iterators, _positionOfField, this);
+            }
+            return (ViewArray<ForIfClauseView>)_field_iterators;
+        }
+    }
 }
 
-internal sealed partial record SetComprehensionNode : GreenNode, AtomNode
+internal sealed partial record SetComprehensionNode : GreenNode, IAtomNode
 {
-    internal StarNamedExpressionNode Expression => (StarNamedExpressionNode)Children![1];
-    internal NodeArray<ForIfClauseNode> Iterators => ((NodeList)Children![2]).GetArray<ForIfClauseNode>();
+    internal IStarNamedExpressionNode Expression => (IStarNamedExpressionNode)Children![1];
+    internal NodeArray<ForIfClauseNode> Iterators => (NodeArray<ForIfClauseNode>)Children![2];
+    public override SetComprehensionView GetView(int position, IRedView? parent)
+        => new SetComprehensionView(this, position, parent);
+}
+internal sealed partial class SetComprehensionView : RedView, IAtomView
+{
+    internal SetComprehensionView(SetComprehensionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarNamedExpressionView? _field_expression = null;
+    internal IStarNamedExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (IStarNamedExpressionView)((SetComprehensionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IStarNamedExpressionView)_field_expression;
+        }
+    }
+
+    private ViewArray<ForIfClauseView>? _field_iterators = null;
+    internal ViewArray<ForIfClauseView> Iterators
+    {
+        get
+        {
+            if (_field_iterators == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_iterators = (ViewArray<ForIfClauseView>)new ViewArray<ForIfClauseView>(((SetComprehensionNode)base.Green).Iterators, _positionOfField, this);
+            }
+            return (ViewArray<ForIfClauseView>)_field_iterators;
+        }
+    }
 }
 
-internal sealed partial record GeneratorExpressionNode : GreenNode, AtomNode
+internal sealed partial record GeneratorExpressionNode : GreenNode, IAtomNode
 {
-    internal StarNamedExpressionNode Expression => (StarNamedExpressionNode)Children![1];
-    internal NodeArray<ForIfClauseNode> Iterators => ((NodeList)Children![2]).GetArray<ForIfClauseNode>();
+    internal IStarNamedExpressionNode Expression => (IStarNamedExpressionNode)Children![1];
+    internal NodeArray<ForIfClauseNode> Iterators => (NodeArray<ForIfClauseNode>)Children![2];
+    public override GeneratorExpressionView GetView(int position, IRedView? parent)
+        => new GeneratorExpressionView(this, position, parent);
+}
+internal sealed partial class GeneratorExpressionView : RedView, IAtomView
+{
+    internal GeneratorExpressionView(GeneratorExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IStarNamedExpressionView? _field_expression = null;
+    internal IStarNamedExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (IStarNamedExpressionView)((GeneratorExpressionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IStarNamedExpressionView)_field_expression;
+        }
+    }
+
+    private ViewArray<ForIfClauseView>? _field_iterators = null;
+    internal ViewArray<ForIfClauseView> Iterators
+    {
+        get
+        {
+            if (_field_iterators == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_iterators = (ViewArray<ForIfClauseView>)new ViewArray<ForIfClauseView>(((GeneratorExpressionNode)base.Green).Iterators, _positionOfField, this);
+            }
+            return (ViewArray<ForIfClauseView>)_field_iterators;
+        }
+    }
 }
 
-internal abstract partial record DictComprehensionNode : GreenNode, AtomNode
+internal abstract partial record DictComprehensionNode : GreenNode, IAtomNode
 {
+}
+internal abstract partial class DictComprehensionView : RedView, IAtomView
+{
+    internal DictComprehensionView(DictComprehensionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record KeyValueDictComprehensionNode : DictComprehensionNode
 {
-    internal ExpressionNode Key => (ExpressionNode)Children![1];
-    internal ExpressionNode Value => (ExpressionNode)Children![3];
-    internal NodeArray<ForIfClauseNode> Iterators => ((NodeList)Children![4]).GetArray<ForIfClauseNode>();
+    internal IExpressionNode Key => (IExpressionNode)Children![1];
+    internal IExpressionNode Value => (IExpressionNode)Children![3];
+    internal NodeArray<ForIfClauseNode> Iterators => (NodeArray<ForIfClauseNode>)Children![4];
+    public override KeyValueDictComprehensionView GetView(int position, IRedView? parent)
+        => new KeyValueDictComprehensionView(this, position, parent);
+}
+internal sealed partial class KeyValueDictComprehensionView : DictComprehensionView
+{
+    internal KeyValueDictComprehensionView(KeyValueDictComprehensionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_key = null;
+    internal IExpressionView Key
+    {
+        get
+        {
+            if (_field_key == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_key = (IExpressionView)((KeyValueDictComprehensionNode)base.Green).Key!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_key;
+        }
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_value = (IExpressionView)((KeyValueDictComprehensionNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
+
+    private ViewArray<ForIfClauseView>? _field_iterators = null;
+    internal ViewArray<ForIfClauseView> Iterators
+    {
+        get
+        {
+            if (_field_iterators == null)
+            {
+                var _positionOfField = base.GetPositionFor(4);
+                _field_iterators = (ViewArray<ForIfClauseView>)new ViewArray<ForIfClauseView>(((KeyValueDictComprehensionNode)base.Green).Iterators, _positionOfField, this);
+            }
+            return (ViewArray<ForIfClauseView>)_field_iterators;
+        }
+    }
 }
 
 internal sealed partial record UnpackingDictComprehensionNode : DictComprehensionNode
 {
-    internal ExpressionNode Expression => (ExpressionNode)Children![2];
-    internal NodeArray<ForIfClauseNode> Iterators => ((NodeList)Children![3]).GetArray<ForIfClauseNode>();
+    internal IExpressionNode Expression => (IExpressionNode)Children![2];
+    internal NodeArray<ForIfClauseNode> Iterators => (NodeArray<ForIfClauseNode>)Children![3];
+    public override UnpackingDictComprehensionView GetView(int position, IRedView? parent)
+        => new UnpackingDictComprehensionView(this, position, parent);
+}
+internal sealed partial class UnpackingDictComprehensionView : DictComprehensionView
+{
+    internal UnpackingDictComprehensionView(UnpackingDictComprehensionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_expression = null;
+    internal IExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_expression = (IExpressionView)((UnpackingDictComprehensionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_expression;
+        }
+    }
+
+    private ViewArray<ForIfClauseView>? _field_iterators = null;
+    internal ViewArray<ForIfClauseView> Iterators
+    {
+        get
+        {
+            if (_field_iterators == null)
+            {
+                var _positionOfField = base.GetPositionFor(3);
+                _field_iterators = (ViewArray<ForIfClauseView>)new ViewArray<ForIfClauseView>(((UnpackingDictComprehensionNode)base.Green).Iterators, _positionOfField, this);
+            }
+            return (ViewArray<ForIfClauseView>)_field_iterators;
+        }
+    }
 }
 
 internal abstract partial record ArgumentsNode : GreenNode
 {
 }
+internal abstract partial class ArgumentsView : RedView
+{
+    internal ArgumentsView(ArgumentsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record WithPositionalArgumentsNode : ArgumentsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<PositionalArgumentNode>? _field_PositionalArgumentsPart = null;
-    internal global::System.Collections.Immutable.ImmutableArray<PositionalArgumentNode> PositionalArgumentsPart
+    private global::System.Collections.Immutable.ImmutableArray<IPositionalArgumentNode>? _field_PositionalArgumentsPart = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IPositionalArgumentNode> PositionalArgumentsPart
     {
         get
         {
             if (_field_PositionalArgumentsPart is null)
             {
-                var _tmp = AstPositionalArgumentsPart.Where(static (_, i) => i % 2 == 0).Cast<PositionalArgumentNode>();
+                var _tmp = AstPositionalArgumentsPart.Where(static (_, i) => i % 2 == 0).Cast<IPositionalArgumentNode>();
                 _field_PositionalArgumentsPart = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_PositionalArgumentsPart.Value;
         }
     }
-    internal NodeArray<GreenNode> AstPositionalArgumentsPart => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstPositionalArgumentsPart => (NodeArray<GreenNode>)Children![0];
     internal KeywordArgumentsPartNode? KeywordArgumentsPart => Children![1] as KeywordArgumentsPartNode;
+    public override WithPositionalArgumentsView GetView(int position, IRedView? parent)
+        => new WithPositionalArgumentsView(this, position, parent);
+}
+internal sealed partial class WithPositionalArgumentsView : ArgumentsView
+{
+    internal WithPositionalArgumentsView(WithPositionalArgumentsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_positionalArgumentsPart = null;
+    internal ViewArray<RedView> AstPositionalArgumentsPart
+    {
+        get
+        {
+            if (_ast_field_positionalArgumentsPart == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_positionalArgumentsPart = new ViewArray<RedView>(((WithPositionalArgumentsNode)base.Green).AstPositionalArgumentsPart, _positionOfField, this);
+            }
+            return _ast_field_positionalArgumentsPart.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IPositionalArgumentView>? _field_positionalArgumentsPart = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IPositionalArgumentView> PositionalArgumentsPart
+    {
+        get
+        {
+            if (_field_positionalArgumentsPart == null)
+            {
+                var _tmp = AstPositionalArgumentsPart.Where(static (_, i) => i % 2 == 0).Cast<IPositionalArgumentView>();
+                _field_positionalArgumentsPart = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_positionalArgumentsPart.Value;
+        }
+    }
+
+    private KeywordArgumentsPartView? _field_keywordArgumentsPart = null;
+    internal KeywordArgumentsPartView? KeywordArgumentsPart
+    {
+        get
+        {
+            if (_field_keywordArgumentsPart == null && ((WithPositionalArgumentsNode)base.Green).KeywordArgumentsPart != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_keywordArgumentsPart = (KeywordArgumentsPartView)((WithPositionalArgumentsNode)base.Green).KeywordArgumentsPart!.GetView(_positionOfField, this);
+            }
+            return (KeywordArgumentsPartView?)_field_keywordArgumentsPart;
+        }
+    }
 }
 
 internal sealed partial record OnlyKeywordArgumentsNode : ArgumentsNode
 {
     internal KwargsNode Value => (KwargsNode)Children![0];
+    public override OnlyKeywordArgumentsView GetView(int position, IRedView? parent)
+        => new OnlyKeywordArgumentsView(this, position, parent);
+}
+internal sealed partial class OnlyKeywordArgumentsView : ArgumentsView
+{
+    internal OnlyKeywordArgumentsView(OnlyKeywordArgumentsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private KwargsView? _field_value = null;
+    internal KwargsView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (KwargsView)((OnlyKeywordArgumentsNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (KwargsView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record KeywordArgumentsPartNode : GreenNode
 {
     internal KwargsNode Value => (KwargsNode)Children![1];
+    public override KeywordArgumentsPartView GetView(int position, IRedView? parent)
+        => new KeywordArgumentsPartView(this, position, parent);
+}
+internal sealed partial class KeywordArgumentsPartView : RedView
+{
+    internal KeywordArgumentsPartView(KeywordArgumentsPartNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private KwargsView? _field_value = null;
+    internal KwargsView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_value = (KwargsView)((KeywordArgumentsPartNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (KwargsView)_field_value;
+        }
+    }
 }
 
-internal partial interface PositionalArgumentNode : IGreenNode;
+internal partial interface IPositionalArgumentNode : IGreenNode;
+internal partial interface IPositionalArgumentView : IRedView;
 
 internal abstract partial record KwargsNode : GreenNode
 {
 }
+internal abstract partial class KwargsView : RedView
+{
+    internal KwargsView(KwargsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record BothStarredKwargsNode : KwargsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<KwargOrStarredNode>? _field_OneStarred = null;
-    internal global::System.Collections.Immutable.ImmutableArray<KwargOrStarredNode> OneStarred
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredNode>? _field_OneStarred = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredNode> OneStarred
     {
         get
         {
             if (_field_OneStarred is null)
             {
-                var _tmp = AstOneStarred.Where(static (_, i) => i % 2 == 0).Cast<KwargOrStarredNode>();
+                var _tmp = AstOneStarred.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrStarredNode>();
                 _field_OneStarred = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_OneStarred.Value;
         }
     }
-    internal NodeArray<GreenNode> AstOneStarred => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
-    private global::System.Collections.Immutable.ImmutableArray<KwargOrDoubleStarredNode>? _field_DoubleStarred = null;
-    internal global::System.Collections.Immutable.ImmutableArray<KwargOrDoubleStarredNode> DoubleStarred
+    internal NodeArray<GreenNode> AstOneStarred => (NodeArray<GreenNode>)Children![0];
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredNode>? _field_DoubleStarred = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredNode> DoubleStarred
     {
         get
         {
             if (_field_DoubleStarred is null)
             {
-                var _tmp = AstDoubleStarred.Where(static (_, i) => i % 2 == 0).Cast<KwargOrDoubleStarredNode>();
+                var _tmp = AstDoubleStarred.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrDoubleStarredNode>();
                 _field_DoubleStarred = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_DoubleStarred.Value;
         }
     }
-    internal NodeArray<GreenNode> AstDoubleStarred => (NodeArray<GreenNode>)((NodeList)Children![2]).Children!;
+    internal NodeArray<GreenNode> AstDoubleStarred => (NodeArray<GreenNode>)Children![2];
+    public override BothStarredKwargsView GetView(int position, IRedView? parent)
+        => new BothStarredKwargsView(this, position, parent);
+}
+internal sealed partial class BothStarredKwargsView : KwargsView
+{
+    internal BothStarredKwargsView(BothStarredKwargsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_oneStarred = null;
+    internal ViewArray<RedView> AstOneStarred
+    {
+        get
+        {
+            if (_ast_field_oneStarred == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_oneStarred = new ViewArray<RedView>(((BothStarredKwargsNode)base.Green).AstOneStarred, _positionOfField, this);
+            }
+            return _ast_field_oneStarred.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredView>? _field_oneStarred = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredView> OneStarred
+    {
+        get
+        {
+            if (_field_oneStarred == null)
+            {
+                var _tmp = AstOneStarred.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrStarredView>();
+                _field_oneStarred = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_oneStarred.Value;
+        }
+    }
+
+    private ViewArray<RedView>? _ast_field_doubleStarred = null;
+    internal ViewArray<RedView> AstDoubleStarred
+    {
+        get
+        {
+            if (_ast_field_doubleStarred == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _ast_field_doubleStarred = new ViewArray<RedView>(((BothStarredKwargsNode)base.Green).AstDoubleStarred, _positionOfField, this);
+            }
+            return _ast_field_doubleStarred.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredView>? _field_doubleStarred = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredView> DoubleStarred
+    {
+        get
+        {
+            if (_field_doubleStarred == null)
+            {
+                var _tmp = AstDoubleStarred.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrDoubleStarredView>();
+                _field_doubleStarred = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_doubleStarred.Value;
+        }
+    }
 }
 
 internal sealed partial record OneStarredKwargsNode : KwargsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<KwargOrStarredNode>? _field_Items = null;
-    internal global::System.Collections.Immutable.ImmutableArray<KwargOrStarredNode> Items
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredNode>? _field_Items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredNode> Items
     {
         get
         {
             if (_field_Items is null)
             {
-                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<KwargOrStarredNode>();
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrStarredNode>();
                 _field_Items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![0];
+    public override OneStarredKwargsView GetView(int position, IRedView? parent)
+        => new OneStarredKwargsView(this, position, parent);
+}
+internal sealed partial class OneStarredKwargsView : KwargsView
+{
+    internal OneStarredKwargsView(OneStarredKwargsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_items = new ViewArray<RedView>(((OneStarredKwargsNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrStarredView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrStarredView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
 }
 
 internal sealed partial record DoubleStarredKwargsNode : KwargsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<KwargOrDoubleStarredNode>? _field_Items = null;
-    internal global::System.Collections.Immutable.ImmutableArray<KwargOrDoubleStarredNode> Items
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredNode>? _field_Items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredNode> Items
     {
         get
         {
             if (_field_Items is null)
             {
-                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<KwargOrDoubleStarredNode>();
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrDoubleStarredNode>();
                 _field_Items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
             }
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![0];
+    public override DoubleStarredKwargsView GetView(int position, IRedView? parent)
+        => new DoubleStarredKwargsView(this, position, parent);
 }
-
-internal partial interface KwargOrStarredNode : IGreenNode;
-
-internal partial interface KwargOrDoubleStarredNode : IGreenNode;
-
-internal sealed partial record DoubleStarredExpressionNode : GreenNode, KwargOrDoubleStarredNode
+internal sealed partial class DoubleStarredKwargsView : KwargsView
 {
-    internal ExpressionNode Expression => (ExpressionNode)Children![1];
+    internal DoubleStarredKwargsView(DoubleStarredKwargsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_items = new ViewArray<RedView>(((DoubleStarredKwargsNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<IKwargOrDoubleStarredView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<IKwargOrDoubleStarredView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
 }
 
-internal sealed partial record StarredExpressionNode : GreenNode, PositionalArgumentNode
+internal partial interface IKwargOrStarredNode : IGreenNode;
+internal partial interface IKwargOrStarredView : IRedView;
+
+internal partial interface IKwargOrDoubleStarredNode : IGreenNode;
+internal partial interface IKwargOrDoubleStarredView : IRedView;
+
+internal sealed partial record DoubleStarredExpressionNode : GreenNode, IKwargOrDoubleStarredNode
 {
-    internal ExpressionNode Expression => (ExpressionNode)Children![1];
+    internal IExpressionNode Expression => (IExpressionNode)Children![1];
+    public override DoubleStarredExpressionView GetView(int position, IRedView? parent)
+        => new DoubleStarredExpressionView(this, position, parent);
+}
+internal sealed partial class DoubleStarredExpressionView : RedView, IKwargOrDoubleStarredView
+{
+    internal DoubleStarredExpressionView(DoubleStarredExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_expression = null;
+    internal IExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (IExpressionView)((DoubleStarredExpressionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_expression;
+        }
+    }
 }
 
-internal sealed partial record KwargNode : GreenNode, KwargOrStarredNode, KwargOrDoubleStarredNode
+internal sealed partial record StarredExpressionNode : GreenNode, IPositionalArgumentNode
+{
+    internal IExpressionNode Expression => (IExpressionNode)Children![1];
+    public override StarredExpressionView GetView(int position, IRedView? parent)
+        => new StarredExpressionView(this, position, parent);
+}
+internal sealed partial class StarredExpressionView : RedView, IPositionalArgumentView
+{
+    internal StarredExpressionView(StarredExpressionNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IExpressionView? _field_expression = null;
+    internal IExpressionView Expression
+    {
+        get
+        {
+            if (_field_expression == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_expression = (IExpressionView)((StarredExpressionNode)base.Green).Expression!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_expression;
+        }
+    }
+}
+
+internal sealed partial record KwargNode : GreenNode, IKwargOrStarredNode, IKwargOrDoubleStarredNode
 {
     internal TokenNode Keyword => (TokenNode)Children![0];
-    internal ExpressionNode Value => (ExpressionNode)Children![2];
+    internal IExpressionNode Value => (IExpressionNode)Children![2];
+    public override KwargView GetView(int position, IRedView? parent)
+        => new KwargView(this, position, parent);
+}
+internal sealed partial class KwargView : RedView, IKwargOrStarredView, IKwargOrDoubleStarredView
+{
+    internal KwargView(KwargNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_keyword = null;
+    internal TokenView Keyword
+    {
+        get
+        {
+            if (_field_keyword == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_keyword = (TokenView)((KwargNode)base.Green).Keyword!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_keyword;
+        }
+    }
+
+    private IExpressionView? _field_value = null;
+    internal IExpressionView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_value = (IExpressionView)((KwargNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IExpressionView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record StarTargetsNode : GreenNode
 {
 }
-
-internal sealed partial record StarTargetsNode_Derived0 : StarTargetsNode
+internal abstract partial class StarTargetsView : RedView
 {
-    internal StarTargetNode StarTargetNode => (StarTargetNode)Children![0];
+    internal StarTargetsView(StarTargetsNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
-internal sealed partial record StarTargetsNode_Derived1 : StarTargetsNode
+internal sealed partial record StarTargets_Derived0Node : StarTargetsNode
 {
-    private global::System.Collections.Immutable.ImmutableArray<StarTargetNode>? _field_StarTargetNode = null;
-    internal global::System.Collections.Immutable.ImmutableArray<StarTargetNode> StarTargetNode
+    internal StarTargetNode StarTarget => (StarTargetNode)Children![0];
+    public override StarTargets_Derived0View GetView(int position, IRedView? parent)
+        => new StarTargets_Derived0View(this, position, parent);
+}
+internal sealed partial class StarTargets_Derived0View : StarTargetsView
+{
+    internal StarTargets_Derived0View(StarTargets_Derived0Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetView? _field_starTarget = null;
+    internal StarTargetView StarTarget
     {
         get
         {
-            if (_field_StarTargetNode is null)
+            if (_field_starTarget == null)
             {
-                var _tmp = AstStarTargetNode.Where(static (_, i) => i % 2 == 0).Cast<StarTargetNode>();
-                _field_StarTargetNode = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+                var _positionOfField = base.GetPositionFor(0);
+                _field_starTarget = (StarTargetView)((StarTargets_Derived0Node)base.Green).StarTarget!.GetView(_positionOfField, this);
             }
-            return _field_StarTargetNode.Value;
+            return (StarTargetView)_field_starTarget;
         }
     }
-    internal NodeArray<GreenNode> AstStarTargetNode => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
-    internal TokenNode? TokenNode => Children![1] as TokenNode;
+}
+
+internal sealed partial record StarTargets_Derived1Node : StarTargetsNode
+{
+    private global::System.Collections.Immutable.ImmutableArray<StarTargetNode>? _field_StarTarget = null;
+    internal global::System.Collections.Immutable.ImmutableArray<StarTargetNode> StarTarget
+    {
+        get
+        {
+            if (_field_StarTarget is null)
+            {
+                var _tmp = AstStarTarget.Where(static (_, i) => i % 2 == 0).Cast<StarTargetNode>();
+                _field_StarTarget = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_StarTarget.Value;
+        }
+    }
+    internal NodeArray<GreenNode> AstStarTarget => (NodeArray<GreenNode>)Children![0];
+    internal TokenNode? Token => Children![1] as TokenNode;
+    public override StarTargets_Derived1View GetView(int position, IRedView? parent)
+        => new StarTargets_Derived1View(this, position, parent);
+}
+internal sealed partial class StarTargets_Derived1View : StarTargetsView
+{
+    internal StarTargets_Derived1View(StarTargets_Derived1Node green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_starTarget = null;
+    internal ViewArray<RedView> AstStarTarget
+    {
+        get
+        {
+            if (_ast_field_starTarget == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_starTarget = new ViewArray<RedView>(((StarTargets_Derived1Node)base.Green).AstStarTarget, _positionOfField, this);
+            }
+            return _ast_field_starTarget.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<StarTargetView>? _field_starTarget = null;
+    internal global::System.Collections.Immutable.ImmutableArray<StarTargetView> StarTarget
+    {
+        get
+        {
+            if (_field_starTarget == null)
+            {
+                var _tmp = AstStarTarget.Where(static (_, i) => i % 2 == 0).Cast<StarTargetView>();
+                _field_starTarget = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_starTarget.Value;
+        }
+    }
+
+    private TokenView? _field_token = null;
+    internal TokenView? Token
+    {
+        get
+        {
+            if (_field_token == null && ((StarTargets_Derived1Node)base.Green).Token != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_token = (TokenView)((StarTargets_Derived1Node)base.Green).Token!.GetView(_positionOfField, this);
+            }
+            return (TokenView?)_field_token;
+        }
+    }
 }
 
 internal abstract partial record StarTargetNode : GreenNode
 {
 }
+internal abstract partial class StarTargetView : RedView
+{
+    internal StarTargetView(StarTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record ActuallyStarTargetNode : StarTargetNode
 {
     internal TargetWithStarAtomNode Target => (TargetWithStarAtomNode)Children![1];
+    public override ActuallyStarTargetView GetView(int position, IRedView? parent)
+        => new ActuallyStarTargetView(this, position, parent);
+}
+internal sealed partial class ActuallyStarTargetView : StarTargetView
+{
+    internal ActuallyStarTargetView(ActuallyStarTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetWithStarAtomView? _field_target = null;
+    internal TargetWithStarAtomView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_target = (TargetWithStarAtomView)((ActuallyStarTargetNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (TargetWithStarAtomView)_field_target;
+        }
+    }
 }
 
 internal sealed partial record NotStarTargetNode : StarTargetNode
 {
     internal TargetWithStarAtomNode Target => (TargetWithStarAtomNode)Children![0];
+    public override NotStarTargetView GetView(int position, IRedView? parent)
+        => new NotStarTargetView(this, position, parent);
+}
+internal sealed partial class NotStarTargetView : StarTargetView
+{
+    internal NotStarTargetView(NotStarTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetWithStarAtomView? _field_target = null;
+    internal TargetWithStarAtomView Target
+    {
+        get
+        {
+            if (_field_target == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_target = (TargetWithStarAtomView)((NotStarTargetNode)base.Green).Target!.GetView(_positionOfField, this);
+            }
+            return (TargetWithStarAtomView)_field_target;
+        }
+    }
 }
 
 internal abstract partial record TargetWithStarAtomNode : GreenNode
 {
+}
+internal abstract partial class TargetWithStarAtomView : RedView
+{
+    internal TargetWithStarAtomView(TargetWithStarAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record DottedStarTargetNode : TargetWithStarAtomNode
 {
     internal TargetPrimaryNode Left => (TargetPrimaryNode)Children![0];
     internal TokenNode Right => (TokenNode)Children![2];
+    public override DottedStarTargetView GetView(int position, IRedView? parent)
+        => new DottedStarTargetView(this, position, parent);
+}
+internal sealed partial class DottedStarTargetView : TargetWithStarAtomView
+{
+    internal DottedStarTargetView(DottedStarTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_left = null;
+    internal TargetPrimaryView Left
+    {
+        get
+        {
+            if (_field_left == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_left = (TargetPrimaryView)((DottedStarTargetNode)base.Green).Left!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_left;
+        }
+    }
+
+    private TokenView? _field_right = null;
+    internal TokenView Right
+    {
+        get
+        {
+            if (_field_right == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_right = (TokenView)((DottedStarTargetNode)base.Green).Right!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_right;
+        }
+    }
 }
 
 internal sealed partial record SubscriptStarTargetNode : TargetWithStarAtomNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal SlicesNode Subscript => (SlicesNode)Children![2];
+    public override SubscriptStarTargetView GetView(int position, IRedView? parent)
+        => new SubscriptStarTargetView(this, position, parent);
+}
+internal sealed partial class SubscriptStarTargetView : TargetWithStarAtomView
+{
+    internal SubscriptStarTargetView(SubscriptStarTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((SubscriptStarTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private SlicesView? _field_subscript = null;
+    internal SlicesView Subscript
+    {
+        get
+        {
+            if (_field_subscript == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_subscript = (SlicesView)((SubscriptStarTargetNode)base.Green).Subscript!.GetView(_positionOfField, this);
+            }
+            return (SlicesView)_field_subscript;
+        }
+    }
 }
 
 internal sealed partial record SingleStarTargetNode : TargetWithStarAtomNode
 {
     internal StarAtomNode Atom => (StarAtomNode)Children![0];
+    public override SingleStarTargetView GetView(int position, IRedView? parent)
+        => new SingleStarTargetView(this, position, parent);
+}
+internal sealed partial class SingleStarTargetView : TargetWithStarAtomView
+{
+    internal SingleStarTargetView(SingleStarTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarAtomView? _field_atom = null;
+    internal StarAtomView Atom
+    {
+        get
+        {
+            if (_field_atom == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_atom = (StarAtomView)((SingleStarTargetNode)base.Green).Atom!.GetView(_positionOfField, this);
+            }
+            return (StarAtomView)_field_atom;
+        }
+    }
 }
 
 internal abstract partial record StarAtomNode : GreenNode
 {
 }
+internal abstract partial class StarAtomView : RedView
+{
+    internal StarAtomView(StarAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record NameStarAtomNode : StarAtomNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override NameStarAtomView GetView(int position, IRedView? parent)
+        => new NameStarAtomView(this, position, parent);
+}
+internal sealed partial class NameStarAtomView : StarAtomView
+{
+    internal NameStarAtomView(NameStarAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((NameStarAtomNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record TupleStarAtomNode : StarAtomNode
 {
     internal StarTargetSequenceNode? Items => Children![1] as StarTargetSequenceNode;
+    public override TupleStarAtomView GetView(int position, IRedView? parent)
+        => new TupleStarAtomView(this, position, parent);
+}
+internal sealed partial class TupleStarAtomView : StarAtomView
+{
+    internal TupleStarAtomView(TupleStarAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetSequenceView? _field_items = null;
+    internal StarTargetSequenceView? Items
+    {
+        get
+        {
+            if (_field_items == null && ((TupleStarAtomNode)base.Green).Items != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_items = (StarTargetSequenceView)((TupleStarAtomNode)base.Green).Items!.GetView(_positionOfField, this);
+            }
+            return (StarTargetSequenceView?)_field_items;
+        }
+    }
 }
 
 internal sealed partial record ListStarAtomNode : StarAtomNode
 {
     internal StarTargetSequenceNode? Items => Children![1] as StarTargetSequenceNode;
+    public override ListStarAtomView GetView(int position, IRedView? parent)
+        => new ListStarAtomView(this, position, parent);
+}
+internal sealed partial class ListStarAtomView : StarAtomView
+{
+    internal ListStarAtomView(ListStarAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private StarTargetSequenceView? _field_items = null;
+    internal StarTargetSequenceView? Items
+    {
+        get
+        {
+            if (_field_items == null && ((ListStarAtomNode)base.Green).Items != null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_items = (StarTargetSequenceView)((ListStarAtomNode)base.Green).Items!.GetView(_positionOfField, this);
+            }
+            return (StarTargetSequenceView?)_field_items;
+        }
+    }
 }
 
 internal sealed partial record StarTargetSequenceNode : GreenNode
@@ -14517,94 +21994,555 @@ internal sealed partial record StarTargetSequenceNode : GreenNode
             return _field_Items.Value;
         }
     }
-    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)((NodeList)Children![0]).Children!;
+    internal NodeArray<GreenNode> AstItems => (NodeArray<GreenNode>)Children![0];
+    public override StarTargetSequenceView GetView(int position, IRedView? parent)
+        => new StarTargetSequenceView(this, position, parent);
+}
+internal sealed partial class StarTargetSequenceView : RedView
+{
+    internal StarTargetSequenceView(StarTargetSequenceNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private ViewArray<RedView>? _ast_field_items = null;
+    internal ViewArray<RedView> AstItems
+    {
+        get
+        {
+            if (_ast_field_items == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _ast_field_items = new ViewArray<RedView>(((StarTargetSequenceNode)base.Green).AstItems, _positionOfField, this);
+            }
+            return _ast_field_items.Value;
+        }
+    }
+    private global::System.Collections.Immutable.ImmutableArray<StarTargetView>? _field_items = null;
+    internal global::System.Collections.Immutable.ImmutableArray<StarTargetView> Items
+    {
+        get
+        {
+            if (_field_items == null)
+            {
+                var _tmp = AstItems.Where(static (_, i) => i % 2 == 0).Cast<StarTargetView>();
+                _field_items = global::System.Collections.Immutable.ImmutableArray.ToImmutableArray(_tmp);
+            }
+            return _field_items.Value;
+        }
+    }
 }
 
 internal abstract partial record SingleTargetNode : GreenNode
 {
 }
+internal abstract partial class SingleTargetView : RedView
+{
+    internal SingleTargetView(SingleTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+}
 
 internal sealed partial record SubscriptSingleTargetNode : SingleTargetNode
 {
     internal SingleSubscriptAttributeTargetNode Value => (SingleSubscriptAttributeTargetNode)Children![0];
+    public override SubscriptSingleTargetView GetView(int position, IRedView? parent)
+        => new SubscriptSingleTargetView(this, position, parent);
+}
+internal sealed partial class SubscriptSingleTargetView : SingleTargetView
+{
+    internal SubscriptSingleTargetView(SubscriptSingleTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SingleSubscriptAttributeTargetView? _field_value = null;
+    internal SingleSubscriptAttributeTargetView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (SingleSubscriptAttributeTargetView)((SubscriptSingleTargetNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (SingleSubscriptAttributeTargetView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record NameSingleTargetNode : SingleTargetNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override NameSingleTargetView GetView(int position, IRedView? parent)
+        => new NameSingleTargetView(this, position, parent);
+}
+internal sealed partial class NameSingleTargetView : SingleTargetView
+{
+    internal NameSingleTargetView(NameSingleTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((NameSingleTargetNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record SingleSubscriptAttributeTargetNode : GreenNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
 }
+internal abstract partial class SingleSubscriptAttributeTargetView : RedView
+{
+    internal SingleSubscriptAttributeTargetView(SingleSubscriptAttributeTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((SingleSubscriptAttributeTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+}
 
 internal sealed partial record SingleAttributeTargetNode : SingleSubscriptAttributeTargetNode
 {
     internal TokenNode AttributeName => (TokenNode)Children![2];
+    public override SingleAttributeTargetView GetView(int position, IRedView? parent)
+        => new SingleAttributeTargetView(this, position, parent);
+}
+internal sealed partial class SingleAttributeTargetView : SingleSubscriptAttributeTargetView
+{
+    internal SingleAttributeTargetView(SingleAttributeTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_attributeName = null;
+    internal TokenView AttributeName
+    {
+        get
+        {
+            if (_field_attributeName == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_attributeName = (TokenView)((SingleAttributeTargetNode)base.Green).AttributeName!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_attributeName;
+        }
+    }
 }
 
 internal sealed partial record SingleSubscriptTargetNode : SingleSubscriptAttributeTargetNode
 {
     internal SlicesNode Subscript => (SlicesNode)Children![2];
+    public override SingleSubscriptTargetView GetView(int position, IRedView? parent)
+        => new SingleSubscriptTargetView(this, position, parent);
+}
+internal sealed partial class SingleSubscriptTargetView : SingleSubscriptAttributeTargetView
+{
+    internal SingleSubscriptTargetView(SingleSubscriptTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private SlicesView? _field_subscript = null;
+    internal SlicesView Subscript
+    {
+        get
+        {
+            if (_field_subscript == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_subscript = (SlicesView)((SingleSubscriptTargetNode)base.Green).Subscript!.GetView(_positionOfField, this);
+            }
+            return (SlicesView)_field_subscript;
+        }
+    }
 }
 
 internal abstract partial record TargetPrimaryNode : GreenNode
 {
+}
+internal abstract partial class TargetPrimaryView : RedView
+{
+    internal TargetPrimaryView(TargetPrimaryNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record AttributeTargetNode : TargetPrimaryNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal TokenNode AttributeName => (TokenNode)Children![2];
+    public override AttributeTargetView GetView(int position, IRedView? parent)
+        => new AttributeTargetView(this, position, parent);
+}
+internal sealed partial class AttributeTargetView : TargetPrimaryView
+{
+    internal AttributeTargetView(AttributeTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((AttributeTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private TokenView? _field_attributeName = null;
+    internal TokenView AttributeName
+    {
+        get
+        {
+            if (_field_attributeName == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_attributeName = (TokenView)((AttributeTargetNode)base.Green).AttributeName!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_attributeName;
+        }
+    }
 }
 
 internal sealed partial record SubscriptTargetNode : TargetPrimaryNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal SlicesNode Subscript => (SlicesNode)Children![2];
+    public override SubscriptTargetView GetView(int position, IRedView? parent)
+        => new SubscriptTargetView(this, position, parent);
+}
+internal sealed partial class SubscriptTargetView : TargetPrimaryView
+{
+    internal SubscriptTargetView(SubscriptTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((SubscriptTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private SlicesView? _field_subscript = null;
+    internal SlicesView Subscript
+    {
+        get
+        {
+            if (_field_subscript == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_subscript = (SlicesView)((SubscriptTargetNode)base.Green).Subscript!.GetView(_positionOfField, this);
+            }
+            return (SlicesView)_field_subscript;
+        }
+    }
 }
 
 internal sealed partial record GeneratorTargetNode : TargetPrimaryNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal GeneratorExpressionNode Generator => (GeneratorExpressionNode)Children![1];
+    public override GeneratorTargetView GetView(int position, IRedView? parent)
+        => new GeneratorTargetView(this, position, parent);
+}
+internal sealed partial class GeneratorTargetView : TargetPrimaryView
+{
+    internal GeneratorTargetView(GeneratorTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((GeneratorTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private GeneratorExpressionView? _field_generator = null;
+    internal GeneratorExpressionView Generator
+    {
+        get
+        {
+            if (_field_generator == null)
+            {
+                var _positionOfField = base.GetPositionFor(1);
+                _field_generator = (GeneratorExpressionView)((GeneratorTargetNode)base.Green).Generator!.GetView(_positionOfField, this);
+            }
+            return (GeneratorExpressionView)_field_generator;
+        }
+    }
 }
 
 internal sealed partial record CallTargetNode : TargetPrimaryNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal ArgumentsNode? Arguments => Children![2] as ArgumentsNode;
+    public override CallTargetView GetView(int position, IRedView? parent)
+        => new CallTargetView(this, position, parent);
+}
+internal sealed partial class CallTargetView : TargetPrimaryView
+{
+    internal CallTargetView(CallTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((CallTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private ArgumentsView? _field_arguments = null;
+    internal ArgumentsView? Arguments
+    {
+        get
+        {
+            if (_field_arguments == null && ((CallTargetNode)base.Green).Arguments != null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_arguments = (ArgumentsView)((CallTargetNode)base.Green).Arguments!.GetView(_positionOfField, this);
+            }
+            return (ArgumentsView?)_field_arguments;
+        }
+    }
 }
 
 internal sealed partial record AtomTargetNode : TargetPrimaryNode
 {
-    internal AtomNode Value => (AtomNode)Children![0];
+    internal IAtomNode Value => (IAtomNode)Children![0];
+    public override AtomTargetView GetView(int position, IRedView? parent)
+        => new AtomTargetView(this, position, parent);
+}
+internal sealed partial class AtomTargetView : TargetPrimaryView
+{
+    internal AtomTargetView(AtomTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private IAtomView? _field_value = null;
+    internal IAtomView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (IAtomView)((AtomTargetNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (IAtomView)_field_value;
+        }
+    }
 }
 
 internal abstract partial record DeleteTargetNode : GreenNode
 {
+}
+internal abstract partial class DeleteTargetView : RedView
+{
+    internal DeleteTargetView(DeleteTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
 }
 
 internal sealed partial record DeleteAttributeTargetNode : DeleteTargetNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal TokenNode AttributeName => (TokenNode)Children![2];
+    public override DeleteAttributeTargetView GetView(int position, IRedView? parent)
+        => new DeleteAttributeTargetView(this, position, parent);
+}
+internal sealed partial class DeleteAttributeTargetView : DeleteTargetView
+{
+    internal DeleteAttributeTargetView(DeleteAttributeTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((DeleteAttributeTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private TokenView? _field_attributeName = null;
+    internal TokenView AttributeName
+    {
+        get
+        {
+            if (_field_attributeName == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_attributeName = (TokenView)((DeleteAttributeTargetNode)base.Green).AttributeName!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_attributeName;
+        }
+    }
 }
 
 internal sealed partial record DeleteSubscriptTargetNode : DeleteTargetNode
 {
     internal TargetPrimaryNode Primary => (TargetPrimaryNode)Children![0];
     internal SlicesNode Subscript => (SlicesNode)Children![2];
+    public override DeleteSubscriptTargetView GetView(int position, IRedView? parent)
+        => new DeleteSubscriptTargetView(this, position, parent);
+}
+internal sealed partial class DeleteSubscriptTargetView : DeleteTargetView
+{
+    internal DeleteSubscriptTargetView(DeleteSubscriptTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TargetPrimaryView? _field_primary = null;
+    internal TargetPrimaryView Primary
+    {
+        get
+        {
+            if (_field_primary == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_primary = (TargetPrimaryView)((DeleteSubscriptTargetNode)base.Green).Primary!.GetView(_positionOfField, this);
+            }
+            return (TargetPrimaryView)_field_primary;
+        }
+    }
+
+    private SlicesView? _field_subscript = null;
+    internal SlicesView Subscript
+    {
+        get
+        {
+            if (_field_subscript == null)
+            {
+                var _positionOfField = base.GetPositionFor(2);
+                _field_subscript = (SlicesView)((DeleteSubscriptTargetNode)base.Green).Subscript!.GetView(_positionOfField, this);
+            }
+            return (SlicesView)_field_subscript;
+        }
+    }
 }
 
 internal sealed partial record DeleteAtomTargetNode : DeleteTargetNode
 {
     internal DeleteTargetAtomNode Value => (DeleteTargetAtomNode)Children![0];
+    public override DeleteAtomTargetView GetView(int position, IRedView? parent)
+        => new DeleteAtomTargetView(this, position, parent);
+}
+internal sealed partial class DeleteAtomTargetView : DeleteTargetView
+{
+    internal DeleteAtomTargetView(DeleteAtomTargetNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private DeleteTargetAtomView? _field_value = null;
+    internal DeleteTargetAtomView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (DeleteTargetAtomView)((DeleteAtomTargetNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (DeleteTargetAtomView)_field_value;
+        }
+    }
 }
 
 internal sealed partial record DeleteTargetAtomNode : GreenNode
 {
     internal TokenNode Value => (TokenNode)Children![0];
+    public override DeleteTargetAtomView GetView(int position, IRedView? parent)
+        => new DeleteTargetAtomView(this, position, parent);
+}
+internal sealed partial class DeleteTargetAtomView : RedView
+{
+    internal DeleteTargetAtomView(DeleteTargetAtomNode green, int position, IRedView? parent)
+        : base(green, position, parent)
+    {
+    }
+
+    private TokenView? _field_value = null;
+    internal TokenView Value
+    {
+        get
+        {
+            if (_field_value == null)
+            {
+                var _positionOfField = base.GetPositionFor(0);
+                _field_value = (TokenView)((DeleteTargetAtomNode)base.Green).Value!.GetView(_positionOfField, this);
+            }
+            return (TokenView)_field_value;
+        }
+    }
 }
 #endregion
