@@ -7,7 +7,6 @@ public enum TokenizerError
     InvalidLiteral,
     IndentationError,
     CharacterError,
-    InterpolatedStringNestingOverflow,
     TooLongInterpolationExpression,
     UnclosedInterpolationExpression,
 }

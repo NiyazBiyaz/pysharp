@@ -12,7 +12,6 @@ public partial class Tokenizer : BaseTokenizer, ITokenizer
 
     private readonly Stack<int> indentStack;
     private readonly Stack<int> alternateIndentStack;
-    private readonly bool limitInterpolationLines;
 
     private const int tab_size = 8;
     private const int alter_tab_size = 1;
@@ -36,20 +35,14 @@ public partial class Tokenizer : BaseTokenizer, ITokenizer
     } = 0;
     private int bracketsLevel { get; set; }
 
-    public Tokenizer(SynchronizationPoint syncPoint, bool limitInterpolationLines = true)
+    public Tokenizer(SynchronizationPoint syncPoint)
         : base(syncPoint)
     {
         indentStack = syncPoint.IndentStack;
         alternateIndentStack = syncPoint.AltIndentStack;
         bracketsLevel = syncPoint.BracketsLevel;
 
-        this.limitInterpolationLines = limitInterpolationLines;
         atLineBeginning = true;
-
-        interpolationNestedTokenizer = null;
-        interpolationQuote = Eof;
-        interpolationQuoteCount = -1;
-        interpolationCurrentGeneration = 0;
     }
 
     public override SynchronizationPoint Synchronize()
@@ -71,13 +64,20 @@ public partial class Tokenizer : BaseTokenizer, ITokenizer
         if (ShouldStop)
             throw new InvalidOperationException("Buffer already was read. Check ShouldStop flag before calling.");
 
-        if (tryInterpolated(out token))
+        var span = Source.Span;
+
+        ResetStart();
+
+        if (tryInterpolated(span, out token))
         {
             return;
         }
 
-        var span = Source.Span;
+        readNext(span, out token);
+    }
 
+    private void readNext(ReadOnlySpan<char> span, [NotNull] out Token? token)
+    {
         ResetStart();
 
         if (tryNextLine(span, out token) || tryIndentation(out token))
@@ -110,7 +110,6 @@ public partial class Tokenizer : BaseTokenizer, ITokenizer
         }
 
         readOperatorOrErrorToken(span, out token);
-        return;
     }
 
     private bool tryNextLine(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
@@ -835,8 +834,7 @@ public partial class Tokenizer : BaseTokenizer, ITokenizer
                 if (hasEscapedQuote)
                     message += " Perhaps you escaped the end quote?";
 
-                if (NextChar == Eof)
-                    unrecoverable = true;
+                interpolationModes.Clear(); // Remove interpolated modes to return exactly one error.
 
                 ErrorToken(out token, TokenizerError.InvalidLiteral, message);
                 return;

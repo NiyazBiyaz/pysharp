@@ -34,7 +34,7 @@ public class TestSampleCode
 
         var sync = SynchronizationPoint.ClearPoint(new StringBuffer(code));
 
-        var tokenizer = new Tokenizer(sync, true);
+        var tokenizer = new Tokenizer(sync);
         List<Token> tokens = new(expected.Count);
 
         while (!tokenizer.ShouldStop)

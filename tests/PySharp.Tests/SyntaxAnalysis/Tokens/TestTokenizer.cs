@@ -1081,26 +1081,6 @@ public class TestTokenizer
                 new(Error, ""),
                 eof
             ]),
-            ["Partial_InterpolationLineLimitExceeded_Fatal"] =
-            ("""
-            f'{b
-            a
-            u
-            b
-            a
-            u}'
-            """, "Interpolation exceeds maximum line limit. Allowed maximum 4 lines.",
-            [
-                new(FStringStart, "f'"),
-                new(LeftBrace, "{"),
-                new(Name, "b"), new(TriviaNewLine, "\n"),
-                new(Name, "a"), new(TriviaNewLine, "\n"),
-                new(Name, "u"), new(TriviaNewLine, "\n"),
-                new(Name, "b"), new(TriviaNewLine, "\n"),
-                new(Name, "a"), new(TriviaNewLine, "\n"),
-                new(Error, "u}'"),
-                eof
-            ]),
             ["Partial_NestedUnterminatedString(Only one error expecting)"] =
             ("f'{x'", unterminated,
             [
@@ -1110,46 +1090,6 @@ public class TestTokenizer
                 new(Error, "'"),
                 eof
             ]),
-            ["Partial_NestingDepthExceeded_Fatal"] =
-            ("f'1{f'2{f'3{f'4{f'5{f'6'}'}'}'}'}'", "f-string: nesting depth exceeded (limit: 5).",
-            [
-                new(FStringStart, "f'"),
-                new(FStringMiddle, "1"),
-                new(LeftBrace, "{"),
-                new(FStringStart, "f'"),
-                new(FStringMiddle, "2"),
-                new(LeftBrace, "{"),
-                new(FStringStart, "f'"),
-                new(FStringMiddle, "3"),
-                new(LeftBrace, "{"),
-                new(FStringStart, "f'"),
-                new(FStringMiddle, "4"),
-                new(LeftBrace, "{"),
-                new(FStringStart, "f'"),
-                new(FStringMiddle, "5"),
-                new(LeftBrace, "{"),
-                new(Error, "f'6'}'}'}'}'}'"),
-                eof
-            ]),
-            ["Partial_FormatSpecNestedInterpolationLineLimit_Fatal"] =
-            ("""
-            f'{x:
-
-
-
-
-            {y}}'
-            """, "Interpolation exceeds maximum line limit. Allowed maximum 4 lines.",
-            [
-                new(FStringStart, "f'"),
-                new(LeftBrace, "{"),
-                new(Name, "x"),
-                new(Colon, ":"),
-                new(FStringMiddle, "\n\n\n\n\n"),
-                new(Error, "{y}}'"),
-                eof
-            ]),
-
             ["Partial_InvalidPrefix_bf"] =
             ("bf'hello'", string.Format(str_prf, "b", "f"),
             [
@@ -1255,10 +1195,7 @@ public class TestTokenizer
     [InlineData("Partial_SingleQuoteUnterminatedNewline")]
     [InlineData("Partial_TripleQuoteUnterminatedEOF")]
     [InlineData("Partial_InterpolationUnclosedBraceEOF", TokenizerError.UnclosedInterpolationExpression)]
-    [InlineData("Partial_InterpolationLineLimitExceeded_Fatal", TokenizerError.TooLongInterpolationExpression)]
     [InlineData("Partial_NestedUnterminatedString(Only one error expecting)")]
-    [InlineData("Partial_NestingDepthExceeded_Fatal", TokenizerError.InterpolatedStringNestingOverflow)]
-    [InlineData("Partial_FormatSpecNestedInterpolationLineLimit_Fatal", TokenizerError.TooLongInterpolationExpression)]
     [InlineData("Partial_InvalidPrefix_bf")]
     [InlineData("Partial_InvalidPrefix_fb")]
     [InlineData("Partial_InvalidPrefix_bt")]
@@ -1947,6 +1884,11 @@ public class TestTokenizer
 
     private static Tokenizer test(string code, IList<Token> expected)
     {
+        Debug.WriteLine($"Testing:\n{code}");
+
+        if (code == "f'''content")
+            Debugger.Break();
+
         var sync = SynchronizationPoint.ClearPoint(new StringBuffer(code));
 
         var tokenizer = new Tokenizer(sync);

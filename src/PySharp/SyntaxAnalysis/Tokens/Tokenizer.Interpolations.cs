@@ -5,108 +5,41 @@ namespace PySharp.SyntaxAnalysis.Tokens;
 
 public partial class Tokenizer
 {
-    private Tokenizer? interpolationNestedTokenizer;
-    private readonly char interpolationQuote;
-    private readonly int interpolationQuoteCount;
-    private readonly int interpolationCurrentGeneration;
-    private readonly StringType interpolationStringType;
-    private InterpolationTokenizerMode tokenizerMode;
-    private bool unrecoverable = false;
-    private int braceLevel = 0;
-    private int expressionStartBraceLevel = -1;
-    private int expressionStartLine;
-    private bool formatSpec = false;
-    private readonly Queue<Token> pendingErrorTokens = null!;
+    private readonly Stack<InterpolationModeInfo> interpolationModes = [];
 
-    /// <summary>
-    /// Maximum lines for one interpolation. It limited by the UX reasons, because in IDE
-    /// if user somehow breaks closing brackets he would to see all file red of errors.
-    /// This constant prevents such scenarios and saves error locality.
-    /// Another reason for it is the fact, that such a long interpolations are ugly.
-    /// </summary>
-    // TODO: Now we just do opposite thing and read all buffer as error. Needs something like
-    // signal to buffer to limit itself by some safe-point that doesn't was changed, but later.
-    private const int interpolation_maximum_lines = 4;
-    /// <summary>
-    /// Maximum F-/T-strings that can be nested to each other by the Python reference
-    ///
-    /// <see href="https://docs.python.org/3/reference/lexical_analysis.html#formatted-string-literals"/>
-    /// </summary>
-    private const int maximum_interpolated_strings_nesting = 5;
+    private readonly Queue<Token?> pendingErrorTokens = [];
 
-    private Tokenizer(SynchronizationPoint syncPoint, bool limitInterpolationLines, int oldGeneration, StringType stringType, char quote, int quoteCount)
-        : base(syncPoint)
+    private bool tryInterpolated(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
-        // Setup synchronization point.
-        indentStack = syncPoint.IndentStack;
-        alternateIndentStack = syncPoint.AltIndentStack;
-        bracketsLevel = syncPoint.BracketsLevel;
-
-        this.limitInterpolationLines = limitInterpolationLines;
-        // Set it false, because in nested tokenizer it can be start of the line (if true, may create invalid dedents)
-        atLineBeginning = false;
-
-        // Setup interpolated string stuff.
-        interpolationNestedTokenizer = null;
-        interpolationStringType = stringType;
-        interpolationQuote = quote;
-        interpolationQuoteCount = quoteCount;
-        interpolationCurrentGeneration = oldGeneration + 1;
-        tokenizerMode = InterpolationTokenizerMode.MiddleString;
-        pendingErrorTokens = new(1);
-    }
-
-    private bool tryInterpolated([NotNullWhen(true)] out Token? token)
-    {
-        if (interpolationNestedTokenizer is not null)
+        if (pendingErrorTokens.TryDequeue(out token))
         {
-            // Close nested if it want that.
-            if (interpolationNestedTokenizer.ShouldStop)
-            {
-                killNested();
-            }
-            else
-            {
-                bool isNestedParsed = interpolationNestedTokenizer.tryNextInterpolationMode(out token);
+#pragma warning disable CS8762 // Parameter must have a non-null value when exiting in some condition.
+            return true;
+#pragma warning restore CS8762 // Parameter must have a non-null value when exiting in some condition.
+        }
 
-                // If nested tokenizer returns null, it means that it can't more read the characters
-                // but in some weird condition. So we need to delete it now and resume tokenizing.
-                if (!isNestedParsed)
-                {
-                    killNested();
-                    token = null;
-                    return false;
-                }
+        if (interpolationModes.Count > 0)
+        {
+            switch (interpolationModes.Peek().Mode)
+            {
+                case InterpolationTokenizerMode.Regular:
+                    if (tryInterpolationExpression(span, out token))
+                        return true;
+                    break;
 
-                // Throw out errors.
-                if (token!.Value.Type is TokenType.Error)
-                {
-                    Error = interpolationNestedTokenizer.Error;
-                    ErrorMessage = interpolationNestedTokenizer.ErrorMessage;
-                }
-                return true;
+                case InterpolationTokenizerMode.MiddleString:
+                    if (tryInterpolationMiddleString(span, out token))
+                        return true;
+                    break;
             }
         }
 
         token = null;
         return false;
-
-        void killNested()
-        {
-            ReSync(interpolationNestedTokenizer.Synchronize());
-            if (interpolationNestedTokenizer.unrecoverable)
-                unrecoverable = true;
-            interpolationNestedTokenizer = null;
-        }
     }
 
     private void readInterpolatedStringStart(ReadOnlySpan<char> span, [NotNull] out Token? token, StringType stringType)
     {
-        if (assertCanReadInterpolated(out token))
-        {
-            return;
-        }
-
         Advance(span); // First char always prefix.
 
         char quote;
@@ -135,7 +68,13 @@ public partial class Tokenizer
 
             CreateToken(out token, getStart(stringType));
 
-            interpolationNestedTokenizer = new Tokenizer(Synchronize(), limitInterpolationLines, interpolationCurrentGeneration, stringType, quote, quoteCount);
+            interpolationModes.Push(new InterpolationModeInfo()
+            {
+                Mode = InterpolationTokenizerMode.MiddleString,
+                StringType = stringType,
+                QuoteChar = quote,
+                QuoteCount = quoteCount,
+            });
         }
         else
             throw new ArgumentException("Given source does not contains valid string start.");
@@ -143,23 +82,26 @@ public partial class Tokenizer
 
     private bool tryNextInterpolationMode([NotNullWhen(true)] out Token? token)
     {
-        if (pendingErrorTokens.TryDequeue(out var err))
+        if (pendingErrorTokens.TryDequeue(out token))
         {
-            token = err;
+#pragma warning disable CS8762 // Parameter must have a non-null value when exiting in some condition.
             return true;
+#pragma warning restore CS8762 // Parameter must have a non-null value when exiting in some condition.
         }
 
         var span = Source.Span;
 
-        if (tokenizerMode is InterpolationTokenizerMode.MiddleString)
-            return tryMiddleString(span, out token);
+        if (interpolationModes.Peek().Mode is InterpolationTokenizerMode.MiddleString)
+            return tryInterpolationMiddleString(span, out token);
 
         else
-            return tryExpression(span, out token);
+            return tryInterpolationExpression(span, out token);
     }
 
-    private bool tryMiddleString(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
+    private bool tryInterpolationMiddleString(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
+        var mode = interpolationModes.Peek();
+
         // If false, next Middle string will not be emitted, because it's empty.
         bool isAdvanced = false;
 
@@ -169,36 +111,34 @@ public partial class Tokenizer
             if (NextChar == '{')
             {
                 // Shielded brace is not allowed in format spec.
-                if (!formatSpec && TwoNextChar == '{')
+                if (!mode.FormatSpec && TwoNextChar == '{')
                 {
                     // Take first brace, but ignore second.
                     Advance(span);
-                    CreateToken(out token, getMiddle(interpolationStringType));
+                    CreateToken(out token, getMiddle(mode.StringType));
                     Advance(span);
                     return true;
                 }
 
                 // Else we need to switch to regular mode.
-                expressionStartBraceLevel++;
-                tokenizerMode = InterpolationTokenizerMode.Regular;
-                setExprStartLine();
+                mode.ExpressionStartBraceLevel++;
+                mode.Mode = InterpolationTokenizerMode.Regular;
 
                 if (!isAdvanced)
                     return tryNextInterpolationMode(out token);
 
-                CreateToken(out token, getMiddle(interpolationStringType));
+                CreateToken(out token, getMiddle(mode.StringType));
                 return true;
             }
             else if (NextChar == '}')
             {
                 // In format spec shielded braces aren't allowed.
-                if (formatSpec)
+                if (mode.FormatSpec)
                 {
-                    tokenizerMode = InterpolationTokenizerMode.Regular;
-                    setExprStartLine();
+                    mode.Mode = InterpolationTokenizerMode.Regular;
                     if (isAdvanced)
                     {
-                        CreateToken(out token, getMiddle(interpolationStringType));
+                        CreateToken(out token, getMiddle(mode.StringType));
                         return true;
                     }
                     else
@@ -210,14 +150,14 @@ public partial class Tokenizer
                     if (isAdvanced)
                     {
                         // Create with valid part.
-                        CreateToken(out token, getMiddle(interpolationStringType));
+                        CreateToken(out token, getMiddle(mode.StringType));
 
                         ResetStart();
                         Advance(span);
 
                         // Create with invalid part.
                         ErrorToken(out var invalid, TokenizerError.InvalidLiteral, double_brackets_message);
-                        pendingErrorTokens.Enqueue(invalid.Value);
+                        pendingErrorTokens.Enqueue(invalid);
 
                         if (isAdvanced)
                             return true;
@@ -234,7 +174,7 @@ public partial class Tokenizer
                 {
                     // Ignore second brace.
                     Advance(span);
-                    CreateToken(out token, getMiddle(interpolationStringType));
+                    CreateToken(out token, getMiddle(mode.StringType));
                     Advance(span);
                     return true;
                 }
@@ -244,41 +184,39 @@ public partial class Tokenizer
             {
                 Advance(span);
             }
-            else if (!formatSpec && (NextChar == Eof || interpolationQuoteCount == 1 && NextChar == '\n'))
+            else if (!mode.FormatSpec && (NextChar == Eof || mode.QuoteCount == 1 && NextChar == '\n'))
             {
-                ShouldStop = unrecoverable = true;
                 ErrorToken(out token, TokenizerError.InvalidLiteral, unterminated_string_message);
+                interpolationModes.Clear();
                 return true;
             }
             // If NextChar is quote, check that we can end string.
             // In format spec we are not done yet.
-            else if (NextChar == interpolationQuote && !formatSpec)
+            else if (NextChar == mode.QuoteChar && !mode.FormatSpec)
             {
-                bool isEndReached = (interpolationQuoteCount == 1 && NextChar == interpolationQuote) ||
-                                    (interpolationQuoteCount == 3 && NextChar == interpolationQuote
-                                                            && TwoNextChar == interpolationQuote
-                                                            && ThreeNextChar == interpolationQuote);
+                bool isEndReached = (mode.QuoteCount == 1 && NextChar == mode.QuoteChar) ||
+                                    (mode.QuoteCount == 3 && NextChar == mode.QuoteChar
+                                                            && TwoNextChar == mode.QuoteChar
+                                                            && ThreeNextChar == mode.QuoteChar);
 
                 if (isEndReached)
                 {
                     // In next iteration we will point to the same symbols, but not advanced...
                     if (isAdvanced)
                     {
-                        CreateToken(out token, getMiddle(interpolationStringType));
+                        CreateToken(out token, getMiddle(mode.StringType));
                         return true;
                     }
 
                     // ...so we create end token.
                     else
                     {
-                        for (int i = 0; i < interpolationQuoteCount; i++)
+                        for (int i = 0; i < mode.QuoteCount; i++)
                             Advance(span);
 
-                        ShouldStop = true;
-                        {
-                            CreateToken(out token, getEnd(interpolationStringType));
-                            return true;
-                        }
+                        CreateToken(out token, getEnd(mode.StringType));
+                        interpolationModes.Pop();
+                        return true;
                     }
                 }
             }
@@ -288,16 +226,11 @@ public partial class Tokenizer
             if (shouldNewLine)
                 AdvanceLine();
         }
-
-        // Set start of the expression to be able manage lines count and create error when limit reached.
-        void setExprStartLine() => expressionStartLine = StartLineNumber;
     }
 
-    private bool tryExpression(ReadOnlySpan<char> span, out Token? token)
+    private bool tryInterpolationExpression(ReadOnlySpan<char> span, [NotNullWhen(true)] out Token? token)
     {
-        // Maybe another nested tokenizer.
-        if (tryInterpolated(out token))
-            return true;
+        var mode = interpolationModes.Peek();
 
         ResetStart();
 
@@ -306,109 +239,60 @@ public partial class Tokenizer
         {
             // This code block executes before braceLevel incremented by opening brace '{'
             // so for ensuring we are on the level 0 we need to adjust it manually.
-            int level = braceLevel - (NextChar != '{' ? 1 : 0);
-            bool atLevelWithMeaningfulPunctuation = (level == 1 && formatSpec) || level == 0;
+            int level = mode.BraceLevel - (NextChar != '{' ? 1 : 0);
+            bool atLevelWithMeaningfulPunctuation = (level == 1 && mode.FormatSpec) || level == 0;
 
             if (atLevelWithMeaningfulPunctuation)
             {
                 // Enable format spec string.
                 if (NextChar == ':')
                 {
-                    tokenizerMode = InterpolationTokenizerMode.MiddleString;
-                    formatSpec = true;
+                    mode.Mode = InterpolationTokenizerMode.MiddleString;
+                    mode.FormatSpec = true;
                 }
             }
 
             // Increase/Decrease level of the braces before mode switching.
             if (NextChar == '{')
-                braceLevel++;
+                mode.BraceLevel++;
 
             else if (NextChar == '}')
-                braceLevel--;
+                mode.BraceLevel--;
 
             // If we on the same level where we start, go back to MiddleString mode.
-            if (braceLevel == expressionStartBraceLevel)
+            if (mode.BraceLevel == mode.ExpressionStartBraceLevel)
             {
-                expressionStartBraceLevel--;
-                tokenizerMode = InterpolationTokenizerMode.MiddleString;
-                formatSpec = expressionStartBraceLevel >= 0;
+                mode.ExpressionStartBraceLevel--;
+                mode.Mode = InterpolationTokenizerMode.MiddleString;
+                mode.FormatSpec = mode.ExpressionStartBraceLevel >= 0;
             }
         }
 
-        ReadNext(out token);
+        readNext(span, out token);
 
-        // Check the limit of the maximum lines in expression if no compatible mode enabled.
-        if (!unrecoverable && limitInterpolationLines && StartLineNumber - expressionStartLine > interpolation_maximum_lines)
+        if (token.Value.Type == TokenType.EndOfFile)
         {
-            while (NextChar != Eof)
-            {
-                if (Advance(span))
-                    AdvanceLine();
-            }
-
-            ShouldStop = true;
-            unrecoverable = true;
             ErrorToken(
                 out token,
-                TokenizerError.TooLongInterpolationExpression,
-                $"Interpolation exceeds maximum line limit. Allowed maximum {interpolation_maximum_lines} lines."
-            );
+                TokenizerError.UnclosedInterpolationExpression,
+                "Unexpected EOF in multi-line statement.");
+            interpolationModes.Clear();
+            ShouldStop = false; // Rewrite EOF to return error instead.
             return true;
-        }
-
-        // Nested tokenizers shouldn't return EOF token, only the root one.
-        if (token?.Type is TokenType.EndOfFile)
-        {
-            // If it's not unrecoverable error it's mean that expression is unclosed,
-            // so we need to create such error token and in next iteration control will
-            // comeback to root tokenizer.
-            if (!unrecoverable)
-            {
-                ErrorToken(
-                    out token,
-                    TokenizerError.UnclosedInterpolationExpression,
-                    "Unexpected EOF in multi-line statement."
-                );
-                return true;
-            }
-
-            // ShouldStop already set to true.
-            token = null;
-            return false;
         }
 
         return true;
     }
 
-    private bool assertCanReadInterpolated([NotNullWhen(true)] out Token? token)
+    private class InterpolationModeInfo
     {
-        if (interpolationCurrentGeneration + 1 > maximum_interpolated_strings_nesting)
-        {
-            var span = Source.Span;
-
-            while (NextChar != Eof)
-            {
-                if (Advance(span))
-                    AdvanceLine();
-            }
-
-            ShouldStop = true;
-            unrecoverable = true;
-
-            var message = string.Format("{0}-string: nesting depth exceeded (limit: {1}).",
-                interpolationStringType == StringType.Format ? 'f' : 't',
-                maximum_interpolated_strings_nesting);
-
-            ErrorToken(out token, TokenizerError.InterpolatedStringNestingOverflow, message);
-            return true;
-        }
-
-        token = null;
-        return false;
-    }
-
-    private readonly record struct InterpolationModeInfo
-    {
+        public InterpolationTokenizerMode Mode;
+        public int QuoteCount;
+        public char QuoteChar;
+        public StringType StringType;
+        public int BraceLevel = 0;
+        public int ExpressionStartBraceLevel = -1;
+        public bool FormatSpec = false;
     }
 
     private enum InterpolationTokenizerMode
@@ -416,7 +300,6 @@ public partial class Tokenizer
         Regular,
         MiddleString,
     }
-
 
     private static TokenType getStart(StringType type) => type switch
     {
